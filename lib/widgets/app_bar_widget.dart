@@ -29,6 +29,12 @@ PreferredSizeWidget appBarWidget(BuildContext context,
       actions: showActions
           ? [
               if (hasLoggedInUser())
+                IconButton(
+                    onPressed: () =>
+                        GoRouter.of(context).goNamed(GoRoutes.cart),
+                    icon: const Icon(Icons.shopping_cart_rounded,
+                        color: Colors.white)),
+              if (hasLoggedInUser())
                 TextButton(
                     onPressed: () =>
                         GoRouter.of(context).goNamed(GoRoutes.profile),
@@ -58,11 +64,15 @@ PreferredSizeWidget secondAppBar(BuildContext context) {
         Row(
           children: [
             TextButton(
-                onPressed: () {}, child: montserratWhiteBold('PRODUCTS')),
+                onPressed: () =>
+                    GoRouter.of(context).goNamed(GoRoutes.products),
+                child: montserratWhiteBold('PRODUCTS')),
             TextButton(onPressed: () {}, child: montserratWhiteBold('SERVICES'))
           ],
         ),
-        TextButton(onPressed: () {}, child: montserratWhiteBold('HELP')),
+        TextButton(
+            onPressed: () => GoRouter.of(context).goNamed(GoRoutes.help),
+            child: montserratWhiteBold('HELP')),
       ],
     ),
   );

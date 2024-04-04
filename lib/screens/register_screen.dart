@@ -10,7 +10,9 @@ import '../utils/go_router_util.dart';
 import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
+import '../widgets/custom_padding_widgets.dart';
 import '../widgets/custom_text_field_widget.dart';
+import '../widgets/text_widgets.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -61,6 +63,8 @@ class _LoginScreenState extends ConsumerState<RegisterScreen> {
       child: roundedWhiteContainer(context,
           child: Column(
             children: [
+              vertical20Pix(
+                  child: montserratBlackBold('REGISTER', fontSize: 40)),
               Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: CustomTextField(
@@ -118,7 +122,8 @@ class _LoginScreenState extends ConsumerState<RegisterScreen> {
                       mobileNumberController: mobileNumberController)),
               const Divider(color: CustomColors.ultimateGray),
               TextButton(
-                  onPressed: () {},
+                  onPressed: () =>
+                      GoRouter.of(context).goNamed(GoRoutes.forgotPassword),
                   child: const Text(
                     'Forgot Password?',
                     style: TextStyle(

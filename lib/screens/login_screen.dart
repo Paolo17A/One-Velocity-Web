@@ -10,6 +10,7 @@ import '../utils/go_router_util.dart';
 import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
+import '../widgets/custom_padding_widgets.dart';
 import '../widgets/custom_text_field_widget.dart';
 import '../widgets/text_widgets.dart';
 
@@ -51,6 +52,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: roundedWhiteContainer(context,
           child: Column(
             children: [
+              vertical20Pix(child: montserratBlackBold('LOG-IN', fontSize: 40)),
               CustomTextField(
                   text: 'Email Address',
                   controller: emailController,
@@ -62,6 +64,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 controller: passwordController,
                 textInputType: TextInputType.visiblePassword,
                 displayPrefixIcon: const Icon(Icons.lock),
+                onSearchPress: () => logInUser(context, ref,
+                    emailController: emailController,
+                    passwordController: passwordController),
               ),
               submitButton(context,
                   label: 'LOG-IN',

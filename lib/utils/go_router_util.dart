@@ -2,25 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:one_velocity_web/screens/add_faq_screen.dart';
 import 'package:one_velocity_web/screens/add_product_screen.dart';
+import 'package:one_velocity_web/screens/bookmarks_screen.dart';
+import 'package:one_velocity_web/screens/cart_screen.dart';
 import 'package:one_velocity_web/screens/edit_product_screen.dart';
 import 'package:one_velocity_web/screens/forgot_password_screen.dart';
 import 'package:one_velocity_web/screens/login_screen.dart';
+import 'package:one_velocity_web/screens/purchase_history_screen.dart';
 import 'package:one_velocity_web/screens/register_screen.dart';
 import 'package:one_velocity_web/screens/view_faqs_screen.dart';
 import 'package:one_velocity_web/screens/view_products_screen.dart';
+import 'package:one_velocity_web/screens/view_purchases_screen.dart';
+import 'package:one_velocity_web/screens/view_transactions_screen.dart';
 import 'package:one_velocity_web/screens/view_users_screen.dart';
 import 'package:one_velocity_web/utils/string_util.dart';
 
 import '../screens/edit_faq_screen.dart';
+import '../screens/edit_profile_screen.dart';
+import '../screens/help_center_screen.dart';
 import '../screens/home_screen.dart';
+import '../screens/profile_screen.dart';
+import '../screens/selected_product_screen.dart';
 import '../screens/selected_user_screen.dart';
+import '../screens/shop_products_screen.dart';
 
 class GoRoutes {
   static const home = '/';
   static const login = 'login';
   static const register = 'register';
-  static const profile = 'profile';
   static const forgotPassword = 'forgotPassword';
+  static const products = 'products';
+  static const selectedProduct = 'selectedProduct';
+  static const help = 'help';
 
   //  ADMIN
   static const viewProducts = 'viewProducts';
@@ -32,9 +44,17 @@ class GoRoutes {
   static const viewUsers = 'viewUsers';
   static const selectedUser = 'selectedUser';
   static const viewTransactions = 'viewTransactions';
+  static const viewPurchases = 'viewPurchases';
   static const viewFAQs = 'viewFAQs';
   static const addFAQ = 'addFAQ';
   static const editFAQ = 'editFAQ';
+
+  //  CLIENT
+  static const cart = 'cart';
+  static const profile = 'profile';
+  static const editProfile = 'editProfile';
+  static const bookmarks = 'bookmarks';
+  static const purchaseHistory = 'purchaseHistory';
 }
 
 CustomTransitionPage customTransition(
@@ -77,6 +97,26 @@ final GoRouter goRoutes = GoRouter(initialLocation: GoRoutes.home, routes: [
             path: GoRoutes.forgotPassword,
             pageBuilder: (context, state) =>
                 customTransition(context, state, const ForgotPasswordScreen())),
+        GoRoute(
+            name: GoRoutes.products,
+            path: GoRoutes.products,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const ShopProductsScreen())),
+        GoRoute(
+            name: GoRoutes.selectedProduct,
+            path: '${GoRoutes.selectedProduct}/:${PathParameters.productID}',
+            pageBuilder: (context, state) => customTransition(
+                context,
+                state,
+                SelectedProductScreen(
+                    productID:
+                        state.pathParameters[PathParameters.productID]!))),
+        GoRoute(
+            name: GoRoutes.help,
+            path: GoRoutes.help,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const HelpCenterScreen())),
+
         //======================================================================
         //==ADMIN PAGES=========================================================
         //======================================================================
@@ -133,5 +173,43 @@ final GoRouter goRoutes = GoRouter(initialLocation: GoRoutes.home, routes: [
                 state,
                 EditFAQScreen(
                     faqID: state.pathParameters[PathParameters.faqID]!))),
+        GoRoute(
+            name: GoRoutes.viewTransactions,
+            path: GoRoutes.viewTransactions,
+            pageBuilder: (context, state) => customTransition(
+                context, state, const ViewTransactionsScreen())),
+        GoRoute(
+            name: GoRoutes.viewPurchases,
+            path: GoRoutes.viewPurchases,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const ViewPurchasesScreen())),
+        //======================================================================
+        //==CLIENT PAGES========================================================
+        //======================================================================
+        GoRoute(
+            name: GoRoutes.cart,
+            path: GoRoutes.cart,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const CartScreen())),
+        GoRoute(
+            name: GoRoutes.profile,
+            path: GoRoutes.profile,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const ProfileScreen())),
+        GoRoute(
+            name: GoRoutes.editProfile,
+            path: GoRoutes.editProfile,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const EditProfileScreen())),
+        GoRoute(
+            name: GoRoutes.bookmarks,
+            path: GoRoutes.bookmarks,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const BookMarksScreen())),
+        GoRoute(
+            name: GoRoutes.purchaseHistory,
+            path: GoRoutes.purchaseHistory,
+            pageBuilder: (context, state) => customTransition(
+                context, state, const PurchaseHistoryScreen())),
       ])
 ]);

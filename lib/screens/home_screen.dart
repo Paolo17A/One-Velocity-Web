@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:one_velocity_web/utils/color_util.dart';
 import 'package:one_velocity_web/widgets/app_bar_widget.dart';
@@ -13,6 +14,7 @@ import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
+import '../widgets/item_entry_widget.dart';
 import '../widgets/left_navigator_widget.dart';
 import '../widgets/text_widgets.dart';
 
@@ -32,6 +34,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   //  CLIENT
   List<DocumentSnapshot> productDocs = [];
   List<DocumentSnapshot> serviceDocs = [];
+  List<DocumentSnapshot> paymentDocs = [];
+  Map<String, double> paymentBreakdown = {
+    'PENDING': 0,
+    'APPROVED': 0,
+    'DENIED': 0
+  };
+  num totalSales = 0;
 
   @override
   void initState() {
@@ -50,6 +59,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         servicesCount = services.length;
         final users = await getAllClientDocs();
         userCount = users.length;
+        paymentDocs = await getAllPaymentDocs();
+        for (var payment in paymentDocs) {
+          final paymentData = payment.data() as Map<dynamic, dynamic>;
+          final status = paymentData[PaymentFields.paymentStatus];
+          if (status == PaymentStatuses.pending) {
+            paymentBreakdown[PaymentStatuses.pending] =
+                paymentBreakdown[PaymentStatuses.pending]! + 1;
+          } else if (status == PaymentStatuses.approved) {
+            paymentBreakdown[PaymentStatuses.approved] =
+                paymentBreakdown[PaymentStatuses.approved]! + 1;
+            totalSales += paymentData[PaymentFields.paidAmount];
+          } else if (status == PaymentStatuses.denied) {
+            paymentBreakdown[PaymentStatuses.denied] =
+                paymentBreakdown[PaymentStatuses.denied]! + 1;
+          }
+        }
       } else {
         productDocs = await getAllProducts();
         serviceDocs = await getAllServices();
@@ -80,12 +105,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget regularHome() {
     return Column(
-      children: [secondAppBar(context)],
+      children: [secondAppBar(context), _topProducts()],
+    );
+  }
+
+  Widget _topProducts() {
+    productDocs.shuffle();
+    return Container(
+      decoration:
+          BoxDecoration(border: Border.all(color: CustomColors.ultimateGray)),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          int maxItemsToDisplay = (constraints.maxWidth / 275).floor();
+          return Column(
+            children: [
+              Row(children: [
+                all20Pix(
+                    child: montserratBlackBold('TOP PRODUCTS', fontSize: 25))
+              ]),
+              Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: productDocs.isNotEmpty
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.center,
+                  children: productDocs.isNotEmpty
+                      ? productDocs
+                          .take(maxItemsToDisplay)
+                          .toList()
+                          .map((item) => Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 10),
+                                child: itemEntry(context,
+                                    itemDoc: item,
+                                    onPress: () => GoRouter.of(context).goNamed(
+                                            GoRoutes.selectedProduct,
+                                            pathParameters: {
+                                              PathParameters.productID: item.id
+                                            }),
+                                    fontColor: Colors.white),
+                              ))
+                          .toList()
+                      : [
+                          Center(
+                              child: montserratBlackBold(
+                                  'NO AVAILABLE PRODUCTS TO DISPLAY'))
+                        ]),
+              const Gap(10),
+            ],
+          );
+        },
+      ),
     );
   }
 
   //============================================================================
-  //  ADMIN WIDGETS
+  //==ADMIN WIDGETS=============================================================
+  //============================================================================
 
   Widget adminDashboard() {
     return Row(
@@ -125,7 +200,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            montserratWhiteBold('OVERALL TOTAL SALES: PHP 0.00', fontSize: 30),
+            montserratWhiteBold(
+                'OVERALL TOTAL SALES: PHP ${totalSales.toStringAsFixed(2)}',
+                fontSize: 30),
             montserratWhiteBold(
                 'Best Selling Product: ${bestSellerName.isNotEmpty ? bestSellerName : 'N/A'}',
                 fontSize: 18),
@@ -184,15 +261,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Column(
           children: [
             montserratBlackBold('PAYMENT STATUSES'),
-            const PieChart(dataMap: {
-              'PENDING': 1,
-              'APPROVED': 4,
-              'DENIED': 0
-            }, colorList: [
-              CustomColors.grenadine,
-              CustomColors.ultimateGray,
-              CustomColors.blackBeauty
-            ], chartValuesOptions: ChartValuesOptions(decimalPlaces: 0)),
+            PieChart(
+                dataMap: paymentBreakdown,
+                colorList: [
+                  CustomColors.grenadine,
+                  CustomColors.ultimateGray,
+                  CustomColors.blackBeauty
+                ],
+                chartValuesOptions: ChartValuesOptions(decimalPlaces: 0)),
           ],
         ));
   }

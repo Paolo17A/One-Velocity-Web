@@ -13,6 +13,9 @@ class Collections {
   static const String users = 'users';
   static const String faqs = 'faqs';
   static const String products = 'products';
+  static const String cart = 'cart';
+  static const String purchases = 'purchases';
+  static const String payments = 'payments';
   static const String services = 'services';
 }
 
@@ -24,6 +27,8 @@ class UserFields {
   static const String mobileNumber = 'mobileNumber';
   static const String userType = 'userType';
   static const String profileImageURL = 'profileImageURL';
+  static const String bookmarkedProducts = 'bookmarkedProducts';
+  static const String bookmarkedServices = 'bookmarkedServices';
 }
 
 class FAQFields {
@@ -39,6 +44,33 @@ class ProductFields {
   static const String imageURLs = 'imageURLs';
 }
 
+class CartFields {
+  static const String clientID = 'clientID';
+  static const String productID = 'productID';
+  static const String quantity = 'quantity';
+}
+
+class PaymentFields {
+  static const String clientID = 'clientID';
+  static const String productID = 'productID';
+  static const String paidAmount = 'paidAmount';
+  static const String paymentMethod = 'paymentMethod';
+  static const String proofOfPayment = 'proofOfPayment';
+  static const String paymentStatus = 'paymentStatus';
+  static const String paymentVerified = 'paymentVerified';
+  static const String dateCreated = 'dateCreated';
+  static const String dateApproved = 'dateApproved';
+}
+
+class PurchaseFields {
+  static const String clientID = 'clientID';
+  static const String productID = 'productID';
+  static const String quantity = 'quantity';
+  static const String purchaseStatus = 'purchaseStatus';
+  static const String datePickedUp = 'datePickedUp';
+  static const String rating = 'rating';
+}
+
 class ServiceFields {
   static const String name = 'name';
   static const String description = 'description';
@@ -52,6 +84,26 @@ class PathParameters {
   static const String faqID = 'faqID';
   static const String productID = 'productID';
   static const String serviceID = 'serviceID';
+}
+
+class StorageFields {
+  static const String profilePics = 'profilePics';
+  static const String payments = 'payments';
+  static const String products = 'products';
+}
+
+class PaymentStatuses {
+  static const String pending = 'PENDING';
+  static const String approved = 'APPROVED';
+  static const String denied = 'DENIED';
+}
+
+class PurchaseStatuses {
+  static const String denied = 'DENIED';
+  static const String pending = 'PENDING';
+  static const String processing = 'PROCESSING';
+  static const String forPickUp = 'FOR PICK UP';
+  static const String pickedUp = 'PICKED UP';
 }
 
 String generateRandomHexString(int length) {

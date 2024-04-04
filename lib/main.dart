@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-        title: 'One Velocity Car Car Inc.',
+        title: 'One Velocity Car Care Inc.',
         theme: themeData,
         routerConfig: goRoutes);
   }
