@@ -46,41 +46,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      ref.read(loadingProvider.notifier).toggleLoading(true);
-      if (hasLoggedInUser()) {
-        ref
-            .read(userTypeProvider.notifier)
-            .setUserType(await getCurrentUserType());
-      }
-      if (ref.read(userTypeProvider) == UserTypes.admin) {
-        final products = await getAllProducts();
-        productsCount = products.length;
-        final services = await getAllServices();
-        servicesCount = services.length;
-        final users = await getAllClientDocs();
-        userCount = users.length;
-        paymentDocs = await getAllPaymentDocs();
-        for (var payment in paymentDocs) {
-          final paymentData = payment.data() as Map<dynamic, dynamic>;
-          final status = paymentData[PaymentFields.paymentStatus];
-          if (status == PaymentStatuses.pending) {
-            paymentBreakdown[PaymentStatuses.pending] =
-                paymentBreakdown[PaymentStatuses.pending]! + 1;
-          } else if (status == PaymentStatuses.approved) {
-            paymentBreakdown[PaymentStatuses.approved] =
-                paymentBreakdown[PaymentStatuses.approved]! + 1;
-            totalSales += paymentData[PaymentFields.paidAmount];
-          } else if (status == PaymentStatuses.denied) {
-            paymentBreakdown[PaymentStatuses.denied] =
-                paymentBreakdown[PaymentStatuses.denied]! + 1;
-          }
+      try {
+        ref.read(loadingProvider.notifier).toggleLoading(true);
+        if (hasLoggedInUser()) {
+          ref
+              .read(userTypeProvider.notifier)
+              .setUserType(await getCurrentUserType());
         }
-      } else {
-        productDocs = await getAllProducts();
-        serviceDocs = await getAllServices();
-        setState(() {});
+        if (ref.read(userTypeProvider) == UserTypes.admin) {
+          final products = await getAllProducts();
+          productsCount = products.length;
+          final services = await getAllServices();
+          servicesCount = services.length;
+          final users = await getAllClientDocs();
+          userCount = users.length;
+          paymentDocs = await getAllPaymentDocs();
+          for (var payment in paymentDocs) {
+            final paymentData = payment.data() as Map<dynamic, dynamic>;
+            final status = paymentData[PaymentFields.paymentStatus];
+            if (status == PaymentStatuses.pending) {
+              paymentBreakdown[PaymentStatuses.pending] =
+                  paymentBreakdown[PaymentStatuses.pending]! + 1;
+            } else if (status == PaymentStatuses.approved) {
+              paymentBreakdown[PaymentStatuses.approved] =
+                  paymentBreakdown[PaymentStatuses.approved]! + 1;
+              totalSales += paymentData[PaymentFields.paidAmount];
+            } else if (status == PaymentStatuses.denied) {
+              paymentBreakdown[PaymentStatuses.denied] =
+                  paymentBreakdown[PaymentStatuses.denied]! + 1;
+            }
+          }
+        } else {
+          productDocs = await getAllProducts();
+          serviceDocs = await getAllServices();
+          setState(() {});
+        }
+        ref.read(loadingProvider.notifier).toggleLoading(false);
+      } catch (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error initializing home: $error')));
+        ref.read(loadingProvider.notifier).toggleLoading(false);
       }
-      ref.read(loadingProvider.notifier).toggleLoading(false);
     });
   }
 

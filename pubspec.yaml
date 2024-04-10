@@ -41,8 +41,8 @@ dependencies:
   google_fonts: 6.1.0
   gap: ^3.0.1
   flutter_launcher_icons: ^0.13.1
-  firebase_auth: ^4.17.8
-  cloud_firestore: ^4.15.8
+  firebase_auth: 4.17.7
+  cloud_firestore: 4.15.7
   pie_chart: ^5.4.0
   image_picker_web: ^3.1.1
   firebase_storage: ^11.6.9
