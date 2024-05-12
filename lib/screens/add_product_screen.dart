@@ -16,6 +16,7 @@ import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
 import '../widgets/custom_text_field_widget.dart';
+import '../widgets/dropdown_widget.dart';
 import '../widgets/left_navigator_widget.dart';
 import '../widgets/text_widgets.dart';
 
@@ -29,6 +30,7 @@ class AddProductScreen extends ConsumerStatefulWidget {
 class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final nameController = TextEditingController();
   final descriptionController = TextEditingController();
+  String selectedCategory = '';
   final quantityController = TextEditingController();
   final priceController = TextEditingController();
   List<Uint8List?> selectedItemImages = [];
@@ -95,6 +97,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       _newProductHeaderWidget(),
                       _productNameWidget(),
                       _productDescriptionWidget(),
+                      _productCategoryWidget(),
                       SizedBox(
                         width: double.infinity,
                         child: Wrap(
@@ -155,6 +158,28 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           controller: descriptionController,
           textInputType: TextInputType.multiline,
           displayPrefixIcon: null),
+    ]);
+  }
+
+  Widget _productCategoryWidget() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      vertical10Pix(
+          child: montserratBlackBold('Product Category', fontSize: 24)),
+      Container(
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(5)),
+        child: dropdownWidget(selectedCategory, (newVal) {
+          setState(() {
+            selectedCategory = newVal!;
+          });
+        }, [
+          ProductCategories.wheel,
+          ProductCategories.battery,
+          ProductCategories.accessory,
+          ProductCategories.others
+        ], selectedCategory.isNotEmpty ? selectedCategory : 'Select a category',
+            false),
+      )
     ]);
   }
 
@@ -227,6 +252,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         onPressed: () => addProductEntry(context, ref,
             nameController: nameController,
             descriptionController: descriptionController,
+            selectedCategory: selectedCategory,
             quantityController: quantityController,
             priceController: priceController),
         child: Padding(

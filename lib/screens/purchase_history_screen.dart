@@ -15,6 +15,7 @@ import 'package:one_velocity_web/widgets/left_navigator_widget.dart';
 import 'package:one_velocity_web/widgets/text_widgets.dart';
 
 import '../utils/color_util.dart';
+import '../utils/url_util.dart';
 
 class PurchaseHistoryScreen extends ConsumerStatefulWidget {
   const PurchaseHistoryScreen({super.key});
@@ -162,32 +163,39 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
                               const Gap(15),
                               montserratWhiteRegular('Status: $status',
                                   fontSize: 15),
+                              if (status == PurchaseStatuses.pickedUp)
+                                _downloadInvoiceFutureBuilder(purchaseDoc.id)
                             ],
                           ),
                         ),
                       ],
                     ),
                     all20Pix(
-                      child: Column(
-                        children: [
-                          montserratWhiteBold(
-                              'PHP ${(price * quantity).toStringAsFixed(2)}'),
-                          if (status == 'DELIVERED')
-                            ElevatedButton(
-                                onPressed: () {},
-                                child:
-                                    montserratWhiteRegular('MARK AS RECEIVED'))
-                          else if (status == 'TO RATE')
-                            ElevatedButton(
-                                onPressed: () {},
-                                child: montserratWhiteRegular('RATE THIS ITEM'))
-                        ],
-                      ),
-                    )
+                        child: montserratWhiteBold(
+                            'PHP ${(price * quantity).toStringAsFixed(2)}'))
                   ],
                 ),
               ))),
         );
+      },
+    );
+  }
+
+  Widget _downloadInvoiceFutureBuilder(String purchaseID) {
+    return FutureBuilder(
+      future: getThisPaymentDoc(purchaseID),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            !snapshot.hasData ||
+            snapshot.hasError) return snapshotHandler(snapshot);
+        final paymentData = snapshot.data!.data() as Map<dynamic, dynamic>;
+        String invoiceURL = paymentData[PaymentFields.invoiceURL];
+        return TextButton(
+            onPressed: () async => launchThisURL(invoiceURL),
+            child: montserratWhiteRegular('Download Invoice',
+                fontSize: 12,
+                textAlign: TextAlign.left,
+                decoration: TextDecoration.underline));
       },
     );
   }

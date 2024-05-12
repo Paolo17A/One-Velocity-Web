@@ -14,7 +14,10 @@ PreferredSizeWidget appBarWidget(BuildContext context,
       toolbarHeight: 60,
       automaticallyImplyLeading: false,
       title: InkWell(
-        onTap: () => GoRouter.of(context).goNamed(GoRoutes.home),
+        onTap: () {
+          GoRouter.of(context).goNamed(GoRoutes.home);
+          GoRouter.of(context).pushReplacementNamed(GoRoutes.home);
+        },
         child: Row(
           children: [
             CircleAvatar(

@@ -26,9 +26,7 @@ Widget leftNavigator(BuildContext context, {required String path}) {
                 thisPath: GoRoutes.viewProducts,
                 currentPath: path),
             listTile(context,
-                label: 'Services',
-                thisPath: GoRoutes.viewServices,
-                currentPath: path),
+                label: 'Services', thisPath: '', currentPath: path),
             listTile(context,
                 label: 'Users',
                 thisPath: GoRoutes.viewUsers,
@@ -140,5 +138,7 @@ Widget listTile(BuildContext context,
           title: Text(label,
               style: const TextStyle(
                   color: Colors.white, fontWeight: FontWeight.bold)),
-          onTap: () => GoRouter.of(context).goNamed(thisPath)));
+          onTap: thisPath.isNotEmpty
+              ? () => GoRouter.of(context).goNamed(thisPath)
+              : null));
 }

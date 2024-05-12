@@ -42,6 +42,14 @@ class ProductFields {
   static const String quantity = 'quantity';
   static const String price = 'price';
   static const String imageURLs = 'imageURLs';
+  static const String category = 'category';
+}
+
+class ProductCategories {
+  static const String wheel = 'WHEEL';
+  static const String battery = 'BATTERY';
+  static const String accessory = 'ACCESSORY';
+  static const String others = 'OTHERS';
 }
 
 class CartFields {
@@ -60,6 +68,7 @@ class PaymentFields {
   static const String paymentVerified = 'paymentVerified';
   static const String dateCreated = 'dateCreated';
   static const String dateApproved = 'dateApproved';
+  static const String invoiceURL = 'invoiceURL';
 }
 
 class PurchaseFields {
@@ -90,6 +99,7 @@ class StorageFields {
   static const String profilePics = 'profilePics';
   static const String payments = 'payments';
   static const String products = 'products';
+  static const String invoices = 'invoices';
 }
 
 class PaymentStatuses {

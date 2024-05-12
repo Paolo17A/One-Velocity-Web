@@ -16,6 +16,7 @@ import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
 import '../widgets/custom_text_field_widget.dart';
+import '../widgets/dropdown_widget.dart';
 import '../widgets/left_navigator_widget.dart';
 import '../widgets/text_widgets.dart';
 
@@ -30,6 +31,7 @@ class EditProductScreen extends ConsumerStatefulWidget {
 class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   final nameController = TextEditingController();
   final descriptionController = TextEditingController();
+  String selectedCategory = '';
   final quantityController = TextEditingController();
   final priceController = TextEditingController();
   List<dynamic> imageURLs = [];
@@ -57,6 +59,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         final productData = product.data() as Map<dynamic, dynamic>;
         nameController.text = productData[ProductFields.name];
         descriptionController.text = productData[ProductFields.description];
+        selectedCategory = productData[ProductFields.category];
         quantityController.text =
             productData[ProductFields.quantity].toString();
         priceController.text = productData[ProductFields.price].toString();
@@ -106,6 +109,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                       _newProductHeaderWidget(),
                       _productNameWidget(),
                       _productDescriptionWidget(),
+                      _productCategoryWidget(),
                       SizedBox(
                         width: double.infinity,
                         child: Wrap(
@@ -166,6 +170,28 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           controller: descriptionController,
           textInputType: TextInputType.multiline,
           displayPrefixIcon: null),
+    ]);
+  }
+
+  Widget _productCategoryWidget() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      vertical10Pix(
+          child: montserratBlackBold('Product Category', fontSize: 24)),
+      Container(
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(5)),
+        child: dropdownWidget(selectedCategory, (newVal) {
+          setState(() {
+            selectedCategory = newVal!;
+          });
+        }, [
+          ProductCategories.wheel,
+          ProductCategories.battery,
+          ProductCategories.accessory,
+          ProductCategories.others
+        ], selectedCategory.isNotEmpty ? selectedCategory : 'Select a category',
+            false),
+      )
     ]);
   }
 
@@ -247,6 +273,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             productID: widget.productID,
             nameController: nameController,
             descriptionController: descriptionController,
+            selectedCategory: selectedCategory,
             quantityController: quantityController,
             priceController: priceController),
         child: Padding(

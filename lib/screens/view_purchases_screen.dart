@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:one_velocity_web/providers/purchases_provider.dart';
+import 'package:one_velocity_web/utils/url_util.dart';
 import 'package:one_velocity_web/widgets/app_bar_widget.dart';
 import 'package:one_velocity_web/widgets/left_navigator_widget.dart';
 import 'package:one_velocity_web/widgets/text_widgets.dart';
@@ -13,6 +17,9 @@ import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
+import 'package:pdf/widgets.dart' as pw;
+
+import '../widgets/pdf_widgets.dart';
 
 class ViewPurchasesScreen extends ConsumerStatefulWidget {
   const ViewPurchasesScreen({super.key});
@@ -157,7 +164,8 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
                               flex: 1,
                               backgroundColor: backgroundColor,
                               textColor: entryColor),
-                          viewFlexTextCell((quantity * price).toString(),
+                          viewFlexTextCell(
+                              (quantity * price).toStringAsFixed(2),
                               flex: 1,
                               backgroundColor: backgroundColor,
                               textColor: entryColor),
@@ -181,18 +189,10 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
                                         'MARK AS READY FOR PICK UP',
                                         fontSize: 12))
                               else if (status == PurchaseStatuses.forPickUp)
-                                ElevatedButton(
-                                    onPressed: () => markPurchaseAsPickedUp(
-                                        context, ref,
-                                        purchaseID: ref
-                                            .read(purchasesProvider)
-                                            .purchaseDocs[index]
-                                            .id),
-                                    child: montserratWhiteRegular(
-                                        'MARK AS PICKED UP',
-                                        fontSize: 12))
+                                _markAsPickedUpFutureBuilder(
+                                    index, formattedName, name, quantity)
                               else if (status == PurchaseStatuses.pickedUp)
-                                montserratBlackBold('COMPLETED')
+                                _downloadInvoiceFutureBuilder(index)
                             ],
                             flex: 2,
                             backgroundColor: backgroundColor,
@@ -203,6 +203,60 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
                 });
             //  Client Variables
           }),
+    );
+  }
+
+  Widget _markAsPickedUpFutureBuilder(
+      int index, String formattedName, String productName, num quantity) {
+    return FutureBuilder(
+      future:
+          getThisPaymentDoc(ref.read(purchasesProvider).purchaseDocs[index].id),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            !snapshot.hasData ||
+            snapshot.hasError) return snapshotHandler(snapshot);
+        final paymentData = snapshot.data!.data() as Map<dynamic, dynamic>;
+        num paidAmount = paymentData[PaymentFields.paidAmount];
+        DateTime datePaid =
+            (paymentData[PaymentFields.dateCreated] as Timestamp).toDate();
+        return ElevatedButton(
+            onPressed: () async {
+              final document = pw.Document();
+
+              document.addPage(pw.Page(
+                  build: (context) => invoicePage(
+                      formattedName: formattedName,
+                      productName: productName,
+                      quantity: quantity,
+                      paidAmount: paidAmount,
+                      datePaid: datePaid)));
+              Uint8List savedPDF = await document.save();
+
+              markPurchaseAsPickedUp(context, ref,
+                  purchaseID:
+                      ref.read(purchasesProvider).purchaseDocs[index].id,
+                  pdfBytes: savedPDF);
+            },
+            child: montserratWhiteRegular('MARK AS PICKED UP', fontSize: 12));
+      },
+    );
+  }
+
+  Widget _downloadInvoiceFutureBuilder(int index) {
+    return FutureBuilder(
+      future:
+          getThisPaymentDoc(ref.read(purchasesProvider).purchaseDocs[index].id),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            !snapshot.hasData ||
+            snapshot.hasError) return snapshotHandler(snapshot);
+        final paymentData = snapshot.data!.data() as Map<dynamic, dynamic>;
+        String invoiceURL = paymentData[PaymentFields.invoiceURL];
+        return ElevatedButton(
+            onPressed: () async => launchThisURL(invoiceURL),
+            child: montserratWhiteRegular('COMPLETED (Download Invoice)',
+                fontSize: 12));
+      },
     );
   }
 }

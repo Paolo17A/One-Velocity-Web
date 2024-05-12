@@ -30,17 +30,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int productsCount = 0;
   int servicesCount = 0;
   int userCount = 0;
-
-  //  CLIENT
-  List<DocumentSnapshot> productDocs = [];
-  List<DocumentSnapshot> serviceDocs = [];
-  List<DocumentSnapshot> paymentDocs = [];
   Map<String, double> paymentBreakdown = {
     'PENDING': 0,
     'APPROVED': 0,
     'DENIED': 0
   };
   num totalSales = 0;
+  //  CLIENT
+  List<DocumentSnapshot> productDocs = [];
+  List<DocumentSnapshot> wheelProductDocs = [];
+  List<DocumentSnapshot> batteryProductDocs = [];
+  List<DocumentSnapshot> serviceDocs = [];
+  List<DocumentSnapshot> paymentDocs = [];
 
   @override
   void initState() {
@@ -52,35 +53,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ref
               .read(userTypeProvider.notifier)
               .setUserType(await getCurrentUserType());
-        }
-        if (ref.read(userTypeProvider) == UserTypes.admin) {
-          final products = await getAllProducts();
-          productsCount = products.length;
-          final services = await getAllServices();
-          servicesCount = services.length;
-          final users = await getAllClientDocs();
-          userCount = users.length;
-          paymentDocs = await getAllPaymentDocs();
-          for (var payment in paymentDocs) {
-            final paymentData = payment.data() as Map<dynamic, dynamic>;
-            final status = paymentData[PaymentFields.paymentStatus];
-            if (status == PaymentStatuses.pending) {
-              paymentBreakdown[PaymentStatuses.pending] =
-                  paymentBreakdown[PaymentStatuses.pending]! + 1;
-            } else if (status == PaymentStatuses.approved) {
-              paymentBreakdown[PaymentStatuses.approved] =
-                  paymentBreakdown[PaymentStatuses.approved]! + 1;
-              totalSales += paymentData[PaymentFields.paidAmount];
-            } else if (status == PaymentStatuses.denied) {
-              paymentBreakdown[PaymentStatuses.denied] =
-                  paymentBreakdown[PaymentStatuses.denied]! + 1;
+          if (ref.read(userTypeProvider) == UserTypes.admin) {
+            final products = await getAllProducts();
+            productsCount = products.length;
+            final services = await getAllServices();
+            servicesCount = services.length;
+            final users = await getAllClientDocs();
+            userCount = users.length;
+            paymentDocs = await getAllPaymentDocs();
+            for (var payment in paymentDocs) {
+              final paymentData = payment.data() as Map<dynamic, dynamic>;
+              final status = paymentData[PaymentFields.paymentStatus];
+              if (status == PaymentStatuses.pending) {
+                paymentBreakdown[PaymentStatuses.pending] =
+                    paymentBreakdown[PaymentStatuses.pending]! + 1;
+              } else if (status == PaymentStatuses.approved) {
+                paymentBreakdown[PaymentStatuses.approved] =
+                    paymentBreakdown[PaymentStatuses.approved]! + 1;
+                totalSales += paymentData[PaymentFields.paidAmount];
+              } else if (status == PaymentStatuses.denied) {
+                paymentBreakdown[PaymentStatuses.denied] =
+                    paymentBreakdown[PaymentStatuses.denied]! + 1;
+              }
             }
+          } else {
+            productDocs = await getAllProducts();
+            serviceDocs = await getAllServices();
           }
         } else {
           productDocs = await getAllProducts();
           serviceDocs = await getAllServices();
-          setState(() {});
         }
+
+        wheelProductDocs = productDocs.where((productDoc) {
+          final productData = productDoc.data() as Map<dynamic, dynamic>;
+          return productData[ProductFields.category] == ProductCategories.wheel;
+        }).toList();
+        batteryProductDocs = productDocs.where((productDoc) {
+          final productData = productDoc.data() as Map<dynamic, dynamic>;
+          return productData[ProductFields.category] ==
+              ProductCategories.battery;
+        }).toList();
+
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -111,11 +125,98 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget regularHome() {
     return Column(
-      children: [secondAppBar(context), _topProducts()],
+      children: [
+        secondAppBar(context),
+        if (wheelProductDocs.isNotEmpty) _wheelProducts(),
+        if (batteryProductDocs.isNotEmpty) _batteryProducts(),
+        _allProducts(),
+      ],
     );
   }
 
-  Widget _topProducts() {
+  Widget _batteryProducts() {
+    batteryProductDocs.shuffle();
+    return Container(
+      decoration:
+          BoxDecoration(border: Border.all(color: CustomColors.ultimateGray)),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          int maxItemsToDisplay = (constraints.maxWidth / 275).floor();
+          return Column(
+            children: [
+              Row(children: [
+                all20Pix(child: montserratBlackBold('BATTERIES', fontSize: 25))
+              ]),
+              Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: batteryProductDocs.isNotEmpty
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.center,
+                  children: batteryProductDocs
+                      .take(maxItemsToDisplay)
+                      .toList()
+                      .map((item) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: itemEntry(context,
+                                itemDoc: item,
+                                onPress: () => GoRouter.of(context).goNamed(
+                                        GoRoutes.selectedProduct,
+                                        pathParameters: {
+                                          PathParameters.productID: item.id
+                                        }),
+                                fontColor: Colors.white),
+                          ))
+                      .toList()),
+              const Gap(10),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _wheelProducts() {
+    wheelProductDocs.shuffle();
+    return Container(
+      decoration:
+          BoxDecoration(border: Border.all(color: CustomColors.ultimateGray)),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          int maxItemsToDisplay = (constraints.maxWidth / 275).floor();
+          return Column(
+            children: [
+              Row(children: [
+                all20Pix(child: montserratBlackBold('WHEELS', fontSize: 25))
+              ]),
+              Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: wheelProductDocs.isNotEmpty
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.center,
+                  children: wheelProductDocs
+                      .take(maxItemsToDisplay)
+                      .toList()
+                      .map((item) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: itemEntry(context,
+                                itemDoc: item,
+                                onPress: () => GoRouter.of(context).goNamed(
+                                        GoRoutes.selectedProduct,
+                                        pathParameters: {
+                                          PathParameters.productID: item.id
+                                        }),
+                                fontColor: Colors.white),
+                          ))
+                      .toList()),
+              const Gap(10),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _allProducts() {
     productDocs.shuffle();
     return Container(
       decoration:
@@ -127,7 +228,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Row(children: [
                 all20Pix(
-                    child: montserratBlackBold('TOP PRODUCTS', fontSize: 25))
+                    child: montserratBlackBold('ALL PRODUCTS', fontSize: 25))
               ]),
               Row(
                   crossAxisAlignment: CrossAxisAlignment.start,

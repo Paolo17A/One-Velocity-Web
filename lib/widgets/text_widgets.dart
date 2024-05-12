@@ -29,12 +29,17 @@ Text montserratBlackRegular(String label,
 Text montserratWhiteRegular(String label,
     {double fontSize = 20,
     TextAlign textAlign = TextAlign.center,
-    TextOverflow? textOverflow}) {
+    TextOverflow? textOverflow,
+    TextDecoration? decoration}) {
   return Text(
     label,
     textAlign: textAlign,
     overflow: textOverflow,
-    style: GoogleFonts.montserrat(fontSize: fontSize, color: Colors.white),
+    style: GoogleFonts.montserrat(
+        fontSize: fontSize,
+        color: Colors.white,
+        decoration: decoration,
+        decorationColor: Colors.white),
   );
 }
 

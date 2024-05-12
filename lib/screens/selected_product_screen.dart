@@ -28,6 +28,7 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
   //  PRODUCT VARIABLES
   String name = '';
   String description = '';
+  String category = '';
   num price = 0;
   num quantity = 0;
   List<dynamic> imageURLs = [];
@@ -51,6 +52,7 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
         final productData = product.data() as Map<dynamic, dynamic>;
         name = productData[ProductFields.name];
         description = productData[ProductFields.description];
+        category = productData[ProductFields.category];
         quantity = productData[ProductFields.quantity];
         price = productData[ProductFields.price];
         imageURLs = productData[ProductFields.imageURLs];
@@ -119,6 +121,8 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
                         montserratBlackBold(name, fontSize: 60),
                         montserratBlackBold('PHP ${price.toStringAsFixed(2)}',
                             fontSize: 40),
+                        montserratBlackRegular('Category: $category',
+                            fontSize: 30),
                         Gap(30),
                         Row(
                           children: [

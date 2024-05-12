@@ -361,6 +361,22 @@ Future<List<DocumentSnapshot>> getAllProducts() async {
   return products.docs;
 }
 
+Future<List<DocumentSnapshot>> getAllWheelProducts() async {
+  final products = await FirebaseFirestore.instance
+      .collection(Collections.products)
+      .where(ProductFields.category, isEqualTo: ProductCategories.wheel)
+      .get();
+  return products.docs;
+}
+
+Future<List<DocumentSnapshot>> getAllBattryProducts() async {
+  final products = await FirebaseFirestore.instance
+      .collection(Collections.products)
+      .where(ProductFields.category, isEqualTo: ProductCategories.battery)
+      .get();
+  return products.docs;
+}
+
 Future<DocumentSnapshot> getThisProductDoc(String productID) async {
   return await FirebaseFirestore.instance
       .collection(Collections.products)
@@ -383,12 +399,14 @@ Future<List<DocumentSnapshot>> getSelectedProductDocs(
 Future addProductEntry(BuildContext context, WidgetRef ref,
     {required TextEditingController nameController,
     required TextEditingController descriptionController,
+    required String selectedCategory,
     required TextEditingController quantityController,
     required TextEditingController priceController}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   final goRouter = GoRouter.of(context);
   if (nameController.text.isEmpty ||
       descriptionController.text.isEmpty ||
+      selectedCategory.isEmpty ||
       quantityController.text.isEmpty ||
       priceController.text.isEmpty) {
     scaffoldMessenger.showSnackBar(
@@ -441,6 +459,7 @@ Future addProductEntry(BuildContext context, WidgetRef ref,
         .set({
       ProductFields.name: nameController.text.trim(),
       ProductFields.description: descriptionController.text.trim(),
+      ProductFields.category: selectedCategory,
       ProductFields.quantity: int.parse(quantityController.text),
       ProductFields.price: double.parse(priceController.text),
       ProductFields.imageURLs: imageURLs
@@ -461,11 +480,13 @@ Future editProductEntry(BuildContext context, WidgetRef ref,
     {required String productID,
     required TextEditingController nameController,
     required TextEditingController descriptionController,
+    required String selectedCategory,
     required TextEditingController quantityController,
     required TextEditingController priceController}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   if (nameController.text.isEmpty ||
       descriptionController.text.isEmpty ||
+      selectedCategory.isEmpty ||
       quantityController.text.isEmpty ||
       priceController.text.isEmpty) {
     scaffoldMessenger.showSnackBar(
@@ -511,6 +532,7 @@ Future editProductEntry(BuildContext context, WidgetRef ref,
         .update({
       ProductFields.name: nameController.text.trim(),
       ProductFields.description: descriptionController.text.trim(),
+      ProductFields.category: selectedCategory,
       ProductFields.quantity: int.parse(quantityController.text),
       ProductFields.price: double.parse(priceController.text),
       ProductFields.imageURLs: FieldValue.arrayUnion(imageURLs)
@@ -795,6 +817,7 @@ Future purchaseSelectedCartItem(BuildContext context, WidgetRef ref,
       PaymentFields.paymentMethod: ref.read(cartProvider).selectedPaymentMethod,
       PaymentFields.dateCreated: DateTime.now(),
       PaymentFields.dateApproved: DateTime(1970),
+      PaymentFields.invoiceURL: '',
     });
 
     //  4. Delete cart entry
@@ -842,15 +865,31 @@ Future markPurchaseAsReadyForPickUp(BuildContext context, WidgetRef ref,
 }
 
 Future markPurchaseAsPickedUp(BuildContext context, WidgetRef ref,
-    {required String purchaseID}) async {
+    {required String purchaseID, required Uint8List pdfBytes}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
+
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
-
+    final storageRef = FirebaseStorage.instance
+        .ref()
+        .child(StorageFields.invoices)
+        .child('$purchaseID.pdf');
+    final uploadTask = storageRef.putData(pdfBytes);
+    final taskSnapshot = await uploadTask;
+    final downloadURL = await taskSnapshot.ref.getDownloadURL();
     await FirebaseFirestore.instance
         .collection(Collections.purchases)
         .doc(purchaseID)
-        .update({PurchaseFields.purchaseStatus: PurchaseStatuses.pickedUp});
+        .update({
+      PurchaseFields.purchaseStatus: PurchaseStatuses.pickedUp,
+      PurchaseFields.datePickedUp: DateTime.now()
+    });
+
+    await FirebaseFirestore.instance
+        .collection(Collections.payments)
+        .doc(purchaseID)
+        .update({PaymentFields.invoiceURL: downloadURL});
+
     ref.read(purchasesProvider).setPurchaseDocs(await getAllPurchaseDocs());
     scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Successfully marked purchase picked up')));
@@ -871,6 +910,13 @@ Future<List<DocumentSnapshot>> getAllPaymentDocs() async {
   return payments.docs.reversed.toList();
 }
 
+Future<DocumentSnapshot> getThisPaymentDoc(String paymentID) async {
+  return FirebaseFirestore.instance
+      .collection(Collections.payments)
+      .doc(paymentID)
+      .get();
+}
+
 Future approveThisPayment(BuildContext context, WidgetRef ref,
     {required String paymentID}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -883,7 +929,7 @@ Future approveThisPayment(BuildContext context, WidgetRef ref,
         .update({
       PaymentFields.dateApproved: DateTime.now(),
       PaymentFields.paymentVerified: true,
-      PaymentFields.paymentStatus: PaymentStatuses.approved
+      PaymentFields.paymentStatus: PaymentStatuses.approved,
     });
 
     await FirebaseFirestore.instance

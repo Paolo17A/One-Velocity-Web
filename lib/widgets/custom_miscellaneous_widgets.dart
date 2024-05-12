@@ -239,7 +239,7 @@ Widget selectedNetworkImageDisplay(String imageSource, Function deleteImage) {
 
 Widget snapshotHandler(AsyncSnapshot snapshot) {
   if (snapshot.connectionState == ConnectionState.waiting) {
-    return const CircularProgressIndicator();
+    return Center(child: const CircularProgressIndicator());
   } else if (!snapshot.hasData) {
     return Text('No data found');
   } else if (snapshot.hasError) {

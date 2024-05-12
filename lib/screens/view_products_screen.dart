@@ -111,6 +111,7 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
   Widget _productLabelRow() {
     return viewContentLabelRow(context, children: [
       viewFlexLabelTextCell('Name', 4),
+      viewFlexLabelTextCell('Category', 2),
       viewFlexLabelTextCell('Remaining Quantity', 2),
       viewFlexLabelTextCell('Actions', 2)
     ]);
@@ -138,6 +139,7 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
   Widget _productEntry(DocumentSnapshot productDoc, int index) {
     final productData = productDoc.data() as Map<dynamic, dynamic>;
     String name = productData[ProductFields.name];
+    String category = productData[ProductFields.category];
     num quantity = productData[ProductFields.quantity];
     Color entryColor = Colors.black;
     Color backgroundColor = index % 2 == 0
@@ -146,6 +148,8 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
     return viewContentEntryRow(context, children: [
       viewFlexTextCell(name,
           flex: 4, backgroundColor: backgroundColor, textColor: entryColor),
+      viewFlexTextCell(category,
+          flex: 2, backgroundColor: backgroundColor, textColor: entryColor),
       viewFlexTextCell(quantity.toString(),
           flex: 2, backgroundColor: backgroundColor, textColor: entryColor),
       viewFlexActionsCell([
