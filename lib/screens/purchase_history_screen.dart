@@ -191,7 +191,7 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
         final paymentData = snapshot.data!.data() as Map<dynamic, dynamic>;
         String invoiceURL = paymentData[PaymentFields.invoiceURL];
         return TextButton(
-            onPressed: () async => launchThisURL(invoiceURL),
+            onPressed: () async => launchThisURL(context, invoiceURL),
             child: montserratWhiteRegular('Download Invoice',
                 fontSize: 12,
                 textAlign: TextAlign.left,

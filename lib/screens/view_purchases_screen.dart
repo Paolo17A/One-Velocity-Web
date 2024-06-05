@@ -253,7 +253,7 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
         final paymentData = snapshot.data!.data() as Map<dynamic, dynamic>;
         String invoiceURL = paymentData[PaymentFields.invoiceURL];
         return ElevatedButton(
-            onPressed: () async => launchThisURL(invoiceURL),
+            onPressed: () async => launchThisURL(context, invoiceURL),
             child: montserratWhiteRegular('COMPLETED (Download Invoice)',
                 fontSize: 12));
       },
