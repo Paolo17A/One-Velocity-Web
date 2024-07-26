@@ -66,6 +66,7 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
     return Scaffold(
       appBar: appBarWidget(context, showActions: false),
       body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           leftNavigator(context, path: GoRoutes.viewServices),
           SizedBox(
@@ -86,9 +87,11 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
   Widget _addServiceButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        montserratBlackBold('SERVICES', fontSize: 40),
         ElevatedButton(
-            onPressed: () {}, child: montserratWhiteBold('ADD NEW SERVICE'))
+            onPressed: () => GoRouter.of(context).goNamed(GoRoutes.addService),
+            child: montserratWhiteBold('ADD NEW SERVICE'))
       ]),
     );
   }
@@ -148,7 +151,9 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
       viewFlexTextCell(isAvailable ? 'YES' : 'NO',
           flex: 2, backgroundColor: backgroundColor, textColor: entryColor),
       viewFlexActionsCell([
-        editEntryButton(context, onPress: () {}),
+        editEntryButton(context,
+            onPress: () => GoRouter.of(context).goNamed(GoRoutes.editService,
+                pathParameters: {PathParameters.serviceID: serviceDoc.id})),
         deleteEntryButton(context,
             onPress: () => displayDeleteEntryDialog(context,
                 message: 'Are you sure you wish to remove this service?',

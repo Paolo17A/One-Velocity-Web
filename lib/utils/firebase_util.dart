@@ -13,6 +13,7 @@ import 'package:one_velocity_web/providers/cart_provider.dart';
 import 'package:one_velocity_web/providers/profile_image_url_provider.dart';
 import 'package:one_velocity_web/providers/purchases_provider.dart';
 
+import '../providers/bookings_provider.dart';
 import '../providers/loading_provider.dart';
 import '../providers/payments_provider.dart';
 import '../providers/uploaded_images_provider.dart';
@@ -640,15 +641,6 @@ Future changeCartItemQuantity(BuildContext context, WidgetRef ref,
 }
 
 //==============================================================================
-//==SERVICES====================================================================
-//==============================================================================
-Future<List<DocumentSnapshot>> getAllServices() async {
-  final services =
-      await FirebaseFirestore.instance.collection(Collections.services).get();
-  return services.docs;
-}
-
-//==============================================================================
 //==FAQS========================================================================
 //==============================================================================
 Future<List<DocumentSnapshot>> getAllFAQs() async {
@@ -975,4 +967,365 @@ Future denyThisPayment(BuildContext context, WidgetRef ref,
         SnackBar(content: Text('Error denying this payment: $error')));
     ref.read(loadingProvider.notifier).toggleLoading(false);
   }
+}
+
+//==============================================================================
+//==SERVICES====================================================================
+//==============================================================================
+Future<List<DocumentSnapshot>> getAllServices() async {
+  final services =
+      await FirebaseFirestore.instance.collection(Collections.services).get();
+  return services.docs;
+}
+
+Future<DocumentSnapshot> getThisServiceDoc(String serviceID) async {
+  return await FirebaseFirestore.instance
+      .collection(Collections.services)
+      .doc(serviceID)
+      .get();
+}
+
+Future addServiceEntry(BuildContext context, WidgetRef ref,
+    {required TextEditingController nameController,
+    required TextEditingController descriptionController,
+    required bool isAvailable,
+    required TextEditingController priceController}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  final goRouter = GoRouter.of(context);
+  if (nameController.text.isEmpty ||
+      descriptionController.text.isEmpty ||
+      priceController.text.isEmpty) {
+    scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Please fill up all fields.')));
+    return;
+  }
+  if (int.tryParse(priceController.text) == null ||
+      int.parse(priceController.text) <= 0) {
+    scaffoldMessenger.showSnackBar(const SnackBar(
+        content: Text(
+            'Please input a valid number greater than zero for the price.')));
+    return;
+  }
+  if (ref.read(uploadedImagesProvider).uploadedImages.isEmpty) {
+    scaffoldMessenger.showSnackBar(const SnackBar(
+        content: Text('Please upload at least one service image.')));
+    return;
+  }
+  try {
+    ref.read(loadingProvider.notifier).toggleLoading(true);
+    String serviceID = DateTime.now().millisecondsSinceEpoch.toString();
+
+    //  Upload Item Images to Firebase Storage
+    List<String> imageURLs = [];
+    for (int i = 0;
+        i < ref.read(uploadedImagesProvider).uploadedImages.length;
+        i++) {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child(Collections.services)
+          .child(serviceID)
+          .child('${generateRandomHexString(6)}.png');
+      final uploadTask = storageRef
+          .putData(ref.read(uploadedImagesProvider).uploadedImages[i]!);
+      final taskSnapshot = await uploadTask.whenComplete(() {});
+      final downloadURL = await taskSnapshot.ref.getDownloadURL();
+      imageURLs.add(downloadURL);
+    }
+
+    await FirebaseFirestore.instance
+        .collection(Collections.services)
+        .doc(serviceID)
+        .set({
+      ServiceFields.name: nameController.text.trim(),
+      ServiceFields.description: descriptionController.text.trim(),
+      ServiceFields.isAvailable: isAvailable,
+      ServiceFields.price: double.parse(priceController.text),
+      ServiceFields.imageURLs: imageURLs
+    });
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+
+    scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Successfully added new service.')));
+    goRouter.goNamed(GoRoutes.viewServices);
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error adding new service: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
+Future editServiceEntry(BuildContext context, WidgetRef ref,
+    {required String serviceID,
+    required TextEditingController nameController,
+    required TextEditingController descriptionController,
+    required bool isAvailable,
+    required TextEditingController priceController}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  final goRouter = GoRouter.of(context);
+  if (nameController.text.isEmpty ||
+      descriptionController.text.isEmpty ||
+      priceController.text.isEmpty) {
+    scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Please fill up all fields.')));
+    return;
+  }
+  if (int.tryParse(priceController.text) == null ||
+      int.parse(priceController.text) <= 0) {
+    scaffoldMessenger.showSnackBar(const SnackBar(
+        content: Text(
+            'Please input a valid number greater than zero for the price.')));
+    return;
+  }
+  try {
+    ref.read(loadingProvider.notifier).toggleLoading(true);
+
+    //  Upload Item Images to Firebase Storage
+    List<String> imageURLs = [];
+    for (int i = 0;
+        i < ref.read(uploadedImagesProvider).uploadedImages.length;
+        i++) {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child(Collections.services)
+          .child(serviceID)
+          .child('${generateRandomHexString(6)}.png');
+      final uploadTask = storageRef
+          .putData(ref.read(uploadedImagesProvider).uploadedImages[i]!);
+      final taskSnapshot = await uploadTask.whenComplete(() {});
+      final downloadURL = await taskSnapshot.ref.getDownloadURL();
+      imageURLs.add(downloadURL);
+    }
+
+    await FirebaseFirestore.instance
+        .collection(Collections.services)
+        .doc(serviceID)
+        .update({
+      ServiceFields.name: nameController.text.trim(),
+      ServiceFields.description: descriptionController.text.trim(),
+      ServiceFields.isAvailable: isAvailable,
+      ServiceFields.price: double.parse(priceController.text),
+      ServiceFields.imageURLs: FieldValue.arrayUnion(imageURLs)
+    });
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+
+    scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Successfully edited this service.')));
+    goRouter.goNamed(GoRoutes.viewServices);
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error editing this service: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
+Future deleteServiceEntry(BuildContext context, WidgetRef ref,
+    {required String serviceID}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  final goRouter = GoRouter.of(context);
+  try {
+    ref.read(loadingProvider.notifier).toggleLoading(true);
+    await FirebaseFirestore.instance
+        .collection(Collections.services)
+        .doc(serviceID)
+        .delete();
+
+    final storageRef = await FirebaseStorage.instance
+        .ref()
+        .child(Collections.services)
+        .child(serviceID)
+        .listAll();
+    for (var product in storageRef.items) {
+      await product.delete();
+    }
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+
+    scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Successfully deleted this service.')));
+    goRouter.pushReplacementNamed(GoRoutes.viewServices);
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error deleting this service: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
+//==============================================================================
+//==BOOKING=====================================================================
+//==============================================================================
+Future<List<DocumentSnapshot>> getAllBookingDocs() async {
+  final bookings =
+      await FirebaseFirestore.instance.collection(Collections.bookings).get();
+  return bookings.docs.map((e) => e as DocumentSnapshot).toList();
+}
+
+Future<DocumentSnapshot> getThisBookingDoc(String bookingID) async {
+  return await FirebaseFirestore.instance
+      .collection(Collections.bookings)
+      .doc(bookingID)
+      .get();
+}
+
+Future<List<DocumentSnapshot>> getUserBookingDocs() async {
+  final bookings = await FirebaseFirestore.instance
+      .collection(Collections.bookings)
+      .where(BookingFields.clientID,
+          isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+      .get();
+  return bookings.docs.reversed.map((e) => e as DocumentSnapshot).toList();
+}
+
+Future<List<DocumentSnapshot>> getClientBookingDocs(String clientID) async {
+  final bookings = await FirebaseFirestore.instance
+      .collection(Collections.bookings)
+      .where(BookingFields.clientID, isEqualTo: clientID)
+      .get();
+  return bookings.docs.reversed.map((e) => e as DocumentSnapshot).toList();
+}
+
+Future createNewBookingRequest(BuildContext context, WidgetRef ref,
+    {required String serviceID, required DateTime datePicked}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  try {
+    ref.read(loadingProvider.notifier).toggleLoading(true);
+    await FirebaseFirestore.instance.collection(Collections.bookings).add({
+      BookingFields.serviceID: serviceID,
+      BookingFields.clientID: FirebaseAuth.instance.currentUser!.uid,
+      BookingFields.dateCreated: DateTime.now(),
+      BookingFields.dateRequested: datePicked,
+      BookingFields.serviceStatus: ServiceStatuses.pendingApproval
+    });
+
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Successfully requested for this service.')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(SnackBar(
+        content: Text('Error creating new service booking request: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
+Future approveThisBookingRequest(BuildContext context, WidgetRef ref,
+    {required String bookingID,
+    required String serviceName,
+    required String mobileNumber}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  try {
+    ref.read(loadingProvider.notifier).toggleLoading(true);
+
+    await FirebaseFirestore.instance
+        .collection(Collections.bookings)
+        .doc(bookingID)
+        .update({BookingFields.serviceStatus: ServiceStatuses.pendingPayment});
+    ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
+    scaffoldMessenger.showSnackBar(const SnackBar(
+        content: Text('Successfully approved this booking request')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(SnackBar(
+        content: Text('Error approving this booking request: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
+Future denyThisBookingRequest(BuildContext context, WidgetRef ref,
+    {required String bookingID,
+    required String serviceName,
+    required String mobileNumber}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  try {
+    ref.read(loadingProvider.notifier).toggleLoading(true);
+
+    await FirebaseFirestore.instance
+        .collection(Collections.bookings)
+        .doc(bookingID)
+        .update({BookingFields.serviceStatus: ServiceStatuses.denied});
+    ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
+    scaffoldMessenger.showSnackBar(const SnackBar(
+        content: Text('Successfully denied this booking request')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error denying this booking request: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
+Future markBookingRequestAsServiceOngoing(BuildContext context, WidgetRef ref,
+    {required String bookingID}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  try {
+    ref.read(loadingProvider.notifier).toggleLoading(true);
+
+    await FirebaseFirestore.instance
+        .collection(Collections.bookings)
+        .doc(bookingID)
+        .update({BookingFields.serviceStatus: ServiceStatuses.serviceOngoing});
+    ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
+    scaffoldMessenger.showSnackBar(const SnackBar(
+        content:
+            Text('Successfully marked booking request as service ongoing.')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(SnackBar(
+        content:
+            Text('Error marking booking request as service ongoing: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
+Future markBookingRequestAsForPickUp(BuildContext context, WidgetRef ref,
+    {required String bookingID,
+    required String serviceName,
+    required String mobileNumber}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  try {
+    ref.read(loadingProvider.notifier).toggleLoading(true);
+
+    await FirebaseFirestore.instance
+        .collection(Collections.bookings)
+        .doc(bookingID)
+        .update({BookingFields.serviceStatus: ServiceStatuses.pendingPickUp});
+    ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
+    scaffoldMessenger.showSnackBar(const SnackBar(
+        content:
+            Text('Successfully marked booking request as pending pick up.')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(SnackBar(
+        content:
+            Text('Error marking booking request as pending pick up: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
+Future markBookingRequestAsCompleted(BuildContext context, WidgetRef ref,
+    {required String bookingID}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  try {
+    ref.read(loadingProvider.notifier).toggleLoading(true);
+
+    await FirebaseFirestore.instance
+        .collection(Collections.bookings)
+        .doc(bookingID)
+        .update(
+            {BookingFields.serviceStatus: ServiceStatuses.serviceCompleted});
+    ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
+    scaffoldMessenger.showSnackBar(const SnackBar(
+        content: Text('Successfully marked service request as completed')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(SnackBar(
+        content: Text('Error marking service request as completed: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
+Future<List<DocumentSnapshot>> getServiceBookingHistory(
+    String serviceID) async {
+  final purchases = await FirebaseFirestore.instance
+      .collection(Collections.bookings)
+      .where(BookingFields.serviceID, isEqualTo: serviceID)
+      .get();
+  return purchases.docs.map((doc) => doc as DocumentSnapshot).toList();
 }

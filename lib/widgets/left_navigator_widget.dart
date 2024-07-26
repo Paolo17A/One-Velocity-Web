@@ -26,7 +26,9 @@ Widget leftNavigator(BuildContext context, {required String path}) {
                 thisPath: GoRoutes.viewProducts,
                 currentPath: path),
             listTile(context,
-                label: 'Services', thisPath: '', currentPath: path),
+                label: 'Services',
+                thisPath: GoRoutes.viewServices,
+                currentPath: path),
             listTile(context,
                 label: 'Users',
                 thisPath: GoRoutes.viewUsers,
@@ -94,9 +96,20 @@ Widget clientProfileNavigator(BuildContext context, {required String path}) {
                 tileColor: path == GoRoutes.purchaseHistory
                     ? CustomColors.blackBeauty
                     : null,
-                title: Text('PURCHASE HISTORY',
+                title: Text('PRODUCT PURCHASE HISTORY',
                     style: TextStyle(
                         color: path == GoRoutes.purchaseHistory
+                            ? Colors.white
+                            : Colors.black)),
+                onTap: () =>
+                    GoRouter.of(context).goNamed(GoRoutes.purchaseHistory)),
+            ListTile(
+                tileColor: path == GoRoutes.bookingsHistory
+                    ? CustomColors.blackBeauty
+                    : null,
+                title: Text('SERVICE BOOKING HISTORY',
+                    style: TextStyle(
+                        color: path == GoRoutes.bookingsHistory
                             ? Colors.white
                             : Colors.black)),
                 onTap: () =>
@@ -139,6 +152,10 @@ Widget listTile(BuildContext context,
               style: const TextStyle(
                   color: Colors.white, fontWeight: FontWeight.bold)),
           onTap: thisPath.isNotEmpty
-              ? () => GoRouter.of(context).goNamed(thisPath)
+              ? () {
+                  GoRouter.of(context).goNamed(thisPath);
+                  if (thisPath == GoRoutes.home)
+                    GoRouter.of(context).pushReplacementNamed(thisPath);
+                }
               : null));
 }

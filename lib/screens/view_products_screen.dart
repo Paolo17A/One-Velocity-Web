@@ -66,6 +66,7 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
     return Scaffold(
       appBar: appBarWidget(context, showActions: false),
       body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           leftNavigator(context, path: GoRoutes.viewProducts),
           SizedBox(
@@ -86,7 +87,8 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
   Widget _addProductButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        montserratBlackBold('PRODUCTS', fontSize: 40),
         ElevatedButton(
             onPressed: () => GoRouter.of(context).goNamed(GoRoutes.addProduct),
             child: montserratWhiteBold('ADD NEW PRODUCT'))

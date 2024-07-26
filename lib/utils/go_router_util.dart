@@ -16,14 +16,20 @@ import 'package:one_velocity_web/screens/view_transactions_screen.dart';
 import 'package:one_velocity_web/screens/view_users_screen.dart';
 import 'package:one_velocity_web/utils/string_util.dart';
 
+import '../screens/add_service_screen.dart';
+import '../screens/booking_history_screen.dart';
 import '../screens/edit_faq_screen.dart';
 import '../screens/edit_profile_screen.dart';
+import '../screens/edit_service_screen.dart';
 import '../screens/help_center_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/selected_product_screen.dart';
+import '../screens/selected_service_screen.dart';
 import '../screens/selected_user_screen.dart';
 import '../screens/shop_products_screen.dart';
+import '../screens/shop_services_screen.dart';
+import '../screens/view_services_screen.dart';
 
 class GoRoutes {
   static const home = '/';
@@ -32,6 +38,8 @@ class GoRoutes {
   static const forgotPassword = 'forgotPassword';
   static const products = 'products';
   static const selectedProduct = 'selectedProduct';
+  static const services = 'services';
+  static const selectedService = 'selectedService';
   static const help = 'help';
 
   //  ADMIN
@@ -39,8 +47,8 @@ class GoRoutes {
   static const addProduct = 'addProduct';
   static const editProduct = 'editProduct';
   static const viewServices = 'viewServices';
-  //static const addService = 'addService';
-  //static const editService = 'editService';
+  static const addService = 'addService';
+  static const editService = 'editService';
   static const viewUsers = 'viewUsers';
   static const selectedUser = 'selectedUser';
   static const viewTransactions = 'viewTransactions';
@@ -55,6 +63,7 @@ class GoRoutes {
   static const editProfile = 'editProfile';
   static const bookmarks = 'bookmarks';
   static const purchaseHistory = 'purchaseHistory';
+  static const bookingsHistory = 'bookingsHistory';
 }
 
 CustomTransitionPage customTransition(
@@ -111,6 +120,20 @@ final GoRouter goRoutes = GoRouter(initialLocation: GoRoutes.home, routes: [
                 SelectedProductScreen(
                     productID:
                         state.pathParameters[PathParameters.productID]!))),
+        GoRoute(
+            name: GoRoutes.services,
+            path: GoRoutes.services,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const ShopServicesScreen())),
+        GoRoute(
+            name: GoRoutes.selectedService,
+            path: '${GoRoutes.selectedService}/:${PathParameters.serviceID}',
+            pageBuilder: (context, state) => customTransition(
+                context,
+                state,
+                SelectedServiceScreen(
+                    serviceID:
+                        state.pathParameters[PathParameters.serviceID]!))),
         GoRoute(
             name: GoRoutes.help,
             path: GoRoutes.help,
@@ -211,5 +234,29 @@ final GoRouter goRoutes = GoRouter(initialLocation: GoRoutes.home, routes: [
             path: GoRoutes.purchaseHistory,
             pageBuilder: (context, state) => customTransition(
                 context, state, const PurchaseHistoryScreen())),
+        GoRoute(
+            name: GoRoutes.bookingsHistory,
+            path: GoRoutes.bookingsHistory,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const BookingHistoryScreen())),
+        GoRoute(
+            name: GoRoutes.viewServices,
+            path: GoRoutes.viewServices,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const ViewServicesScreen())),
+        GoRoute(
+            name: GoRoutes.addService,
+            path: GoRoutes.addService,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const AddServiceScreen())),
+        GoRoute(
+            name: GoRoutes.editService,
+            path: '${GoRoutes.editService}/:${PathParameters.serviceID}',
+            pageBuilder: (context, state) => customTransition(
+                context,
+                state,
+                EditServiceScreen(
+                    serviceID:
+                        state.pathParameters[PathParameters.serviceID]!))),
       ])
 ]);

@@ -308,7 +308,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             montserratWhiteBold(
-                'OVERALL TOTAL SALES: PHP ${totalSales.toStringAsFixed(2)}',
+                'OVERALL TOTAL SALES: PHP ${formatPrice(totalSales.toDouble())}',
                 fontSize: 30),
             montserratWhiteBold(
                 'Best Selling Product: ${bestSellerName.isNotEmpty ? bestSellerName : 'N/A'}',

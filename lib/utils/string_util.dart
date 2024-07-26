@@ -17,6 +17,7 @@ class Collections {
   static const String purchases = 'purchases';
   static const String payments = 'payments';
   static const String services = 'services';
+  static const String bookings = 'bookings';
 }
 
 class UserFields {
@@ -116,6 +117,26 @@ class PurchaseStatuses {
   static const String pickedUp = 'PICKED UP';
 }
 
+class BookingFields {
+  static const String serviceID = 'serviceID';
+  static const String clientID = 'clientID';
+  static const String serviceStatus = 'serviceStatus';
+  static const String dateCreated = 'dateCreated';
+  static const String dateRequested = 'dateRequsted';
+}
+
+class ServiceStatuses {
+  static const String pendingApproval = 'PENDING APPROVAL';
+  static const String pendingPayment = 'PENDING PAYMENT';
+  static const String processingPayment = 'PROCESSING PAYMENT';
+  static const String pendingDropOff = 'PENDING DROP OFF';
+  static const String serviceOngoing = 'SERVICE ONGOING';
+  static const String pendingPickUp = 'PENDING PICK UP';
+  static const String serviceCompleted = 'SERVICE COMPLETED';
+  static const String denied = 'DENIED';
+  static const String cancelled = 'CANCELLED';
+}
+
 String generateRandomHexString(int length) {
   final random = Random();
   final codeUnits = List.generate(length ~/ 2, (index) {
@@ -125,4 +146,32 @@ String generateRandomHexString(int length) {
   final hexString =
       codeUnits.map((value) => value.toRadixString(16).padLeft(2, '0')).join();
   return hexString;
+}
+
+String formatPrice(double amount) {
+  // Round the amount to two decimal places
+  amount = double.parse((amount).toStringAsFixed(2));
+
+  // Convert the double to a string and split it into whole and decimal parts
+  List<String> parts = amount.toString().split('.');
+
+  // Format the whole part with commas
+  String formattedWhole = '';
+  for (int i = 0; i < parts[0].length; i++) {
+    if (i != 0 && (parts[0].length - i) % 3 == 0) {
+      formattedWhole += ',';
+    }
+    formattedWhole += parts[0][i];
+  }
+
+  // If there's a decimal part, add it back
+  String formattedAmount = formattedWhole;
+  if (parts.length > 1) {
+    formattedAmount += '.${parts[1].length == 1 ? '${parts[1]}0' : parts[1]}';
+  } else {
+    // If there's no decimal part, append '.00'
+    formattedAmount += '.00';
+  }
+
+  return formattedAmount;
 }

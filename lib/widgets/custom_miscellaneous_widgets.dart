@@ -1,8 +1,15 @@
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../utils/color_util.dart';
+import '../utils/firebase_util.dart';
+import '../utils/string_util.dart';
+import 'custom_padding_widgets.dart';
 import 'text_widgets.dart';
 
 Widget stackedLoadingContainer(
@@ -246,4 +253,177 @@ Widget snapshotHandler(AsyncSnapshot snapshot) {
     return Text('Error gettin data: ${snapshot.error.toString()}');
   }
   return Container();
+}
+
+Widget serviceBookingHistoryEntry(DocumentSnapshot bookingDoc) {
+  final bookingData = bookingDoc.data() as Map<dynamic, dynamic>;
+  String serviceStatus = bookingData[BookingFields.serviceStatus];
+  String clientID = bookingData[BookingFields.clientID];
+  DateTime dateCreated =
+      (bookingData[BookingFields.dateCreated] as Timestamp).toDate();
+  DateTime dateRequsted =
+      (bookingData[BookingFields.dateRequested] as Timestamp).toDate();
+
+  return FutureBuilder(
+    future: getThisUserDoc(clientID),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting ||
+          !snapshot.hasData ||
+          snapshot.hasError) return snapshotHandler(snapshot);
+
+      final userData = snapshot.data!.data() as Map<dynamic, dynamic>;
+      String profileImageURL = userData[UserFields.profileImageURL];
+      String name =
+          '${userData[UserFields.firstName]} ${userData[UserFields.lastName]}';
+      return all10Pix(
+          child: Container(
+        decoration: BoxDecoration(border: Border.all(color: Colors.white)),
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                buildProfileImage(profileImageURL: profileImageURL),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      montserratWhiteBold(name, fontSize: 25),
+                      montserratWhiteRegular('Status: $serviceStatus',
+                          fontSize: 15),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                montserratWhiteRegular(
+                    'Date Booked: ${DateFormat('MMM dd, yyyy').format(dateCreated)}',
+                    fontSize: 17),
+                montserratWhiteRegular(
+                    'Date Requested: ${DateFormat('MMM dd, yyyy').format(dateRequsted)}',
+                    fontSize: 17),
+              ],
+            )
+          ],
+        ),
+      ));
+    },
+  );
+}
+
+void showOtherPics(BuildContext context, {required String imageURL}) {
+  showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+              content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.7,
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: Column(children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                      onPressed: () => GoRouter.of(context).pop(),
+                      child: montserratBlackBold('X'))
+                ],
+              ),
+              Container(
+                width: MediaQuery.of(context).size.height * 0.65,
+                height: MediaQuery.of(context).size.height * 0.65,
+                decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: NetworkImage(imageURL), fit: BoxFit.fill)),
+              ),
+            ]),
+          )));
+}
+
+Widget bookingHistoryEntry(DocumentSnapshot bookingDoc,
+    {String userType = UserTypes.client}) {
+  final bookingData = bookingDoc.data() as Map<dynamic, dynamic>;
+  String serviceStatus = bookingData[BookingFields.serviceStatus];
+  String serviceID = bookingData[BookingFields.serviceID];
+  DateTime dateCreated =
+      (bookingData[BookingFields.dateCreated] as Timestamp).toDate();
+  DateTime dateRequsted =
+      (bookingData[BookingFields.dateRequested] as Timestamp).toDate();
+
+  return FutureBuilder(
+    future: getThisServiceDoc(serviceID),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting ||
+          !snapshot.hasData ||
+          snapshot.hasError) return snapshotHandler(snapshot);
+
+      final serviceData = snapshot.data!.data() as Map<dynamic, dynamic>;
+      List<dynamic> imageURLs = serviceData[ServiceFields.imageURLs];
+      String name = serviceData[ServiceFields.name];
+      num price = serviceData[ServiceFields.price];
+      return all10Pix(
+          child: Container(
+        decoration: BoxDecoration(border: Border.all(color: Colors.white)),
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Image.network(
+                  imageURLs[0],
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      montserratWhiteBold(name, fontSize: 25),
+                      if (serviceStatus != ServiceStatuses.pendingPayment)
+                        const Gap(30),
+                      montserratWhiteRegular('Status: $serviceStatus',
+                          fontSize: 15),
+                      if (userType == UserTypes.client &&
+                          serviceStatus == ServiceStatuses.pendingPayment)
+                        ElevatedButton(
+                            onPressed: () {
+                              /*GoRouter.of(context).goNamed(
+                                  GoRoutes.settleBooking,
+                                  pathParameters: {
+                                    PathParameters.bookingID: bookingDoc.id
+                                  });*/
+                            },
+                            child: montserratWhiteRegular('SETTLE PAYMENT'))
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                montserratWhiteRegular(
+                    'Date Booked: ${DateFormat('MMM dd, yyyy').format(dateCreated)}',
+                    fontSize: 17),
+                montserratWhiteRegular(
+                    'Date Requested: ${DateFormat('MMM dd, yyyy').format(dateRequsted)}',
+                    fontSize: 17),
+                Gap(15),
+                montserratWhiteBold('SRP: PHP ${formatPrice(price.toDouble())}',
+                    fontSize: 15),
+              ],
+            )
+          ],
+        ),
+      ));
+    },
+  );
 }
