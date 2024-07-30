@@ -752,68 +752,73 @@ Future<List<DocumentSnapshot>> getAllPurchaseDocs() async {
 }
 
 Future purchaseSelectedCartItem(BuildContext context, WidgetRef ref,
-    {required Uint8List? proofOfPayment}) async {
+    {required Uint8List? proofOfPayment, required num paidAmount}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
-    //  1. Upload the proof of payment image to Firebase Storage
-    String paymentID = DateTime.now().millisecondsSinceEpoch.toString();
-    final storageRef = FirebaseStorage.instance
-        .ref()
-        .child(StorageFields.payments)
-        .child('$paymentID.png');
-    final uploadTask = storageRef.putData(proofOfPayment!);
-    final taskSnapshot = await uploadTask.whenComplete(() {});
-    final downloadURL = await taskSnapshot.ref.getDownloadURL();
+    //  1. Generate a purchase document for the selected cart item
+    List<String> purchaseIDs = [];
+    for (var cartItem in ref.read(cartProvider).selectedCartItemIDs) {
+      final cartDoc = await getThisCartEntry(cartItem);
+      final cartData = cartDoc.data() as Map<dynamic, dynamic>;
 
-    //  2. Generate a purchase document for the selected cart item
-    final cartDoc =
-        await getThisCartEntry(ref.read(cartProvider).selectedCartItem);
-    final cartData = cartDoc.data() as Map<dynamic, dynamic>;
-    final productID = cartData[CartFields.productID];
-    final productDoc = await getThisProductDoc(productID);
-    final productData = productDoc.data() as Map<dynamic, dynamic>;
+      DocumentReference purchaseReference = await FirebaseFirestore.instance
+          .collection(Collections.purchases)
+          .add({
+        PurchaseFields.productID: cartData[CartFields.productID],
+        PurchaseFields.clientID: cartData[CartFields.clientID],
+        PurchaseFields.quantity: cartData[CartFields.quantity],
+        PurchaseFields.purchaseStatus: PurchaseStatuses.pending,
+        PurchaseFields.datePickedUp: DateTime(1970),
+        PurchaseFields.rating: ''
+      });
 
-    await FirebaseFirestore.instance
-        .collection(Collections.purchases)
-        .doc(paymentID)
-        .set({
-      PurchaseFields.productID: cartData[CartFields.productID],
-      PurchaseFields.clientID: cartData[CartFields.clientID],
-      PurchaseFields.quantity: cartData[CartFields.quantity],
-      PurchaseFields.purchaseStatus: PurchaseStatuses.pending,
-      PurchaseFields.datePickedUp: DateTime(1970),
-      PurchaseFields.rating: ''
-    });
+      purchaseIDs.add(purchaseReference.id);
 
-    //  Added step: update the item's remaining quantity
-    await FirebaseFirestore.instance
-        .collection(Collections.products)
-        .doc(cartData[CartFields.productID])
-        .update({
-      ProductFields.quantity:
-          FieldValue.increment(-cartData[CartFields.quantity])
-    });
+      //  Added step: update the item's remaining quantity
+      await FirebaseFirestore.instance
+          .collection(Collections.products)
+          .doc(cartData[CartFields.productID])
+          .update({
+        ProductFields.quantity:
+            FieldValue.increment(-cartData[CartFields.quantity])
+      });
 
-    //  3. Generate a payment document in Firestore
-    await FirebaseFirestore.instance
-        .collection(Collections.payments)
-        .doc(paymentID)
-        .set({
-      PaymentFields.clientID: cartData[CartFields.clientID],
-      PaymentFields.paidAmount:
-          productData[ProductFields.price] * cartData[CartFields.quantity],
-      PaymentFields.proofOfPayment: downloadURL,
+      await FirebaseFirestore.instance
+          .collection(Collections.cart)
+          .doc(cartItem)
+          .delete();
+    }
+
+    //  2. Generate a payment document in Firestore
+    DocumentReference paymentReference =
+        await FirebaseFirestore.instance.collection(Collections.payments).add({
+      PaymentFields.clientID: FirebaseAuth.instance.currentUser!.uid,
+      PaymentFields.paidAmount: paidAmount,
+      //PaymentFields.proofOfPayment: downloadURL,
       PaymentFields.paymentVerified: false,
       PaymentFields.paymentStatus: PaymentStatuses.pending,
       PaymentFields.paymentMethod: ref.read(cartProvider).selectedPaymentMethod,
       PaymentFields.dateCreated: DateTime.now(),
       PaymentFields.dateApproved: DateTime(1970),
       PaymentFields.invoiceURL: '',
+      PaymentFields.purchaseIDs: purchaseIDs
     });
 
-    //  4. Delete cart entry
-    await cartDoc.reference.delete();
+    //  2. Upload the proof of payment image to Firebase Storage
+    final storageRef = FirebaseStorage.instance
+        .ref()
+        .child(StorageFields.payments)
+        .child('${paymentReference.id}.png');
+    final uploadTask = storageRef.putData(proofOfPayment!);
+    final taskSnapshot = await uploadTask;
+    final downloadURL = await taskSnapshot.ref.getDownloadURL();
+
+    await FirebaseFirestore.instance
+        .collection(Collections.payments)
+        .doc(paymentReference.id)
+        .update({PaymentFields.proofOfPayment: downloadURL});
+
     ref.read(cartProvider).cartItems = await getCartEntries(context);
     scaffoldMessenger.showSnackBar(const SnackBar(
         content:
@@ -910,7 +915,9 @@ Future<DocumentSnapshot> getThisPaymentDoc(String paymentID) async {
 }
 
 Future approveThisPayment(BuildContext context, WidgetRef ref,
-    {required String paymentID}) async {
+    {required String paymentID,
+    required List<dynamic> purchaseIDs,
+    required String paymentType}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
@@ -923,11 +930,24 @@ Future approveThisPayment(BuildContext context, WidgetRef ref,
       PaymentFields.paymentVerified: true,
       PaymentFields.paymentStatus: PaymentStatuses.approved,
     });
+    if (paymentType == PaymentTypes.product) {
+      for (var purchaseID in purchaseIDs) {
+        await FirebaseFirestore.instance
+            .collection(Collections.purchases)
+            .doc(purchaseID)
+            .update(
+                {PurchaseFields.purchaseStatus: PurchaseStatuses.processing});
+      }
+    } else if (paymentType == PaymentTypes.service) {
+      for (var purchaseID in purchaseIDs) {
+        await FirebaseFirestore.instance
+            .collection(Collections.bookings)
+            .doc(purchaseID)
+            .update(
+                {BookingFields.serviceStatus: ServiceStatuses.pendingDropOff});
+      }
+    }
 
-    await FirebaseFirestore.instance
-        .collection(Collections.purchases)
-        .doc(paymentID)
-        .update({PurchaseFields.purchaseStatus: PurchaseStatuses.processing});
     ref.read(paymentsProvider).setPaymentDocs(await getAllPaymentDocs());
     scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Successfully approved this payment')));
@@ -940,7 +960,9 @@ Future approveThisPayment(BuildContext context, WidgetRef ref,
 }
 
 Future denyThisPayment(BuildContext context, WidgetRef ref,
-    {required String paymentID}) async {
+    {required String paymentID,
+    required List<dynamic> purchaseIDs,
+    required String paymentType}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
@@ -953,11 +975,21 @@ Future denyThisPayment(BuildContext context, WidgetRef ref,
       PaymentFields.paymentVerified: true,
       PaymentFields.paymentStatus: PaymentStatuses.denied
     });
-
-    await FirebaseFirestore.instance
-        .collection(Collections.purchases)
-        .doc(paymentID)
-        .update({PurchaseFields.purchaseStatus: PurchaseStatuses.denied});
+    if (paymentType == PaymentTypes.product) {
+      for (var purchaseID in purchaseIDs) {
+        await FirebaseFirestore.instance
+            .collection(Collections.purchases)
+            .doc(purchaseID)
+            .update({PurchaseFields.purchaseStatus: PurchaseStatuses.denied});
+      }
+    } else if (paymentType == PaymentTypes.service) {
+      for (var purchaseID in purchaseIDs) {
+        await FirebaseFirestore.instance
+            .collection(Collections.bookings)
+            .doc(purchaseID)
+            .update({BookingFields.serviceStatus: ServiceStatuses.denied});
+      }
+    }
     ref.read(paymentsProvider).setPaymentDocs(await getAllPaymentDocs());
     scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Successfully denied this payment')));
@@ -965,6 +997,62 @@ Future denyThisPayment(BuildContext context, WidgetRef ref,
   } catch (error) {
     scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Error denying this payment: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
+Future settleBookingRequestPayment(BuildContext context, WidgetRef ref,
+    {required String bookingID,
+    required List<dynamic> purchaseIDs,
+    required num servicePrice}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  final goRouter = GoRouter.of(context);
+  try {
+    ref.read(loadingProvider.notifier).toggleLoading(true);
+    //  1. Generate a payment document in Firestore
+    await FirebaseFirestore.instance
+        .collection(Collections.payments)
+        .doc(bookingID)
+        .set({
+      PaymentFields.clientID: FirebaseAuth.instance.currentUser!.uid,
+      PaymentFields.paidAmount: servicePrice,
+      PaymentFields.paymentVerified: false,
+      PaymentFields.paymentStatus: PaymentStatuses.pending,
+      PaymentFields.paymentMethod: ref.read(cartProvider).selectedPaymentMethod,
+      PaymentFields.dateCreated: DateTime.now(),
+      PaymentFields.dateApproved: DateTime(1970),
+      PaymentFields.invoiceURL: '',
+      PaymentFields.paymentType: PaymentTypes.service,
+      PaymentFields.purchaseIDs: purchaseIDs
+    });
+
+    //  3. Upload the proof of payment image to Firebase Storage
+    final storageRef = FirebaseStorage.instance
+        .ref()
+        .child(StorageFields.payments)
+        .child('${bookingID}.png');
+    final uploadTask =
+        storageRef.putData(ref.read(cartProvider).proofOfPaymentBytes!);
+    final taskSnapshot = await uploadTask;
+    final downloadURL = await taskSnapshot.ref.getDownloadURL();
+    await FirebaseFirestore.instance
+        .collection(Collections.payments)
+        .doc(bookingID)
+        .update({PaymentFields.proofOfPayment: downloadURL});
+
+    //  2. Change bookings status
+    await FirebaseFirestore.instance
+        .collection(Collections.bookings)
+        .doc(bookingID)
+        .update(
+            {BookingFields.serviceStatus: ServiceStatuses.processingPayment});
+    scaffoldMessenger.showSnackBar(SnackBar(
+        content: Text('Successfully settled booking request payment!')));
+    goRouter.goNamed(GoRoutes.bookingsHistory);
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(SnackBar(
+        content: Text('Error seetling booking request payment: $error')));
     ref.read(loadingProvider.notifier).toggleLoading(false);
   }
 }
@@ -1206,9 +1294,7 @@ Future createNewBookingRequest(BuildContext context, WidgetRef ref,
 }
 
 Future approveThisBookingRequest(BuildContext context, WidgetRef ref,
-    {required String bookingID,
-    required String serviceName,
-    required String mobileNumber}) async {
+    {required String bookingID, required String serviceName}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
@@ -1229,9 +1315,7 @@ Future approveThisBookingRequest(BuildContext context, WidgetRef ref,
 }
 
 Future denyThisBookingRequest(BuildContext context, WidgetRef ref,
-    {required String bookingID,
-    required String serviceName,
-    required String mobileNumber}) async {
+    {required String bookingID, required String serviceName}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);

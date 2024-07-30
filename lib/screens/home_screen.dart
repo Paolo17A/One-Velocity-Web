@@ -130,6 +130,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         if (wheelProductDocs.isNotEmpty) _wheelProducts(),
         if (batteryProductDocs.isNotEmpty) _batteryProducts(),
         _allProducts(),
+        _allServices()
       ],
     );
   }
@@ -256,6 +257,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           Center(
                               child: montserratBlackBold(
                                   'NO AVAILABLE PRODUCTS TO DISPLAY'))
+                        ]),
+              const Gap(10),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _allServices() {
+    serviceDocs.shuffle();
+    return Container(
+      decoration:
+          BoxDecoration(border: Border.all(color: CustomColors.blackBeauty)),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          int maxItemsToDisplay = (constraints.maxWidth / 275).floor();
+          return Column(
+            children: [
+              Row(children: [
+                all20Pix(
+                    child: montserratBlackBold('TOP SERVICES', fontSize: 25))
+              ]),
+              Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: serviceDocs.isNotEmpty
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.center,
+                  children: serviceDocs.isNotEmpty
+                      ? serviceDocs
+                          .take(maxItemsToDisplay)
+                          .toList()
+                          .map((item) => Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 10),
+                                child: itemEntry(context,
+                                    itemDoc: item,
+                                    onPress: () => GoRouter.of(context).goNamed(
+                                            GoRoutes.selectedService,
+                                            pathParameters: {
+                                              PathParameters.serviceID: item.id
+                                            }),
+                                    fontColor: Colors.white),
+                              ))
+                          .toList()
+                      : [
+                          montserratBlackBold(
+                              'NO AVAILABLE SERVICES TO DISPLAY')
                         ]),
               const Gap(10),
             ],

@@ -70,6 +70,8 @@ class PaymentFields {
   static const String dateCreated = 'dateCreated';
   static const String dateApproved = 'dateApproved';
   static const String invoiceURL = 'invoiceURL';
+  static const String purchaseIDs = 'purchaseIDs';
+  static const String paymentType = 'paymentType';
 }
 
 class PurchaseFields {
@@ -94,6 +96,7 @@ class PathParameters {
   static const String faqID = 'faqID';
   static const String productID = 'productID';
   static const String serviceID = 'serviceID';
+  static const String bookingID = 'bookingID';
 }
 
 class StorageFields {
@@ -135,6 +138,11 @@ class ServiceStatuses {
   static const String serviceCompleted = 'SERVICE COMPLETED';
   static const String denied = 'DENIED';
   static const String cancelled = 'CANCELLED';
+}
+
+class PaymentTypes {
+  static const String product = 'PRODUCT';
+  static const String service = 'SERVICE';
 }
 
 String generateRandomHexString(int length) {

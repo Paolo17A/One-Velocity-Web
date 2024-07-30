@@ -127,7 +127,8 @@ class _ViewTransactionsScreenState
             num totalAmount = paymentData[PaymentFields.paidAmount];
             String paymentMethod = paymentData[PaymentFields.paymentMethod];
             String proofOfPayment = paymentData[PaymentFields.proofOfPayment];
-
+            List<dynamic> purchaseIDs = paymentData[PaymentFields.purchaseIDs];
+            String paymentType = paymentData[PaymentFields.paymentType];
             return FutureBuilder(
                 future: getThisUserDoc(clientID),
                 builder: (context, snapshot) {
@@ -143,7 +144,6 @@ class _ViewTransactionsScreenState
                   Color backgroundColor = index % 2 == 0
                       ? CustomColors.ultimateGray.withOpacity(0.5)
                       : CustomColors.nimbusCloud;
-
                   return viewContentEntryRow(
                     context,
                     children: [
@@ -175,7 +175,9 @@ class _ViewTransactionsScreenState
                                   paymentID: ref
                                       .read(paymentsProvider)
                                       .paymentDocs[index]
-                                      .id),
+                                      .id,
+                                  purchaseIDs: purchaseIDs,
+                                  paymentType: paymentType),
                               child: Icon(
                                 Icons.check,
                                 color: Colors.white,
@@ -191,11 +193,10 @@ class _ViewTransactionsScreenState
                                       paymentID: ref
                                           .read(paymentsProvider)
                                           .paymentDocs[index]
-                                          .id)),
-                              child: Icon(
-                                Icons.block,
-                                color: Colors.white,
-                              ))
+                                          .id,
+                                      purchaseIDs: purchaseIDs,
+                                      paymentType: paymentType)),
+                              child: Icon(Icons.block, color: Colors.white))
                       ], flex: 2, backgroundColor: backgroundColor)
                     ],
                   );

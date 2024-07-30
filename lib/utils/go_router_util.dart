@@ -27,8 +27,10 @@ import '../screens/profile_screen.dart';
 import '../screens/selected_product_screen.dart';
 import '../screens/selected_service_screen.dart';
 import '../screens/selected_user_screen.dart';
+import '../screens/settle_booking_screen.dart';
 import '../screens/shop_products_screen.dart';
 import '../screens/shop_services_screen.dart';
+import '../screens/view_bookings_screen.dart';
 import '../screens/view_services_screen.dart';
 
 class GoRoutes {
@@ -56,6 +58,7 @@ class GoRoutes {
   static const viewFAQs = 'viewFAQs';
   static const addFAQ = 'addFAQ';
   static const editFAQ = 'editFAQ';
+  static const viewBookings = 'viewBookings';
 
   //  CLIENT
   static const cart = 'cart';
@@ -64,6 +67,7 @@ class GoRoutes {
   static const bookmarks = 'bookmarks';
   static const purchaseHistory = 'purchaseHistory';
   static const bookingsHistory = 'bookingsHistory';
+  static const settleBooking = 'settleBooking';
 }
 
 CustomTransitionPage customTransition(
@@ -206,6 +210,11 @@ final GoRouter goRoutes = GoRouter(initialLocation: GoRoutes.home, routes: [
             path: GoRoutes.viewPurchases,
             pageBuilder: (context, state) =>
                 customTransition(context, state, const ViewPurchasesScreen())),
+        GoRoute(
+            name: GoRoutes.viewBookings,
+            path: GoRoutes.viewBookings,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const ViewBookingsScreen())),
         //======================================================================
         //==CLIENT PAGES========================================================
         //======================================================================
@@ -258,5 +267,14 @@ final GoRouter goRoutes = GoRouter(initialLocation: GoRoutes.home, routes: [
                 EditServiceScreen(
                     serviceID:
                         state.pathParameters[PathParameters.serviceID]!))),
+        GoRoute(
+            name: GoRoutes.settleBooking,
+            path: '${GoRoutes.settleBooking}/:${PathParameters.bookingID}',
+            pageBuilder: (context, state) => customTransition(
+                context,
+                state,
+                SettleBookingScreen(
+                    bookingID:
+                        state.pathParameters[PathParameters.bookingID]!))),
       ])
 ]);

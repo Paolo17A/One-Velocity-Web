@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../utils/color_util.dart';
 import '../utils/firebase_util.dart';
+import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
 import 'custom_padding_widgets.dart';
 import 'text_widgets.dart';
@@ -395,11 +396,11 @@ Widget bookingHistoryEntry(DocumentSnapshot bookingDoc,
                           serviceStatus == ServiceStatuses.pendingPayment)
                         ElevatedButton(
                             onPressed: () {
-                              /*GoRouter.of(context).goNamed(
+                              GoRouter.of(context).goNamed(
                                   GoRoutes.settleBooking,
                                   pathParameters: {
                                     PathParameters.bookingID: bookingDoc.id
-                                  });*/
+                                  });
                             },
                             child: montserratWhiteRegular('SETTLE PAYMENT'))
                     ],

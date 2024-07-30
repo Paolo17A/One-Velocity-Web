@@ -62,23 +62,23 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
       appBar: appBarWidget(context),
       body: switchedLoadingContainer(
           ref.read(loadingProvider),
-          Column(
-            children: [
-              secondAppBar(context),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  clientProfileNavigator(context,
-                      path: GoRoutes.bookingsHistory),
-                  SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      height: MediaQuery.of(context).size.height - 100,
-                      child: SingleChildScrollView(
-                        child: _bookingHistory(),
-                      ))
-                ],
-              )
-            ],
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                secondAppBar(context),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    clientProfileNavigator(context,
+                        path: GoRoutes.bookingsHistory),
+                    SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.8,
+                        height: MediaQuery.of(context).size.height - 100,
+                        child: _bookingHistory())
+                  ],
+                )
+              ],
+            ),
           )),
     );
   }
