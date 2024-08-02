@@ -77,6 +77,7 @@ class PaymentFields {
 class PurchaseFields {
   static const String clientID = 'clientID';
   static const String productID = 'productID';
+  static const String paymentID = 'paymentID';
   static const String quantity = 'quantity';
   static const String purchaseStatus = 'purchaseStatus';
   static const String datePickedUp = 'datePickedUp';

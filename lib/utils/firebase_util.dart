@@ -819,6 +819,12 @@ Future purchaseSelectedCartItem(BuildContext context, WidgetRef ref,
         .doc(paymentReference.id)
         .update({PaymentFields.proofOfPayment: downloadURL});
 
+    for (var purchaseID in purchaseIDs) {
+      await FirebaseFirestore.instance
+          .collection(Collections.purchases)
+          .doc(purchaseID)
+          .update({PurchaseFields.paymentID: paymentReference.id});
+    }
     ref.read(cartProvider).cartItems = await getCartEntries(context);
     scaffoldMessenger.showSnackBar(const SnackBar(
         content:
@@ -862,7 +868,9 @@ Future markPurchaseAsReadyForPickUp(BuildContext context, WidgetRef ref,
 }
 
 Future markPurchaseAsPickedUp(BuildContext context, WidgetRef ref,
-    {required String purchaseID, required Uint8List pdfBytes}) async {
+    {required String purchaseID,
+    required String paymentID,
+    required Uint8List pdfBytes}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
 
   try {
@@ -884,7 +892,7 @@ Future markPurchaseAsPickedUp(BuildContext context, WidgetRef ref,
 
     await FirebaseFirestore.instance
         .collection(Collections.payments)
-        .doc(purchaseID)
+        .doc(paymentID)
         .update({PaymentFields.invoiceURL: downloadURL});
 
     ref.read(purchasesProvider).setPurchaseDocs(await getAllPurchaseDocs());

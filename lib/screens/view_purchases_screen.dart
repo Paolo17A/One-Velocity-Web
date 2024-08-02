@@ -40,6 +40,8 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
       try {
         if (hasLoggedInUser() &&
             await getCurrentUserType() == UserTypes.client) {
+          ref.read(loadingProvider.notifier).toggleLoading(false);
+
           goRouter.goNamed(GoRoutes.home);
           return;
         }
@@ -116,7 +118,7 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
             String productID = purchaseData[PurchaseFields.productID];
             num quantity = purchaseData[PurchaseFields.quantity];
             String status = purchaseData[PurchaseFields.purchaseStatus];
-
+            String paymentID = purchaseData[PurchaseFields.paymentID];
             return FutureBuilder(
                 future: getThisUserDoc(clientID),
                 builder: (context, snapshot) {
@@ -189,10 +191,10 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
                                         'MARK AS READY FOR PICK UP',
                                         fontSize: 12))
                               else if (status == PurchaseStatuses.forPickUp)
-                                _markAsPickedUpFutureBuilder(
-                                    index, formattedName, name, quantity)
+                                _markAsPickedUpFutureBuilder(index,
+                                    formattedName, name, quantity, paymentID)
                               else if (status == PurchaseStatuses.pickedUp)
-                                _downloadInvoiceFutureBuilder(index)
+                                _downloadInvoiceFutureBuilder(index, paymentID)
                             ],
                             flex: 2,
                             backgroundColor: backgroundColor,
@@ -206,15 +208,18 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
     );
   }
 
-  Widget _markAsPickedUpFutureBuilder(
-      int index, String formattedName, String productName, num quantity) {
+  Widget _markAsPickedUpFutureBuilder(int index, String formattedName,
+      String productName, num quantity, String paymentID) {
     return FutureBuilder(
-      future:
-          getThisPaymentDoc(ref.read(purchasesProvider).purchaseDocs[index].id),
+      future: getThisPaymentDoc(paymentID),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting ||
             !snapshot.hasData ||
-            snapshot.hasError) return snapshotHandler(snapshot);
+            snapshot.hasError) {
+          print(ref.read(purchasesProvider).purchaseDocs[index].id);
+          print(snapshot.hasData);
+          return snapshotHandler(snapshot);
+        }
         final paymentData = snapshot.data!.data() as Map<dynamic, dynamic>;
         num paidAmount = paymentData[PaymentFields.paidAmount];
         DateTime datePaid =
@@ -235,6 +240,7 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
               markPurchaseAsPickedUp(context, ref,
                   purchaseID:
                       ref.read(purchasesProvider).purchaseDocs[index].id,
+                  paymentID: paymentID,
                   pdfBytes: savedPDF);
             },
             child: montserratWhiteRegular('MARK AS PICKED UP', fontSize: 12));
@@ -242,10 +248,9 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
     );
   }
 
-  Widget _downloadInvoiceFutureBuilder(int index) {
+  Widget _downloadInvoiceFutureBuilder(int index, String paymentID) {
     return FutureBuilder(
-      future:
-          getThisPaymentDoc(ref.read(purchasesProvider).purchaseDocs[index].id),
+      future: getThisPaymentDoc(paymentID),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting ||
             !snapshot.hasData ||
