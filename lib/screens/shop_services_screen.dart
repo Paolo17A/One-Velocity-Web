@@ -15,6 +15,7 @@ import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
+import '../widgets/dropdown_widget.dart';
 import '../widgets/item_entry_widget.dart';
 
 class ShopServicesScreen extends ConsumerStatefulWidget {
@@ -26,6 +27,9 @@ class ShopServicesScreen extends ConsumerStatefulWidget {
 
 class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
   List<DocumentSnapshot> allServiceDocs = [];
+  List<DocumentSnapshot> filteredServiceDocs = [];
+  String selectedCategory = 'VIEW ALL';
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +44,7 @@ class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
           return;
         }
         allServiceDocs = await getAllServices();
+        filteredServiceDocs = allServiceDocs;
         ref.read(pagesProvider.notifier).setCurrentPage(1);
         ref
             .read(pagesProvider.notifier)
@@ -68,7 +73,11 @@ class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
                   context,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [servicesHeader(), _availableServices()],
+                    children: [
+                      servicesHeader(),
+                      _servicesCategoryWidget(),
+                      _availableServices()
+                    ],
                   ),
                 ),
               ],
@@ -79,20 +88,47 @@ class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
 
   Widget servicesHeader() {
     return Row(children: [
-      montserratBlackBold('ALL AVAILABLE SERVICES', fontSize: 60)
+      montserratBlackBold(
+          '${selectedCategory == 'VIEW ALL' ? 'ALL AVAILABLE SERVICES' : '$selectedCategory SERVICES'}',
+          fontSize: 40)
     ]);
+  }
+
+  Widget _servicesCategoryWidget() {
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.6,
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(5)),
+      child: dropdownWidget(selectedCategory, (newVal) {
+        setState(() {
+          selectedCategory = newVal!;
+          print(selectedCategory);
+          if (selectedCategory == 'VIEW ALL') {
+            filteredServiceDocs = allServiceDocs;
+          } else {
+            filteredServiceDocs = allServiceDocs.where((serviceDoc) {
+              final serviceData = serviceDoc.data() as Map<dynamic, dynamic>;
+              return serviceData[ServiceFields.category] == selectedCategory;
+            }).toList();
+          }
+        });
+      },
+          ['VIEW ALL', ServiceCategories.paintJob, ServiceCategories.repair],
+          selectedCategory.isNotEmpty ? selectedCategory : 'Select a category',
+          false),
+    );
   }
 
   Widget _availableServices() {
     int currentPage = ref.read(pagesProvider.notifier).getCurrentPage();
     int maxPage = ref.read(pagesProvider.notifier).getMaxPage();
-    List<DocumentSnapshot> servicesSublist = allServiceDocs.sublist(
+    List<DocumentSnapshot> servicesSublist = filteredServiceDocs.sublist(
         (currentPage - 1) * 20,
-        min(allServiceDocs.length, ((currentPage - 1) * 20) + 20));
+        min(filteredServiceDocs.length, ((currentPage - 1) * 20) + 20));
     return Column(
       children: [
         all20Pix(
-            child: allServiceDocs.isNotEmpty
+            child: filteredServiceDocs.isNotEmpty
                 ? Wrap(
                     alignment: currentPage == maxPage
                         ? WrapAlignment.start

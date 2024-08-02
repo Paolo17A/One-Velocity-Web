@@ -32,6 +32,7 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
   String name = '';
   String description = '';
   num price = 0;
+  String category = '';
   bool isAvailable = false;
   List<dynamic> imageURLs = [];
   int currentImageIndex = 0;
@@ -52,6 +53,7 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
         price = serviceData[ServiceFields.price];
         isAvailable = serviceData[ServiceFields.isAvailable];
         imageURLs = serviceData[ServiceFields.imageURLs];
+        category = serviceData[ServiceFields.category];
         if (ref.read(userTypeProvider) == UserTypes.admin) {
           bookingHistoryDocs = await getServiceBookingHistory(widget.serviceID);
         }
@@ -222,6 +224,8 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
                         montserratBlackBold(name, fontSize: 60),
                         montserratBlackBold('PHP ${price.toStringAsFixed(2)}',
                             fontSize: 40),
+                        montserratBlackRegular('Category: $category',
+                            fontSize: 30),
                       ],
                     ),
                     const Gap(30),

@@ -41,7 +41,8 @@ Widget itemEntry(BuildContext context,
                   padding: const EdgeInsets.all(4),
                   child: Column(
                     children: [
-                      montserratWhiteBold(itemName),
+                      montserratWhiteBold(itemName,
+                          textOverflow: TextOverflow.ellipsis),
                       Row(
                         children: [
                           Column(

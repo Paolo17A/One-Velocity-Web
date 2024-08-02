@@ -113,25 +113,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ref.read(userTypeProvider) == UserTypes.client),
       body: switchedLoadingContainer(
         ref.read(loadingProvider),
-        SingleChildScrollView(
-          child:
-              hasLoggedInUser() && ref.read(userTypeProvider) == UserTypes.admin
-                  ? adminDashboard()
-                  : regularHome(),
-        ),
+        hasLoggedInUser() && ref.read(userTypeProvider) == UserTypes.admin
+            ? adminDashboard()
+            : regularHome(),
       ),
     );
   }
 
   Widget regularHome() {
-    return Column(
-      children: [
-        secondAppBar(context),
-        if (wheelProductDocs.isNotEmpty) _wheelProducts(),
-        if (batteryProductDocs.isNotEmpty) _batteryProducts(),
-        _allProducts(),
-        _allServices()
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          secondAppBar(context),
+          if (wheelProductDocs.isNotEmpty) _wheelProducts(),
+          if (batteryProductDocs.isNotEmpty) _batteryProducts(),
+          _allProducts(),
+          _allServices()
+        ],
+      ),
     );
   }
 
@@ -325,6 +324,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         leftNavigator(context, path: GoRoutes.home),
         SizedBox(
           width: MediaQuery.of(context).size.width * 0.8,
+          height: MediaQuery.of(context).size.height,
           child: switchedLoadingContainer(
               ref.read(loadingProvider),
               SingleChildScrollView(

@@ -1077,6 +1077,7 @@ Future addServiceEntry(BuildContext context, WidgetRef ref,
     {required TextEditingController nameController,
     required TextEditingController descriptionController,
     required bool isAvailable,
+    required String selectedCategory,
     required TextEditingController priceController}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   final goRouter = GoRouter.of(context);
@@ -1097,6 +1098,11 @@ Future addServiceEntry(BuildContext context, WidgetRef ref,
   if (ref.read(uploadedImagesProvider).uploadedImages.isEmpty) {
     scaffoldMessenger.showSnackBar(const SnackBar(
         content: Text('Please upload at least one service image.')));
+    return;
+  }
+  if (selectedCategory.isEmpty) {
+    scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Please select a service category.')));
     return;
   }
   try {
@@ -1128,7 +1134,8 @@ Future addServiceEntry(BuildContext context, WidgetRef ref,
       ServiceFields.description: descriptionController.text.trim(),
       ServiceFields.isAvailable: isAvailable,
       ServiceFields.price: double.parse(priceController.text),
-      ServiceFields.imageURLs: imageURLs
+      ServiceFields.imageURLs: imageURLs,
+      ServiceFields.category: selectedCategory
     });
     ref.read(loadingProvider.notifier).toggleLoading(false);
 
@@ -1147,6 +1154,7 @@ Future editServiceEntry(BuildContext context, WidgetRef ref,
     required TextEditingController nameController,
     required TextEditingController descriptionController,
     required bool isAvailable,
+    required String selectedCategory,
     required TextEditingController priceController}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   final goRouter = GoRouter.of(context);
@@ -1164,6 +1172,11 @@ Future editServiceEntry(BuildContext context, WidgetRef ref,
             'Please input a valid number greater than zero for the price.')));
     return;
   }
+  if (selectedCategory.isEmpty) {
+    scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Please select a service category.')));
+    return;
+  }
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
 
@@ -1179,7 +1192,7 @@ Future editServiceEntry(BuildContext context, WidgetRef ref,
           .child('${generateRandomHexString(6)}.png');
       final uploadTask = storageRef
           .putData(ref.read(uploadedImagesProvider).uploadedImages[i]!);
-      final taskSnapshot = await uploadTask.whenComplete(() {});
+      final taskSnapshot = await uploadTask;
       final downloadURL = await taskSnapshot.ref.getDownloadURL();
       imageURLs.add(downloadURL);
     }
@@ -1192,7 +1205,8 @@ Future editServiceEntry(BuildContext context, WidgetRef ref,
       ServiceFields.description: descriptionController.text.trim(),
       ServiceFields.isAvailable: isAvailable,
       ServiceFields.price: double.parse(priceController.text),
-      ServiceFields.imageURLs: FieldValue.arrayUnion(imageURLs)
+      ServiceFields.imageURLs: FieldValue.arrayUnion(imageURLs),
+      ServiceFields.category: selectedCategory
     });
     ref.read(loadingProvider.notifier).toggleLoading(false);
 

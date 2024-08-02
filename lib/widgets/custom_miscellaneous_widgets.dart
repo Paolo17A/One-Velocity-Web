@@ -140,15 +140,15 @@ Widget analyticReportWidget(BuildContext context,
     required String demographic,
     required Widget displayIcon,
     required Function? onPress}) {
+  print(MediaQuery.of(context).size.width * 0.07);
   return Padding(
     padding: const EdgeInsets.all(8),
     child: Container(
-        width: MediaQuery.of(context).size.width * 0.13,
+        width: 250,
         height: MediaQuery.of(context).size.height * 0.2,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          color: Colors.white,
-        ),
+            borderRadius: BorderRadius.circular(20), color: Colors.white),
+        padding: EdgeInsets.all(8),
         child: Row(children: [
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.08,
@@ -157,7 +157,7 @@ Widget analyticReportWidget(BuildContext context,
               children: [
                 montserratBlackBold(count, fontSize: 40),
                 SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.07,
+                  width: 150,
                   height: 45,
                   child: ElevatedButton(
                     onPressed: onPress != null ? () => onPress() : null,

@@ -89,6 +89,7 @@ class ServiceFields {
   static const String isAvailable = 'isAvailable';
   static const String price = 'price';
   static const String imageURLs = 'imageURLs';
+  static const String category = 'category';
 }
 
 class PathParameters {
@@ -143,6 +144,11 @@ class ServiceStatuses {
 class PaymentTypes {
   static const String product = 'PRODUCT';
   static const String service = 'SERVICE';
+}
+
+class ServiceCategories {
+  static const String paintJob = 'PAINT JOB';
+  static const String repair = 'REPAIR';
 }
 
 String generateRandomHexString(int length) {

@@ -16,6 +16,7 @@ import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
 import '../widgets/custom_text_field_widget.dart';
+import '../widgets/dropdown_widget.dart';
 import '../widgets/left_navigator_widget.dart';
 import '../widgets/text_widgets.dart';
 
@@ -32,6 +33,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
   bool isAvailable = false;
   final priceController = TextEditingController();
   List<Uint8List?> selectedItemImages = [];
+  String selectedCategory = '';
 
   @override
   void initState() {
@@ -95,6 +97,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                       _newServiceHeaderWidget(),
                       _serviceNameWidget(),
                       _serviceDescriptionWidget(),
+                      _serviceCategoryWidget(),
                       SizedBox(
                         width: double.infinity,
                         child: Wrap(
@@ -155,6 +158,26 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
           controller: descriptionController,
           textInputType: TextInputType.multiline,
           displayPrefixIcon: null),
+    ]);
+  }
+
+  Widget _serviceCategoryWidget() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      vertical10Pix(
+          child: montserratBlackBold('Service Category', fontSize: 24)),
+      Container(
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(5)),
+        child: dropdownWidget(selectedCategory, (newVal) {
+          setState(() {
+            selectedCategory = newVal!;
+          });
+        }, [
+          ServiceCategories.paintJob,
+          ServiceCategories.repair
+        ], selectedCategory.isNotEmpty ? selectedCategory : 'Select a category',
+            false),
+      )
     ]);
   }
 
@@ -231,7 +254,8 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
             nameController: nameController,
             descriptionController: descriptionController,
             isAvailable: isAvailable,
-            priceController: priceController),
+            priceController: priceController,
+            selectedCategory: selectedCategory),
         child: Padding(
           padding: const EdgeInsets.all(9),
           child: montserratWhiteBold('SUBMIT'),

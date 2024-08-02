@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../providers/loading_provider.dart';
 import '../providers/pages_provider.dart';
 import '../utils/color_util.dart';
-import '../utils/delete_entry_dialog_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
@@ -35,6 +34,7 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
       try {
         ref.read(loadingProvider.notifier).toggleLoading(true);
         if (!hasLoggedInUser()) {
+          ref.read(loadingProvider.notifier).toggleLoading(false);
           goRouter.goNamed(GoRoutes.login);
           return;
         }
@@ -45,6 +45,15 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
           return;
         }
         allServiceDocs = await getAllServices();
+        for (var serviceDoc in allServiceDocs) {
+          final serviceData = serviceDoc.data() as Map<dynamic, dynamic>;
+          if (!serviceData.containsKey(ServiceFields.category)) {
+            await FirebaseFirestore.instance
+                .collection(Collections.services)
+                .doc(serviceDoc.id)
+                .update({ServiceFields.category: ServiceCategories.repair});
+          }
+        }
 
         ref.read(pagesProvider.notifier).setCurrentPage(1);
         ref
@@ -114,6 +123,7 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
     return viewContentLabelRow(context, children: [
       viewFlexLabelTextCell('Name', 4),
       viewFlexLabelTextCell('Available', 2),
+      viewFlexLabelTextCell('Category', 1),
       viewFlexLabelTextCell('Actions', 2)
     ]);
   }
@@ -140,6 +150,7 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
   Widget _serviceEntry(DocumentSnapshot serviceDoc, int index) {
     final serviceData = serviceDoc.data() as Map<dynamic, dynamic>;
     String name = serviceData[ServiceFields.name];
+    String category = serviceData[ServiceFields.category];
     bool isAvailable = serviceData[ServiceFields.isAvailable];
     Color entryColor = Colors.black;
     Color backgroundColor = index % 2 == 0
@@ -150,14 +161,13 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
           flex: 4, backgroundColor: backgroundColor, textColor: entryColor),
       viewFlexTextCell(isAvailable ? 'YES' : 'NO',
           flex: 2, backgroundColor: backgroundColor, textColor: entryColor),
+      viewFlexTextCell(category,
+          flex: 1, backgroundColor: backgroundColor, textColor: entryColor),
       viewFlexActionsCell([
+        viewEntryButton(context, onPress: () {}),
         editEntryButton(context,
             onPress: () => GoRouter.of(context).goNamed(GoRoutes.editService,
                 pathParameters: {PathParameters.serviceID: serviceDoc.id})),
-        deleteEntryButton(context,
-            onPress: () => displayDeleteEntryDialog(context,
-                message: 'Are you sure you wish to remove this service?',
-                deleteEntry: () {}))
       ], flex: 2, backgroundColor: backgroundColor)
     ]);
   }
