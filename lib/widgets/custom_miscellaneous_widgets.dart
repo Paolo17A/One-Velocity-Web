@@ -140,7 +140,6 @@ Widget analyticReportWidget(BuildContext context,
     required String demographic,
     required Widget displayIcon,
     required Function? onPress}) {
-  print(MediaQuery.of(context).size.width * 0.07);
   return Padding(
     padding: const EdgeInsets.all(8),
     child: Container(

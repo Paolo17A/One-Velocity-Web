@@ -41,12 +41,14 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
         if (hasLoggedInUser() &&
             await getCurrentUserType() == UserTypes.client) {
           ref.read(loadingProvider.notifier).toggleLoading(false);
-
           goRouter.goNamed(GoRoutes.home);
           return;
         }
 
         ref.read(purchasesProvider).setPurchaseDocs(await getAllPurchaseDocs());
+        List<DocumentSnapshot> productPaymentDocs =
+            await getAllProductPaymentDocs();
+
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(

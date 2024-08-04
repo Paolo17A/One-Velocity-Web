@@ -915,6 +915,14 @@ Future<List<DocumentSnapshot>> getAllPaymentDocs() async {
   return payments.docs.reversed.toList();
 }
 
+Future<List<DocumentSnapshot>> getAllProductPaymentDocs() async {
+  final payments = await FirebaseFirestore.instance
+      .collection(Collections.payments)
+      .where(PaymentFields.paymentType, isEqualTo: PaymentTypes.product)
+      .get();
+  return payments.docs;
+}
+
 Future<DocumentSnapshot> getThisPaymentDoc(String paymentID) async {
   return FirebaseFirestore.instance
       .collection(Collections.payments)
