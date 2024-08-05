@@ -155,13 +155,10 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
       viewFlexTextCell(quantity.toString(),
           flex: 2, backgroundColor: backgroundColor, textColor: entryColor),
       viewFlexActionsCell([
+        viewEntryButton(context, onPress: () {}),
         editEntryButton(context,
             onPress: () => GoRouter.of(context).goNamed(GoRoutes.editProduct,
                 pathParameters: {PathParameters.productID: productDoc.id})),
-        /*deleteEntryButton(context,
-            onPress: () => displayDeleteEntryDialog(context,
-                message: 'Are you sure you wish to remove this product?',
-                deleteEntry: () {}))*/
       ], flex: 2, backgroundColor: backgroundColor)
     ]);
   }

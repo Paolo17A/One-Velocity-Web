@@ -151,7 +151,8 @@ class _ViewTransactionsScreenState
                           flex: 3,
                           backgroundColor: backgroundColor,
                           textColor: entryColor),
-                      viewFlexTextCell('PHP ${totalAmount.toStringAsFixed(2)}',
+                      viewFlexTextCell(
+                          'PHP ${formatPrice(totalAmount.toDouble())}',
                           flex: 2,
                           backgroundColor: backgroundColor,
                           textColor: entryColor),

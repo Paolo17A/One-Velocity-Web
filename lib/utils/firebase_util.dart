@@ -751,6 +751,15 @@ Future<List<DocumentSnapshot>> getAllPurchaseDocs() async {
   return purchases.docs.reversed.toList();
 }
 
+Future<List<DocumentSnapshot>> getThesePurchaseDocs(
+    List<dynamic> purchaseIDs) async {
+  final purchases = await FirebaseFirestore.instance
+      .collection(Collections.purchases)
+      .where(FieldPath.documentId, whereIn: purchaseIDs)
+      .get();
+  return purchases.docs.reversed.toList();
+}
+
 Future purchaseSelectedCartItem(BuildContext context, WidgetRef ref,
     {required Uint8List? proofOfPayment, required num paidAmount}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -846,20 +855,24 @@ Future<List<DocumentSnapshot>> getClientPurchaseHistory() async {
   return purchases.docs.map((doc) => doc as DocumentSnapshot).toList();
 }
 
-Future markPurchaseAsReadyForPickUp(BuildContext context, WidgetRef ref,
-    {required String purchaseID}) async {
+Future markPurchasesAsReadyForPickUp(BuildContext context, WidgetRef ref,
+    {required List<String> purchaseIDs}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
-
-    await FirebaseFirestore.instance
-        .collection(Collections.purchases)
-        .doc(purchaseID)
-        .update({PurchaseFields.purchaseStatus: PurchaseStatuses.forPickUp});
-    ref.read(purchasesProvider).setPurchaseDocs(await getAllPurchaseDocs());
-    scaffoldMessenger.showSnackBar(SnackBar(
-        content: Text('Successfully marked purchase as ready for pick up.')));
+    print('purchase count: ${purchaseIDs.length}');
+    for (var purchaseID in purchaseIDs) {
+      print('Purchase ID: $purchaseID');
+      await FirebaseFirestore.instance
+          .collection(Collections.purchases)
+          .doc(purchaseID)
+          .update({PurchaseFields.purchaseStatus: PurchaseStatuses.forPickUp});
+    }
+    print('DONE W FOR LOOP');
+    ref.read(paymentsProvider).setPaymentDocs(await getAllProductPaymentDocs());
     ref.read(loadingProvider.notifier).toggleLoading(false);
+    scaffoldMessenger.showSnackBar(SnackBar(
+        content: Text('Successfully marked purchases as ready for pick-up')));
   } catch (error) {
     scaffoldMessenger.showSnackBar(SnackBar(
         content: Text('Error marking purchase as ready for pick up: $error')));
@@ -868,7 +881,7 @@ Future markPurchaseAsReadyForPickUp(BuildContext context, WidgetRef ref,
 }
 
 Future markPurchaseAsPickedUp(BuildContext context, WidgetRef ref,
-    {required String purchaseID,
+    {required List<String> purchaseIDs,
     required String paymentID,
     required Uint8List pdfBytes}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -878,17 +891,19 @@ Future markPurchaseAsPickedUp(BuildContext context, WidgetRef ref,
     final storageRef = FirebaseStorage.instance
         .ref()
         .child(StorageFields.invoices)
-        .child('$purchaseID.pdf');
+        .child('$paymentID.pdf');
     final uploadTask = storageRef.putData(pdfBytes);
     final taskSnapshot = await uploadTask;
     final downloadURL = await taskSnapshot.ref.getDownloadURL();
-    await FirebaseFirestore.instance
-        .collection(Collections.purchases)
-        .doc(purchaseID)
-        .update({
-      PurchaseFields.purchaseStatus: PurchaseStatuses.pickedUp,
-      PurchaseFields.datePickedUp: DateTime.now()
-    });
+    for (var purchaseID in purchaseIDs) {
+      await FirebaseFirestore.instance
+          .collection(Collections.purchases)
+          .doc(purchaseID)
+          .update({
+        PurchaseFields.purchaseStatus: PurchaseStatuses.pickedUp,
+        PurchaseFields.datePickedUp: DateTime.now()
+      });
+    }
 
     await FirebaseFirestore.instance
         .collection(Collections.payments)

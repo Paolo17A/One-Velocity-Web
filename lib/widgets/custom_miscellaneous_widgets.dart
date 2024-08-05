@@ -150,7 +150,7 @@ Widget analyticReportWidget(BuildContext context,
         padding: EdgeInsets.all(8),
         child: Row(children: [
           SizedBox(
-            width: MediaQuery.of(context).size.width * 0.08,
+            width: 200,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -173,8 +173,7 @@ Widget analyticReportWidget(BuildContext context,
             ),
           ),
           SizedBox(
-              width: MediaQuery.of(context).size.width * 0.05,
-              child: Transform.scale(scale: 2, child: displayIcon))
+              width: 30, child: Transform.scale(scale: 2, child: displayIcon))
         ])),
   );
 }

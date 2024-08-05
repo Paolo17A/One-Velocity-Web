@@ -134,15 +134,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               padding: EdgeInsets.all(10),
               child: Row(
                 children: [
-                  /*Flexible(
-                        child: Radio<String>(
-                            value: cartDoc.id,
-                            groupValue: ref.read(cartProvider).selectedCartItem,
-                            onChanged: (_) {
-                              ref.read(cartProvider).setSelectedCartItem(
-                                  cartDoc.id, price, quantity);
-                            }),
-                      ),*/
                   Flexible(
                       child: Checkbox(
                           value: ref
@@ -153,12 +144,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             if (newVal == null) return;
                             setState(() {
                               if (newVal) {
-                                print('SELECTED');
                                 ref
                                     .read(cartProvider)
                                     .selectCartItem(cartDoc.id);
                               } else {
-                                print('DESELECTED');
                                 ref
                                     .read(cartProvider)
                                     .deselectCartItem(cartDoc.id);
@@ -286,7 +275,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   }
 
   Widget _totalAmountFutureBuilder() {
-    print(ref.read(cartProvider).selectedCartItemIDs);
     //  1. Get every associated cart DocumentSnapshot
     List<DocumentSnapshot> selectedCartDocs = [];
     for (var cartID in ref.read(cartProvider).selectedCartItemIDs) {
@@ -307,7 +295,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           .where((item) => item.id == productID)
           .firstOrNull;
       if (productDoc == null) {
-        print('no product found');
         continue;
       }
       final productData = productDoc.data() as Map<dynamic, dynamic>;

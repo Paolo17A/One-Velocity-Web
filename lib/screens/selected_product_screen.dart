@@ -44,6 +44,7 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
       try {
         if (hasLoggedInUser() &&
             await getCurrentUserType() == UserTypes.admin) {
+          ref.read(loadingProvider.notifier).toggleLoading(false);
           goRouter.goNamed(GoRoutes.home);
           return;
         }
