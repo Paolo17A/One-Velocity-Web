@@ -353,6 +353,56 @@ Future removeBookmarkedProduct(BuildContext context, WidgetRef ref,
   }
 }
 
+Future addBookmarkedService(BuildContext context, WidgetRef ref,
+    {required String service}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  if (!hasLoggedInUser()) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Please log-in to your account first.')));
+    return;
+  }
+  try {
+    await FirebaseFirestore.instance
+        .collection(Collections.users)
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .update({
+      UserFields.bookmarkedServices: FieldValue.arrayUnion([service])
+    });
+    ref.read(bookmarksProvider).addServiceToBookmarks(service);
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Sucessfully added service to bookmarks.')));
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error adding service to bookmarks: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
+Future removeBookmarkedService(BuildContext context, WidgetRef ref,
+    {required String service}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  if (!hasLoggedInUser()) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Please log-in to your account first.')));
+    return;
+  }
+  try {
+    await FirebaseFirestore.instance
+        .collection(Collections.users)
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .update({
+      UserFields.bookmarkedServices: FieldValue.arrayRemove([service])
+    });
+    ref.read(bookmarksProvider).removeServiceFromBookmarks(service);
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Sucessfully removed service from bookmarks.')));
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error removing service to bookmarks: $error')));
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  }
+}
+
 //==============================================================================
 //PRODUCTS======================================================================
 //==============================================================================

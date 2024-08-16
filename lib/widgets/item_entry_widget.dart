@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:one_velocity_web/utils/string_util.dart';
 
 import '../utils/color_util.dart';
 import 'text_widgets.dart';
@@ -19,8 +20,15 @@ Widget itemEntry(BuildContext context,
       onTap: () => onPress(),
       child: Container(
         width: 250,
-        decoration: BoxDecoration(color: CustomColors.ultimateGray),
+        height: 360,
+        decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(),
+            boxShadow: [
+              BoxShadow(offset: Offset(4, 4), color: CustomColors.ultimateGray)
+            ]),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
                 padding: const EdgeInsets.all(10),
@@ -35,26 +43,16 @@ Widget itemEntry(BuildContext context,
               padding: const EdgeInsets.all(10),
               child: Container(
                 width: 250,
-                decoration: BoxDecoration(
-                    color: CustomColors.ultimateGray.withOpacity(0.05)),
                 child: Padding(
                   padding: const EdgeInsets.all(4),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      montserratWhiteBold(itemName,
+                      blackSarabunBold(itemName,
                           textOverflow: TextOverflow.ellipsis),
-                      Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              montserratWhiteBold(
-                                  'PHP ${price.toStringAsFixed(2)}',
-                                  fontSize: 17),
-                            ],
-                          ),
-                        ],
-                      ),
+                      grenadineSarabunRegular(
+                          'PHP ${formatPrice(price.toDouble())}',
+                          fontSize: 17),
                     ],
                   ),
                 ),

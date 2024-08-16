@@ -12,7 +12,6 @@ import 'package:one_velocity_web/widgets/text_widgets.dart';
 
 import '../providers/loading_provider.dart';
 import '../providers/pages_provider.dart';
-import '../utils/color_util.dart';
 import '../utils/delete_entry_dialog_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/string_util.dart';
@@ -42,14 +41,11 @@ class _ViewTransactionsScreenState
         final userDoc = await getCurrentUserDoc();
         final userData = userDoc.data() as Map<dynamic, dynamic>;
         if (userData[UserFields.userType] == UserTypes.client) {
+          ref.read(loadingProvider.notifier).toggleLoading(false);
           goRouter.goNamed(GoRoutes.home);
           return;
         }
         ref.read(paymentsProvider).setPaymentDocs(await getAllPaymentDocs());
-
-        ref.read(pagesProvider.notifier).setCurrentPage(1);
-        ref.read(pagesProvider.notifier).setMaxPage(
-            (ref.read(paymentsProvider).paymentDocs.length / 10).ceil());
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(
@@ -105,10 +101,12 @@ class _ViewTransactionsScreenState
 
   Widget _paymentsLabelRow() {
     return viewContentLabelRow(context, children: [
-      viewFlexLabelTextCell('Buyer', 3),
+      viewFlexLabelTextCell('Buyer', 3,
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(20))),
       viewFlexLabelTextCell('Amount Paid', 2),
       viewFlexLabelTextCell('Payment', 2),
-      viewFlexLabelTextCell('Actions', 2)
+      viewFlexLabelTextCell('Actions', 2,
+          borderRadius: BorderRadius.only(topRight: Radius.circular(20)))
     ]);
   }
 
@@ -141,9 +139,7 @@ class _ViewTransactionsScreenState
                   String formattedName =
                       '${clientData[UserFields.firstName]} ${clientData[UserFields.lastName]}';
                   Color entryColor = Colors.black;
-                  Color backgroundColor = index % 2 == 0
-                      ? CustomColors.ultimateGray.withOpacity(0.5)
-                      : CustomColors.nimbusCloud;
+                  Color backgroundColor = Colors.white;
                   return viewContentEntryRow(
                     context,
                     children: [
@@ -162,14 +158,14 @@ class _ViewTransactionsScreenState
                               onPressed: () => showProofOfPaymentDialog(
                                   paymentMethod: paymentMethod,
                                   proofOfPayment: proofOfPayment),
-                              child: montserratWhiteRegular('VIEW'))
+                              child: whiteSarabunRegular('VIEW'))
                         ],
                         flex: 2,
                         backgroundColor: backgroundColor,
                       ),
                       viewFlexActionsCell([
                         if (paymentData[PaymentFields.paymentVerified])
-                          montserratBlackBold('VERIFIED'),
+                          blackSarabunBold('VERIFIED'),
                         if (!paymentData[PaymentFields.paymentVerified])
                           ElevatedButton(
                               onPressed: () => approveThisPayment(context, ref,
@@ -218,7 +214,7 @@ class _ViewTransactionsScreenState
                 height: MediaQuery.of(context).size.height * 0.7,
                 child: Column(
                   children: [
-                    montserratBlackBold('Payment Method: $paymentMethod',
+                    blackSarabunBold('Payment Method: $paymentMethod',
                         fontSize: 30),
                     const Gap(10),
                     Container(
@@ -235,7 +231,7 @@ class _ViewTransactionsScreenState
                       height: 30,
                       child: ElevatedButton(
                           onPressed: () => GoRouter.of(context).pop(),
-                          child: montserratWhiteBold('CLOSE')),
+                          child: whiteSarabunBold('CLOSE')),
                     )
                   ],
                 ),

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/loading_provider.dart';
 import '../providers/pages_provider.dart';
-import '../utils/color_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
@@ -97,10 +96,10 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        montserratBlackBold('SERVICES', fontSize: 40),
+        blackSarabunBold('SERVICES', fontSize: 40),
         ElevatedButton(
             onPressed: () => GoRouter.of(context).goNamed(GoRoutes.addService),
-            child: montserratWhiteBold('ADD NEW SERVICE'))
+            child: whiteSarabunBold('ADD NEW SERVICE'))
       ]),
     );
   }
@@ -121,10 +120,12 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
 
   Widget _serviceLabelRow() {
     return viewContentLabelRow(context, children: [
-      viewFlexLabelTextCell('Name', 4),
+      viewFlexLabelTextCell('Name', 4,
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(20))),
       viewFlexLabelTextCell('Available', 2),
       viewFlexLabelTextCell('Category', 1),
-      viewFlexLabelTextCell('Actions', 2)
+      viewFlexLabelTextCell('Actions', 2,
+          borderRadius: BorderRadius.only(topRight: Radius.circular(20)))
     ]);
   }
 
@@ -153,9 +154,7 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
     String category = serviceData[ServiceFields.category];
     bool isAvailable = serviceData[ServiceFields.isAvailable];
     Color entryColor = Colors.black;
-    Color backgroundColor = index % 2 == 0
-        ? CustomColors.ultimateGray.withOpacity(0.5)
-        : CustomColors.nimbusCloud;
+    Color backgroundColor = Colors.white;
     return viewContentEntryRow(context, children: [
       viewFlexTextCell(name,
           flex: 4, backgroundColor: backgroundColor, textColor: entryColor),

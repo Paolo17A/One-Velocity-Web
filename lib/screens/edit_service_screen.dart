@@ -134,13 +134,13 @@ class _EditServiceScreenState extends ConsumerState<EditServiceScreen> {
         ElevatedButton(
             onPressed: () =>
                 GoRouter.of(context).goNamed(GoRoutes.viewServices),
-            child: montserratWhiteBold('BACK'))
+            child: whiteSarabunBold('BACK'))
       ]),
     );
   }
 
   Widget _editServiceHeaderWidget() {
-    return montserratBlackBold(
+    return blackSarabunBold(
       'EDIT Service',
       textAlign: TextAlign.center,
       fontSize: 38,
@@ -149,7 +149,7 @@ class _EditServiceScreenState extends ConsumerState<EditServiceScreen> {
 
   Widget _serviceNameWidget() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      vertical10Pix(child: montserratBlackBold('Service Name', fontSize: 24)),
+      vertical10Pix(child: blackSarabunBold('Service Name', fontSize: 24)),
       CustomTextField(
           text: 'Service Name',
           controller: nameController,
@@ -162,7 +162,7 @@ class _EditServiceScreenState extends ConsumerState<EditServiceScreen> {
   Widget _serviceDescriptionWidget() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       vertical10Pix(
-          child: montserratBlackBold('Service Description', fontSize: 24)),
+          child: blackSarabunBold('Service Description', fontSize: 24)),
       CustomTextField(
           text: 'Service Description',
           controller: descriptionController,
@@ -173,8 +173,7 @@ class _EditServiceScreenState extends ConsumerState<EditServiceScreen> {
 
   Widget _serviceCategoryWidget() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      vertical10Pix(
-          child: montserratBlackBold('Service Category', fontSize: 24)),
+      vertical10Pix(child: blackSarabunBold('Service Category', fontSize: 24)),
       Container(
         decoration: BoxDecoration(
             color: Colors.white, borderRadius: BorderRadius.circular(5)),
@@ -198,7 +197,7 @@ class _EditServiceScreenState extends ConsumerState<EditServiceScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           vertical10Pix(
-              child: montserratBlackBold('Is this service currently available?',
+              child: blackSarabunBold('Is this service currently available?',
                   fontSize: 24)),
           Checkbox(
               value: isAvailable,
@@ -218,7 +217,7 @@ class _EditServiceScreenState extends ConsumerState<EditServiceScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          vertical10Pix(child: montserratBlackBold('Price', fontSize: 24)),
+          vertical10Pix(child: blackSarabunBold('Price', fontSize: 24)),
           CustomTextField(
               text: 'Price',
               controller: priceController,
@@ -269,7 +268,7 @@ class _EditServiceScreenState extends ConsumerState<EditServiceScreen> {
             priceController: priceController),
         child: Padding(
           padding: const EdgeInsets.all(9),
-          child: montserratWhiteBold('SUBMIT'),
+          child: whiteSarabunBold('SUBMIT'),
         ),
       ),
     );

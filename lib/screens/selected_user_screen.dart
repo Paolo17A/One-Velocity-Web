@@ -94,7 +94,7 @@ class _SelectedUserScreenState extends ConsumerState<SelectedUserScreen> {
                             children: [
                               buildProfileImage(
                                   profileImageURL: profileImageURL),
-                              montserratBlackBold(formattedName, fontSize: 40),
+                              blackSarabunBold(formattedName, fontSize: 40),
                               Text('Mobile Number: $mobileNumber',
                                   style: const TextStyle(
                                       color: Colors.black, fontSize: 20))

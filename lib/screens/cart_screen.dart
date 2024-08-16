@@ -98,7 +98,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            montserratBlackBold('CART ITEMS', fontSize: 40),
+            blackSarabunBold('CART ITEMS', fontSize: 40),
             ref.read(cartProvider).cartItems.isNotEmpty
                 ? ListView.builder(
                     shrinkWrap: true,
@@ -107,7 +107,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       return _cartEntry(
                           ref.read(cartProvider).cartItems[index]);
                     })
-                : montserratBlackBold('YOU DO NOT HAVE ANY ITEMS IN YOUR CART')
+                : blackSarabunBold('YOU DO NOT HAVE ANY ITEMS IN YOUR CART')
           ],
         ),
       ),
@@ -175,10 +175,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                montserratWhiteBold(name),
-                                montserratWhiteBold(
+                                whiteSarabunBold(name),
+                                whiteSarabunBold(
                                     'SRP: ${formatPrice(price.toDouble())}'),
-                                montserratWhiteRegular(
+                                whiteSarabunRegular(
                                     'Remaining Quantity: $remainingQuantity')
                               ],
                             )
@@ -201,7 +201,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                     : () => changeCartItemQuantity(context, ref,
                                         cartEntryDoc: cartDoc,
                                         isIncreasing: false),
-                                child: montserratWhiteBold('-'))),
+                                child: whiteSarabunBold('-'))),
                         Container(
                             decoration: BoxDecoration(
                                 border: Border.all(
@@ -209,7 +209,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 5),
-                              child: montserratWhiteBold(quantity.toString(),
+                              child: whiteSarabunBold(quantity.toString(),
                                   fontSize: 15),
                             )),
                         Container(
@@ -222,7 +222,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                     : () => changeCartItemQuantity(context, ref,
                                         cartEntryDoc: cartDoc,
                                         isIncreasing: true),
-                                child: montserratWhiteBold('+')))
+                                child: whiteSarabunBold('+')))
                       ],
                     ),
                   ),
@@ -258,12 +258,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 25),
-            child: montserratWhiteBold('CHECKOUT', fontSize: 30),
+            child: whiteSarabunBold('CHECKOUT', fontSize: 30),
           ),
           if (ref.read(cartProvider).selectedCartItemIDs.isNotEmpty)
             _totalAmountFutureBuilder()
           else
-            montserratWhiteBold('TOTAL AMOUNT: PHP 0.00'),
+            whiteSarabunBold('TOTAL AMOUNT: PHP 0.00'),
           const Gap(50),
           _paymentMethod(),
           if (ref.read(cartProvider).selectedPaymentMethod.isNotEmpty)
@@ -302,7 +302,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       totalAmount += quantity * price;
     }
     paidAmount = totalAmount;
-    return montserratWhiteBold(
+    return whiteSarabunBold(
         'TOTAL AMOUNT: PHP ${formatPrice(totalAmount.toDouble())}');
   }
 
@@ -311,7 +311,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         child: Column(
       children: [
         Row(
-          children: [montserratWhiteBold('PAYMENT METHOD')],
+          children: [whiteSarabunBold('PAYMENT METHOD')],
         ),
         Container(
           decoration: BoxDecoration(
@@ -334,12 +334,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                montserratWhiteBold('SEND YOUR PAYMENT HERE'),
+                whiteSarabunBold('SEND YOUR PAYMENT HERE'),
                 if (ref.read(cartProvider).selectedPaymentMethod == 'GCASH')
-                  montserratWhiteBold('GCASH: +639221234567', fontSize: 14)
+                  whiteSarabunBold('GCASH: +639221234567', fontSize: 14)
                 else if (ref.read(cartProvider).selectedPaymentMethod ==
                     'PAYMAYA')
-                  montserratWhiteBold('PAYMAYA: +639221234567', fontSize: 14)
+                  whiteSarabunBold('PAYMAYA: +639221234567', fontSize: 14)
               ],
             )
           ],
@@ -358,7 +358,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               : () => _pickProofOfPayment(),
           style: ElevatedButton.styleFrom(
               disabledBackgroundColor: CustomColors.nimbusCloud),
-          child: montserratWhiteBold('MAKE PAYMENT')),
+          child: whiteSarabunBold('MAKE PAYMENT')),
     );
   }
 }

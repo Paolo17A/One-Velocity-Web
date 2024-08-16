@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/bookmarks_provider.dart';
 import '../providers/loading_provider.dart';
 import '../providers/pages_provider.dart';
 import '../providers/user_type_provider.dart';
@@ -71,6 +72,7 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(loadingProvider);
+    ref.watch(bookmarksProvider);
     currentImageIndex = ref.watch(pagesProvider.notifier).getCurrentPage();
     return Scaffold(
         appBar: appBarWidget(context),
@@ -139,15 +141,15 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                montserratBlackBold(name, fontSize: 40),
-                montserratBlackRegular('PHP ${price.toStringAsFixed(2)}',
+                blackSarabunBold(name, fontSize: 40),
+                blackSarabunRegular('PHP ${price.toStringAsFixed(2)}',
                     fontSize: 32),
                 vertical10Pix(
-                  child: montserratBlackBold(
+                  child: blackSarabunBold(
                       'Is Available: ${isAvailable ? 'YES' : 'NO'}',
                       fontSize: 16),
                 ),
-                montserratBlackRegular(description, fontSize: 20)
+                blackSarabunRegular(description, fontSize: 20)
               ],
             )
           ],
@@ -167,7 +169,7 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            montserratWhiteBold('SERVICE BOOKING HISTORY', fontSize: 28),
+            whiteSarabunBold('SERVICE BOOKING HISTORY', fontSize: 28),
             const Divider(color: Colors.white),
             bookingHistoryDocs.isNotEmpty
                 ? ListView.builder(
@@ -178,7 +180,7 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
                           bookingHistoryDocs[index]);
                     })
                 : Center(
-                    child: montserratWhiteBold('NO BOOKING HISTORY AVAILABLE'),
+                    child: whiteSarabunBold('NO BOOKING HISTORY AVAILABLE'),
                   )
           ],
         ),
@@ -221,14 +223,39 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        montserratBlackBold(name, fontSize: 60),
-                        montserratBlackBold('PHP ${price.toStringAsFixed(2)}',
+                        blackSarabunBold(name, fontSize: 60),
+                        blackSarabunBold('PHP ${price.toStringAsFixed(2)}',
                             fontSize: 40),
-                        montserratBlackRegular('Category: $category',
+                        blackSarabunRegular('Category: $category',
                             fontSize: 30),
                       ],
                     ),
                     const Gap(30),
+                    Row(
+                      children: [
+                        IconButton(
+                            onPressed: () => ref
+                                    .read(bookmarksProvider)
+                                    .bookmarkedServices
+                                    .contains(widget.serviceID)
+                                ? removeBookmarkedService(context, ref,
+                                    service: widget.serviceID)
+                                : addBookmarkedService(context, ref,
+                                    service: widget.serviceID),
+                            icon: Icon(ref
+                                    .read(bookmarksProvider)
+                                    .bookmarkedServices
+                                    .contains(widget.serviceID)
+                                ? Icons.bookmark
+                                : Icons.bookmark_outline)),
+                        blackSarabunRegular(ref
+                                .read(bookmarksProvider)
+                                .bookmarkedServices
+                                .contains(widget.serviceID)
+                            ? 'Remove from Bookmarks'
+                            : 'Add to Bookmarks')
+                      ],
+                    ),
                     SizedBox(
                         height: 40,
                         child: ElevatedButton(
@@ -259,18 +286,17 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
                                         datePicked: datePicked);
                                   }
                                 : null,
-                            child: montserratWhiteRegular(
-                                'REQUEST THIS SERVICE',
+                            child: whiteSarabunRegular('REQUEST THIS SERVICE',
                                 textAlign: TextAlign.center))),
                     all10Pix(
-                        child: montserratBlackBold(
+                        child: blackSarabunBold(
                             'Is Available: ${isAvailable ? 'YES' : ' NO'}',
                             fontSize: 16)),
                     Container(
                         width: MediaQuery.of(context).size.width * 0.6,
                         decoration: BoxDecoration(border: Border.all()),
                         padding: EdgeInsets.all(10),
-                        child: montserratBlackRegular(description,
+                        child: blackSarabunRegular(description,
                             textAlign: TextAlign.left)),
                   ]),
             ),

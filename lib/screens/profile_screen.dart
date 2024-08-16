@@ -127,32 +127,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               child: ElevatedButton(
                                   onPressed: () =>
                                       removeProfilePic(context, ref),
-                                  child: montserratWhiteRegular(
-                                      'REMOVE\nPICTURE')),
+                                  child: whiteSarabunRegular('REMOVE PICTURE')),
                             )
                           else
                             Padding(
                               padding: const EdgeInsets.all(10),
                               child: ElevatedButton(
                                   onPressed: () => _pickImage(),
-                                  child: montserratWhiteRegular(
-                                      'UPLOAD\nPICTURE')),
+                                  child: whiteSarabunRegular('UPLOAD PICTURE')),
                             ),
                         ],
                       ),
                     ],
                   ),
-                  montserratBlackBold(formattedName, fontSize: 40),
-                  Text('Mobile Number: $mobileNumber',
-                      style: const TextStyle(color: Colors.black, fontSize: 20))
+                  blackSarabunBold(formattedName, fontSize: 40),
+                  blackSarabunRegular('Mobile Number: $mobileNumber')
                 ],
               ),
               ElevatedButton(
                   onPressed: () =>
                       GoRouter.of(context).goNamed(GoRoutes.editProfile),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: CustomColors.nimbusCloud),
                   child: Padding(
                     padding: const EdgeInsets.all(10),
-                    child: montserratWhiteBold('EDIT PROFILE', fontSize: 24),
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, color: Colors.black),
+                        Gap(4),
+                        blackSarabunRegular('Edit Profile', fontSize: 24),
+                      ],
+                    ),
                   ))
             ],
           ),

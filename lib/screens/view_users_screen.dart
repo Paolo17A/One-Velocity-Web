@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/loading_provider.dart';
 import '../providers/pages_provider.dart';
-import '../utils/color_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
@@ -73,7 +72,7 @@ class _ViewUsersScreenState extends ConsumerState<ViewUsersScreen> {
             child: switchedLoadingContainer(
                 ref.read(loadingProvider),
                 SingleChildScrollView(
-                  child: all5Percent(context,
+                  child: horizontal5Percent(context,
                       child: viewContentContainer(context,
                           child: Column(
                             children: [
@@ -93,8 +92,10 @@ class _ViewUsersScreenState extends ConsumerState<ViewUsersScreen> {
 
   Widget _usersLabelRow() {
     return viewContentLabelRow(context, children: [
-      viewFlexLabelTextCell('Name', 3),
-      viewFlexLabelTextCell('Actions', 2)
+      viewFlexLabelTextCell('Name', 3,
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(20))),
+      viewFlexLabelTextCell('Actions', 2,
+          borderRadius: BorderRadius.only(topRight: Radius.circular(20)))
     ]);
   }
 
@@ -122,9 +123,7 @@ class _ViewUsersScreenState extends ConsumerState<ViewUsersScreen> {
     String formattedName =
         '${userData[UserFields.firstName]} ${userData[UserFields.lastName]}';
     Color entryColor = Colors.black;
-    Color backgroundColor = index % 2 == 0
-        ? CustomColors.ultimateGray.withOpacity(0.5)
-        : CustomColors.nimbusCloud;
+    Color backgroundColor = Colors.white;
     return viewContentEntryRow(context, children: [
       viewFlexTextCell(formattedName,
           flex: 3, backgroundColor: backgroundColor, textColor: entryColor),

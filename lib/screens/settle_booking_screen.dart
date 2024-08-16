@@ -113,7 +113,7 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            montserratBlackBold('SELECTED SERVICE: $serviceName', fontSize: 40),
+            blackSarabunBold('SELECTED SERVICE: $serviceName', fontSize: 40),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -130,15 +130,15 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (dateCreated != null)
-                        montserratBlackRegular(
+                        blackSarabunRegular(
                             'Date Booked: ${DateFormat('MMM dd, yyyy').format(dateCreated!)}',
                             fontSize: 24),
                       if (dateRequsted != null)
-                        montserratBlackRegular(
+                        blackSarabunRegular(
                             'Date Requested: ${DateFormat('MMM dd, yyyy').format(dateRequsted!)}',
                             fontSize: 24),
                       Gap(20),
-                      montserratBlackRegular(description,
+                      blackSarabunRegular(description,
                           textAlign: TextAlign.left),
                     ],
                   ),
@@ -161,7 +161,7 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
       child: Column(
         children: [
           vertical20Pix(
-            child: montserratWhiteBold(
+            child: whiteSarabunBold(
                 'PHP ${formatPrice(servicePrice.toDouble())}',
                 fontSize: 40),
           ),
@@ -182,7 +182,7 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
         child: Column(
       children: [
         Row(
-          children: [montserratWhiteBold('PAYMENT METHOD')],
+          children: [whiteSarabunBold('PAYMENT METHOD')],
         ),
         Container(
           decoration: BoxDecoration(
@@ -205,12 +205,12 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                montserratWhiteBold('SEND YOUR PAYMENT HERE'),
+                whiteSarabunBold('SEND YOUR PAYMENT HERE'),
                 if (ref.read(cartProvider).selectedPaymentMethod == 'GCASH')
-                  montserratWhiteBold('GCASH: +639221234567', fontSize: 14)
+                  whiteSarabunBold('GCASH: +639221234567', fontSize: 14)
                 else if (ref.read(cartProvider).selectedPaymentMethod ==
                     'PAYMAYA')
-                  montserratWhiteBold('PAYMAYA: +639221234567', fontSize: 14)
+                  whiteSarabunBold('PAYMAYA: +639221234567', fontSize: 14)
               ],
             )
           ],
@@ -227,7 +227,7 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
               ? null
               : () => ref.read(cartProvider).setProofOfPaymentBytes(),
           style: ElevatedButton.styleFrom(disabledBackgroundColor: Colors.grey),
-          child: montserratWhiteBold('SELECT PROOF OF PAYMENT')),
+          child: whiteSarabunBold('SELECT PROOF OF PAYMENT')),
     );
   }
 
@@ -251,7 +251,7 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
                     bookingID: widget.bookingID,
                     purchaseIDs: [widget.bookingID],
                     servicePrice: servicePrice),
-                child: montserratWhiteBold('SETTLE PAYMENT')),
+                child: whiteSarabunBold('SETTLE PAYMENT')),
           ),
         )
       ],

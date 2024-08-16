@@ -88,13 +88,13 @@ class _EditFAQScreenState extends ConsumerState<EditFAQScreen> {
       child: Row(children: [
         ElevatedButton(
             onPressed: () => GoRouter.of(context).goNamed(GoRoutes.viewFAQs),
-            child: montserratWhiteBold('BACK'))
+            child: whiteSarabunBold('BACK'))
       ]),
     );
   }
 
   Widget _newFAQHeaderWidget() {
-    return montserratBlackBold(
+    return blackSarabunBold(
       'EDIT FAQ',
       textAlign: TextAlign.center,
       fontSize: 38,
@@ -103,7 +103,7 @@ class _EditFAQScreenState extends ConsumerState<EditFAQScreen> {
 
   Widget _questionWidget() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      vertical10Pix(child: montserratBlackBold('Question', fontSize: 24)),
+      vertical10Pix(child: blackSarabunBold('Question', fontSize: 24)),
       CustomTextField(
           text: 'Question',
           controller: questionController,
@@ -115,7 +115,7 @@ class _EditFAQScreenState extends ConsumerState<EditFAQScreen> {
 
   Widget _answerWidget() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      vertical10Pix(child: montserratBlackBold('Answer', fontSize: 24)),
+      vertical10Pix(child: blackSarabunBold('Answer', fontSize: 24)),
       CustomTextField(
           text: 'Answer',
           controller: answerController,
@@ -134,7 +134,7 @@ class _EditFAQScreenState extends ConsumerState<EditFAQScreen> {
             answerController: answerController),
         child: Padding(
           padding: const EdgeInsets.all(9),
-          child: montserratWhiteBold('SUBMIT'),
+          child: whiteSarabunBold('SUBMIT'),
         ),
       ),
     );

@@ -63,8 +63,7 @@ class _LoginScreenState extends ConsumerState<RegisterScreen> {
       child: roundedWhiteContainer(context,
           child: Column(
             children: [
-              vertical20Pix(
-                  child: montserratBlackBold('REGISTER', fontSize: 40)),
+              vertical20Pix(child: blackSarabunBold('REGISTER', fontSize: 40)),
               Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: CustomTextField(

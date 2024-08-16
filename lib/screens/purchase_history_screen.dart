@@ -14,7 +14,6 @@ import 'package:one_velocity_web/widgets/custom_padding_widgets.dart';
 import 'package:one_velocity_web/widgets/left_navigator_widget.dart';
 import 'package:one_velocity_web/widgets/text_widgets.dart';
 
-import '../utils/color_util.dart';
 import '../utils/url_util.dart';
 
 class PurchaseHistoryScreen extends ConsumerStatefulWidget {
@@ -75,7 +74,7 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          montserratBlackBold('PURCHASE HISTORY', fontSize: 40),
+                          blackSarabunBold('PURCHASE HISTORY', fontSize: 40),
                           _purchaseHistoryEntries()
                         ],
                       ),
@@ -98,7 +97,7 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
                   ref.read(purchaseHistoryProvider).purchaseHistory[index]);
             })
         : Center(
-            child: montserratBlackBold('YOU HAVE NOT PURCHASED ANY ITEMS YET',
+            child: blackSarabunBold('YOU HAVE NOT PURCHASED ANY ITEMS YET',
                 fontSize: 30),
           );
   }
@@ -131,47 +130,49 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
               },
               child: all10Pix(
                   child: Container(
-                decoration:
-                    const BoxDecoration(color: CustomColors.ultimateGray),
+                decoration: BoxDecoration(border: Border.all()),
                 padding: EdgeInsets.all(10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
-                        CircleAvatar(
-                            backgroundColor: Colors.transparent,
-                            backgroundImage: NetworkImage(imageURLs[0]),
-                            radius: 50),
+                        Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                                image: DecorationImage(
+                                    image: NetworkImage(imageURLs[0]),
+                                    fit: BoxFit.cover))),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 30),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              montserratWhiteBold(name, fontSize: 25),
+                              blackSarabunBold(name, fontSize: 25),
                               Row(
                                 children: [
-                                  montserratWhiteRegular(
-                                      'SRP: ${price.toStringAsFixed(2)}',
+                                  blackSarabunRegular(
+                                      'SRP: PHP ${formatPrice(price.toDouble())}',
                                       fontSize: 15),
                                   const Gap(15),
-                                  montserratWhiteRegular(
+                                  blackSarabunRegular(
                                       'Quantity: ${quantity.toString()}',
                                       fontSize: 15),
                                 ],
                               ),
                               const Gap(15),
-                              montserratWhiteRegular('Status: $status',
+                              blackSarabunRegular('Status: $status',
                                   fontSize: 15),
-                              if (status == PurchaseStatuses.pickedUp)
-                                _downloadInvoiceFutureBuilder(purchaseDoc.id)
+                              /*if (status == PurchaseStatuses.pickedUp)
+                                _downloadInvoiceFutureBuilder(purchaseDoc.id)*/
                             ],
                           ),
                         ),
                       ],
                     ),
                     all20Pix(
-                        child: montserratWhiteBold(
+                        child: whiteSarabunBold(
                             'PHP ${(price * quantity).toStringAsFixed(2)}'))
                   ],
                 ),
@@ -192,7 +193,7 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
         String invoiceURL = paymentData[PaymentFields.invoiceURL];
         return TextButton(
             onPressed: () async => launchThisURL(context, invoiceURL),
-            child: montserratWhiteRegular('Download Invoice',
+            child: whiteSarabunRegular('Download Invoice',
                 fontSize: 12,
                 textAlign: TextAlign.left,
                 decoration: TextDecoration.underline));

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:one_velocity_web/providers/bookmarks_provider.dart';
-import 'package:one_velocity_web/utils/color_util.dart';
 import 'package:one_velocity_web/utils/delete_entry_dialog_util.dart';
 import 'package:one_velocity_web/widgets/app_bar_widget.dart';
 import 'package:one_velocity_web/widgets/custom_miscellaneous_widgets.dart';
@@ -23,10 +22,13 @@ class BookMarksScreen extends ConsumerStatefulWidget {
   ConsumerState<BookMarksScreen> createState() => _BookMarksScreenState();
 }
 
-class _BookMarksScreenState extends ConsumerState<BookMarksScreen> {
+class _BookMarksScreenState extends ConsumerState<BookMarksScreen>
+    with TickerProviderStateMixin {
+  late TabController tabController;
   @override
   void initState() {
     super.initState();
+    tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
       final goRouter = GoRouter.of(context);
@@ -44,8 +46,12 @@ class _BookMarksScreenState extends ConsumerState<BookMarksScreen> {
           ref.read(loadingProvider.notifier).toggleLoading(false);
           return;
         }
-        ref.read(bookmarksProvider).bookmarkedProducts =
-            userData[UserFields.bookmarkedProducts];
+        ref
+            .read(bookmarksProvider)
+            .setBookmarkedProducts(userData[UserFields.bookmarkedProducts]);
+        ref
+            .read(bookmarksProvider)
+            .setBookmarkedServices(userData[UserFields.bookmarkedServices]);
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(
@@ -59,52 +65,82 @@ class _BookMarksScreenState extends ConsumerState<BookMarksScreen> {
   Widget build(BuildContext context) {
     ref.watch(loadingProvider);
     ref.watch(bookmarksProvider);
-    return Scaffold(
-      appBar: appBarWidget(context),
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            secondAppBar(context),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                clientProfileNavigator(context, path: GoRoutes.bookmarks),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: switchedLoadingContainer(
-                      ref.read(loadingProvider), bookmarksContainer()),
-                )
-              ],
-            )
-          ],
+    return DefaultTabController(
+      initialIndex: 0,
+      length: 2,
+      child: Scaffold(
+        appBar: appBarWidget(context),
+        backgroundColor: Colors.white,
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              secondAppBar(context),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  clientProfileNavigator(context, path: GoRoutes.bookmarks),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    child: switchedLoadingContainer(
+                        ref.read(loadingProvider),
+                        Column(
+                          children: [
+                            TabBar(tabs: [
+                              Tab(child: blackSarabunBold('PRODUCTS')),
+                              Tab(child: blackSarabunBold('SERVICES'))
+                            ]),
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.8,
+                              height: MediaQuery.of(context).size.height - 150,
+                              child: TabBarView(
+                                  physics: NeverScrollableScrollPhysics(),
+                                  children: [
+                                    bookmarkedProductsContainer(),
+                                    bookmarkedServicesContainer()
+                                  ]),
+                            )
+                          ],
+                        )),
+                  )
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget bookmarksContainer() {
+  Widget bookmarkedProductsContainer() {
     return horizontal5Percent(context,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Gap(40),
-            montserratBlackBold('BOOKMARKED PRODUCTS', fontSize: 40),
-            if (ref.read(bookmarksProvider).bookmarkedProducts.isNotEmpty)
-              ListView.builder(
-                  shrinkWrap: true,
-                  itemCount:
-                      ref.read(bookmarksProvider).bookmarkedProducts.length,
-                  itemBuilder: (context, index) {
-                    return _favoriteProductEntry(
-                        ref.read(bookmarksProvider).bookmarkedProducts[index]);
-                  })
-            else
-              Center(
-                  child: montserratBlackBold('YOU HAVE NO BOOKMARKED ITEMS',
-                      fontSize: 24))
-          ],
-        ));
+        child: (ref.read(bookmarksProvider).bookmarkedProducts.isNotEmpty)
+            ? ListView.builder(
+                shrinkWrap: true,
+                itemCount:
+                    ref.read(bookmarksProvider).bookmarkedProducts.length,
+                itemBuilder: (context, index) {
+                  return _favoriteProductEntry(
+                      ref.read(bookmarksProvider).bookmarkedProducts[index]);
+                })
+            : Center(
+                child: blackSarabunBold('YOU HAVE NO BOOKMARKED ITEMS',
+                    fontSize: 24)));
+  }
+
+  Widget bookmarkedServicesContainer() {
+    return horizontal5Percent(context,
+        child: (ref.read(bookmarksProvider).bookmarkedServices.isNotEmpty)
+            ? ListView.builder(
+                shrinkWrap: true,
+                itemCount:
+                    ref.read(bookmarksProvider).bookmarkedServices.length,
+                itemBuilder: (context, index) {
+                  return _favoriteServiceEntry(
+                      ref.read(bookmarksProvider).bookmarkedServices[index]);
+                })
+            : Center(
+                child: blackSarabunBold('YOU HAVE NO BOOKMARKED SERVICES',
+                    fontSize: 24)));
   }
 
   Widget _favoriteProductEntry(String productID) {
@@ -128,8 +164,7 @@ class _BookMarksScreenState extends ConsumerState<BookMarksScreen> {
               },
               child: all10Pix(
                   child: Container(
-                      decoration:
-                          BoxDecoration(color: CustomColors.ultimateGray),
+                      decoration: BoxDecoration(border: Border.all()),
                       padding: EdgeInsets.all(10),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -145,9 +180,9 @@ class _BookMarksScreenState extends ConsumerState<BookMarksScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  montserratWhiteBold(name),
-                                  montserratWhiteBold(
-                                      'SRP: ${price.toStringAsFixed(2)}')
+                                  blackSarabunBold(name),
+                                  blackSarabunBold(
+                                      'SRP: PHP ${formatPrice(price.toDouble())}')
                                 ],
                               )
                             ],
@@ -159,6 +194,65 @@ class _BookMarksScreenState extends ConsumerState<BookMarksScreen> {
                                   deleteEntry: () => removeBookmarkedProduct(
                                       context, ref,
                                       productID: productID)),
+                              child: Icon(Icons.delete, color: Colors.white))
+                        ],
+                      ))),
+            ),
+          );
+        });
+  }
+
+  Widget _favoriteServiceEntry(String serviceID) {
+    return FutureBuilder(
+        future: getThisServiceDoc(serviceID),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting ||
+              !snapshot.hasData ||
+              snapshot.hasError) return snapshotHandler(snapshot);
+          final serviceData = snapshot.data!.data() as Map<dynamic, dynamic>;
+          String name = serviceData[ServiceFields.name];
+          List<dynamic> imageURLs = serviceData[ServiceFields.imageURLs];
+          num price = serviceData[ServiceFields.price];
+
+          return MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () {
+                GoRouter.of(context).goNamed(GoRoutes.selectedService,
+                    pathParameters: {PathParameters.serviceID: serviceID});
+              },
+              child: all10Pix(
+                  child: Container(
+                      decoration: BoxDecoration(border: Border.all()),
+                      padding: EdgeInsets.all(10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CircleAvatar(
+                                  backgroundImage: NetworkImage(imageURLs[0]),
+                                  backgroundColor: Colors.transparent,
+                                  radius: 50),
+                              Gap(20),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  blackSarabunBold(name),
+                                  blackSarabunBold(
+                                      'SRP: PHP ${formatPrice(price.toDouble())}')
+                                ],
+                              )
+                            ],
+                          ),
+                          ElevatedButton(
+                              onPressed: () => displayDeleteEntryDialog(context,
+                                  message:
+                                      'Are you sure you wish to remove this service from your bookmarks?',
+                                  deleteEntry: () => removeBookmarkedService(
+                                      context, ref,
+                                      service: serviceID)),
                               child: Icon(Icons.delete, color: Colors.white))
                         ],
                       ))),

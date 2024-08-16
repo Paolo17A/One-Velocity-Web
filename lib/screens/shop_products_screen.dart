@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:one_velocity_web/utils/color_util.dart';
 import 'package:one_velocity_web/widgets/text_widgets.dart';
 
 import '../providers/loading_provider.dart';
@@ -68,15 +69,14 @@ class _ShopProductsScreenState extends ConsumerState<ShopProductsScreen> {
             child: Column(
               children: [
                 secondAppBar(context),
-                horizontal5Percent(context,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        productsHeader(),
-                        _productCategoryWidget(),
-                        _availableProducts()
-                      ],
-                    ))
+                Column(
+                  children: [
+                    productsHeader(),
+                    _productCategoryWidget(),
+                    _availableProducts(),
+                    footerWidget(context)
+                  ],
+                )
               ],
             ),
           )),
@@ -84,40 +84,52 @@ class _ShopProductsScreenState extends ConsumerState<ShopProductsScreen> {
   }
 
   Widget productsHeader() {
-    return Row(children: [
-      montserratBlackBold(
-          '${selectedCategory == 'VIEW ALL' ? 'ALL AVAILABLE PRODUCTS' : '$selectedCategory PRODUCTS'}',
-          fontSize: 40)
-    ]);
+    return blackSarabunBold(
+        '${selectedCategory == 'VIEW ALL' ? 'ALL PRODUCTS' : '$selectedCategory PRODUCTS'}',
+        fontSize: 40);
   }
 
   Widget _productCategoryWidget() {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.6,
+      width: MediaQuery.of(context).size.width * 0.3,
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(5)),
-      child: dropdownWidget(selectedCategory, (newVal) {
-        setState(() {
-          selectedCategory = newVal!;
-          print(selectedCategory);
-          if (selectedCategory == 'VIEW ALL') {
-            filteredProductDocs = allProductDocs;
-          } else {
-            filteredProductDocs = allProductDocs.where((productDoc) {
-              final productData = productDoc.data() as Map<dynamic, dynamic>;
-              return productData[ProductFields.category] == selectedCategory;
-            }).toList();
-            print('products found: ${filteredProductDocs.length}');
-          }
-        });
-      }, [
-        'VIEW ALL',
-        ProductCategories.wheel,
-        ProductCategories.battery,
-        ProductCategories.accessory,
-        ProductCategories.others
-      ], selectedCategory.isNotEmpty ? selectedCategory : 'Select a category',
-          false),
+      child: Column(
+        children: [
+          dropdownWidget(selectedCategory, (newVal) {
+            setState(() {
+              selectedCategory = newVal!;
+              print(selectedCategory);
+              if (selectedCategory == 'VIEW ALL') {
+                filteredProductDocs = allProductDocs;
+              } else {
+                filteredProductDocs = allProductDocs.where((productDoc) {
+                  final productData =
+                      productDoc.data() as Map<dynamic, dynamic>;
+                  return productData[ProductFields.category] ==
+                      selectedCategory;
+                }).toList();
+              }
+            });
+          },
+              [
+                'VIEW ALL',
+                ProductCategories.wheel,
+                ProductCategories.battery,
+                ProductCategories.accessory,
+                ProductCategories.others
+              ],
+              selectedCategory.isNotEmpty
+                  ? selectedCategory
+                  : 'Select a category',
+              false),
+          vertical10Pix(
+              child: Container(
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  height: 8,
+                  color: CustomColors.crimson))
+        ],
+      ),
     );
   }
 
@@ -132,8 +144,8 @@ class _ShopProductsScreenState extends ConsumerState<ShopProductsScreen> {
                     alignment: currentPage == maxPage
                         ? WrapAlignment.start
                         : WrapAlignment.spaceEvenly,
-                    spacing: 10,
-                    runSpacing: 10,
+                    spacing: 100,
+                    runSpacing: 100,
                     children: filteredProductDocs.map((item) {
                       return itemEntry(context,
                           itemDoc: item,
@@ -143,7 +155,7 @@ class _ShopProductsScreenState extends ConsumerState<ShopProductsScreen> {
                                     PathParameters.productID: item.id
                                   }));
                     }).toList())
-                : montserratBlackBold('NO PRODUCTS AVAILABLE', fontSize: 32)),
+                : blackSarabunBold('NO PRODUCTS AVAILABLE', fontSize: 32)),
         if (allProductDocs.length > 20)
           navigatorButtons(context,
               pageNumber: currentPage,

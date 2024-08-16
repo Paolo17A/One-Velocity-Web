@@ -59,13 +59,16 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
 
       //  Get products data
       final List<dynamic> purchaseIDs = paymentData[PaymentFields.purchaseIDs];
-      purchaseDocs = await getThesePurchaseDocs(purchaseIDs);
-      for (var purchaseDoc in purchaseDocs) {
-        final purchaseData = purchaseDoc.data() as Map<dynamic, dynamic>;
-        String productID = purchaseData[PurchaseFields.productID];
-        purchaseStatus = purchaseData[PurchaseFields.purchaseStatus];
-        productDocs.add(await getThisProductDoc(productID));
+      if (purchaseIDs.isNotEmpty) {
+        purchaseDocs = await getThesePurchaseDocs(purchaseIDs);
+        for (var purchaseDoc in purchaseDocs) {
+          final purchaseData = purchaseDoc.data() as Map<dynamic, dynamic>;
+          String productID = purchaseData[PurchaseFields.productID];
+          purchaseStatus = purchaseData[PurchaseFields.purchaseStatus];
+          productDocs.add(await getThisProductDoc(productID));
+        }
       }
+
       setState(() {
         _isLoading = false;
       });
@@ -76,7 +79,7 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
   Widget build(BuildContext context) {
     return Container(
       width: MediaQuery.of(context).size.width * 0.3,
-      height: 240,
+      height: 275,
       decoration: BoxDecoration(
           color: CustomColors.ultimateGray,
           borderRadius: BorderRadius.circular(10)),
@@ -99,20 +102,20 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.15,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        montserratWhiteBold('Buyer: $clientName',
-            fontSize: 24,
+        whiteSarabunBold('Buyer: $clientName',
+            fontSize: 22,
             textOverflow: TextOverflow.ellipsis,
             textAlign: TextAlign.left),
         if (dateCreated != null)
-          montserratWhiteBold(
+          whiteSarabunBold(
               'Date Created: ${DateFormat('MMM dd, yyyy').format(dateCreated!)}',
               fontSize: 16,
               textAlign: TextAlign.left),
-        montserratWhiteRegular(
-            'Total Payment: PHP ${formatPrice(paidAmount.toDouble())}',
+        whiteSarabunRegular(
+            'Total Payment:\n\t\tPHP ${formatPrice(paidAmount.toDouble())}',
             fontSize: 16,
             textAlign: TextAlign.left),
-        montserratWhiteRegular('Payment Status: $paymentStatus',
+        whiteSarabunRegular('Payment Status:\n\t\t$paymentStatus',
             fontSize: 16, textAlign: TextAlign.left),
         Gap(20),
         dynamicButton()
@@ -122,15 +125,15 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
 
   Widget dynamicButton() {
     if (purchaseStatus == PurchaseStatuses.pending)
-      return montserratBlackRegular('PENDING PAYMENT APPROVAL');
+      return blackSarabunRegular('PENDING PAYMENT APPROVAL');
     else if (purchaseStatus == PurchaseStatuses.denied)
-      return montserratBlackRegular('PAYMENT DENIED');
+      return blackSarabunRegular('PAYMENT DENIED');
     else if (purchaseStatus == PurchaseStatuses.processing)
       return ElevatedButton(
           onPressed: () => markPurchasesAsReadyForPickUp(context, widget.ref,
               purchaseIDs: purchaseDocs.map((e) => e.id).toList()),
-          child: montserratWhiteRegular('MARK AS READY FOR PICK UP',
-              fontSize: 12));
+          child:
+              whiteSarabunRegular('MARK AS READY FOR PICK UP', fontSize: 12));
     else if (purchaseStatus == PurchaseStatuses.forPickUp)
       return _markAsPickedUpButton();
     else if (purchaseStatus == PurchaseStatuses.pickedUp)
@@ -176,7 +179,7 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
               paymentID: widget.productPaymentDoc.id,
               pdfBytes: savedPDF);
         },
-        child: montserratWhiteRegular('MARK AS PICKED UP', fontSize: 12));
+        child: whiteSarabunRegular('MARK AS PICKED UP', fontSize: 12));
   }
 
   Widget _downloadInvoiceFutureBuilder() {
@@ -190,7 +193,7 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
         String invoiceURL = paymentData[PaymentFields.invoiceURL];
         return ElevatedButton(
             onPressed: () async => launchThisURL(context, invoiceURL),
-            child: montserratWhiteRegular('COMPLETED (Download Invoice)',
+            child: whiteSarabunRegular('COMPLETED (Download Invoice)',
                 fontSize: 12));
       },
     );
@@ -198,12 +201,11 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
 
   Widget _purchasesContainer() {
     return SizedBox(
-      width: MediaQuery.of(context).size.width * 0.13,
+      width: MediaQuery.of(context).size.width * 0.12,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          montserratWhiteBold('PRODUCTS',
-              fontSize: 24, textAlign: TextAlign.left),
+          whiteSarabunBold('PRODUCTS', fontSize: 22, textAlign: TextAlign.left),
           Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: purchaseDocs
@@ -213,7 +215,7 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
           if (purchaseDocs.length > 2)
             TextButton(
                 onPressed: () {},
-                child: montserratWhiteRegular(
+                child: whiteSarabunRegular(
                   'VIEW ALL',
                   fontSize: 16,
                   decoration: TextDecoration.underline,
@@ -254,12 +256,12 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      montserratWhiteBold(name,
-                          fontSize: 16, textOverflow: TextOverflow.ellipsis),
-                      montserratWhiteRegular('Quanitity: $quantity',
+                      whiteSarabunBold(name,
+                          fontSize: 14, textOverflow: TextOverflow.ellipsis),
+                      whiteSarabunRegular('Quanitity: $quantity',
                           fontSize: 12, textAlign: TextAlign.left),
-                      montserratWhiteRegular(
-                          'SRP: PHP ${formatPrice(price.toDouble())}',
+                      whiteSarabunRegular(
+                          'PHP ${formatPrice(price.toDouble())}',
                           fontSize: 12,
                           textAlign: TextAlign.left),
                     ]),

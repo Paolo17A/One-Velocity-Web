@@ -8,6 +8,7 @@ import 'package:one_velocity_web/widgets/text_widgets.dart';
 
 import '../providers/loading_provider.dart';
 import '../providers/pages_provider.dart';
+import '../utils/color_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
@@ -69,17 +70,10 @@ class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
             child: Column(
               children: [
                 secondAppBar(context),
-                horizontal5Percent(
-                  context,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      servicesHeader(),
-                      _servicesCategoryWidget(),
-                      _availableServices()
-                    ],
-                  ),
-                ),
+                servicesHeader(),
+                _servicesCategoryWidget(),
+                _availableServices(),
+                footerWidget(context)
               ],
             ),
           )),
@@ -87,35 +81,50 @@ class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
   }
 
   Widget servicesHeader() {
-    return Row(children: [
-      montserratBlackBold(
-          '${selectedCategory == 'VIEW ALL' ? 'ALL AVAILABLE SERVICES' : '$selectedCategory SERVICES'}',
-          fontSize: 40)
-    ]);
+    return blackSarabunBold(
+        '${selectedCategory == 'VIEW ALL' ? 'ALL SERVICES' : '$selectedCategory SERVICES'}',
+        fontSize: 40);
   }
 
   Widget _servicesCategoryWidget() {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.6,
+      width: MediaQuery.of(context).size.width * 0.3,
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(5)),
-      child: dropdownWidget(selectedCategory, (newVal) {
-        setState(() {
-          selectedCategory = newVal!;
-          print(selectedCategory);
-          if (selectedCategory == 'VIEW ALL') {
-            filteredServiceDocs = allServiceDocs;
-          } else {
-            filteredServiceDocs = allServiceDocs.where((serviceDoc) {
-              final serviceData = serviceDoc.data() as Map<dynamic, dynamic>;
-              return serviceData[ServiceFields.category] == selectedCategory;
-            }).toList();
-          }
-        });
-      },
-          ['VIEW ALL', ServiceCategories.paintJob, ServiceCategories.repair],
-          selectedCategory.isNotEmpty ? selectedCategory : 'Select a category',
-          false),
+      child: Column(
+        children: [
+          dropdownWidget(selectedCategory, (newVal) {
+            setState(() {
+              selectedCategory = newVal!;
+              print(selectedCategory);
+              if (selectedCategory == 'VIEW ALL') {
+                filteredServiceDocs = allServiceDocs;
+              } else {
+                filteredServiceDocs = allServiceDocs.where((serviceDoc) {
+                  final serviceData =
+                      serviceDoc.data() as Map<dynamic, dynamic>;
+                  return serviceData[ServiceFields.category] ==
+                      selectedCategory;
+                }).toList();
+              }
+            });
+          },
+              [
+                'VIEW ALL',
+                ServiceCategories.paintJob,
+                ServiceCategories.repair
+              ],
+              selectedCategory.isNotEmpty
+                  ? selectedCategory
+                  : 'Select a category',
+              false),
+          vertical10Pix(
+              child: Container(
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  height: 8,
+                  color: CustomColors.crimson))
+        ],
+      ),
     );
   }
 
@@ -133,8 +142,8 @@ class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
                     alignment: currentPage == maxPage
                         ? WrapAlignment.start
                         : WrapAlignment.spaceEvenly,
-                    spacing: 10,
-                    runSpacing: 10,
+                    spacing: 100,
+                    runSpacing: 100,
                     children: servicesSublist.asMap().entries.map((item) {
                       DocumentSnapshot thisService =
                           allServiceDocs[item.key + ((currentPage - 1) * 20)];
@@ -146,7 +155,7 @@ class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
                                     PathParameters.serviceID: thisService.id
                                   }));
                     }).toList())
-                : montserratBlackBold('NO SERVICES AVAILABLE', fontSize: 44)),
+                : blackSarabunBold('NO SERVICES AVAILABLE', fontSize: 44)),
         if (allServiceDocs.length > 20)
           navigatorButtons(context,
               pageNumber: currentPage,

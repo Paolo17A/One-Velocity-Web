@@ -1,3 +1,4 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,6 +43,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<DocumentSnapshot> batteryProductDocs = [];
   List<DocumentSnapshot> serviceDocs = [];
   List<DocumentSnapshot> paymentDocs = [];
+
+  CarouselSliderController wheelsController = CarouselSliderController();
+  CarouselSliderController batteryController = CarouselSliderController();
+  CarouselSliderController allProductsController = CarouselSliderController();
+  CarouselSliderController allServicesController = CarouselSliderController();
 
   @override
   void initState() {
@@ -125,191 +131,95 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Column(
         children: [
           secondAppBar(context),
+          landingWidget(),
           if (wheelProductDocs.isNotEmpty) _wheelProducts(),
           if (batteryProductDocs.isNotEmpty) _batteryProducts(),
-          _allProducts(),
-          _allServices()
+          if (productDocs.isNotEmpty) _allProducts(),
+          if (serviceDocs.isNotEmpty) _allServices(),
+          footerWidget(context)
         ],
       ),
     );
   }
 
-  Widget _batteryProducts() {
-    batteryProductDocs.shuffle();
+  Widget landingWidget() {
     return Container(
-      decoration:
-          BoxDecoration(border: Border.all(color: CustomColors.ultimateGray)),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          int maxItemsToDisplay = (constraints.maxWidth / 275).floor();
-          return Column(
-            children: [
-              Row(children: [
-                all20Pix(child: montserratBlackBold('BATTERIES', fontSize: 25))
-              ]),
-              Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: batteryProductDocs.isNotEmpty
-                      ? MainAxisAlignment.start
-                      : MainAxisAlignment.center,
-                  children: batteryProductDocs
-                      .take(maxItemsToDisplay)
-                      .toList()
-                      .map((item) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: itemEntry(context,
-                                itemDoc: item,
-                                onPress: () => GoRouter.of(context).goNamed(
-                                        GoRoutes.selectedProduct,
-                                        pathParameters: {
-                                          PathParameters.productID: item.id
-                                        }),
-                                fontColor: Colors.white),
-                          ))
-                      .toList()),
-              const Gap(10),
-            ],
-          );
-        },
+      width: double.infinity,
+      height: 600,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+            image: AssetImage(ImagePaths.landing), fit: BoxFit.fill),
       ),
     );
   }
 
   Widget _wheelProducts() {
     wheelProductDocs.shuffle();
-    return Container(
-      decoration:
-          BoxDecoration(border: Border.all(color: CustomColors.ultimateGray)),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          int maxItemsToDisplay = (constraints.maxWidth / 275).floor();
-          return Column(
-            children: [
-              Row(children: [
-                all20Pix(child: montserratBlackBold('WHEELS', fontSize: 25))
-              ]),
-              Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: wheelProductDocs.isNotEmpty
-                      ? MainAxisAlignment.start
-                      : MainAxisAlignment.center,
-                  children: wheelProductDocs
-                      .take(maxItemsToDisplay)
-                      .toList()
-                      .map((item) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: itemEntry(context,
-                                itemDoc: item,
-                                onPress: () => GoRouter.of(context).goNamed(
-                                        GoRoutes.selectedProduct,
-                                        pathParameters: {
-                                          PathParameters.productID: item.id
-                                        }),
-                                fontColor: Colors.white),
-                          ))
-                      .toList()),
-              const Gap(10),
-            ],
-          );
-        },
-      ),
-    );
+    return itemCarouselTemplate(context,
+        label: 'Wheels',
+        carouselSliderController: wheelsController,
+        itemDocs: wheelProductDocs);
+  }
+
+  Widget _batteryProducts() {
+    batteryProductDocs.shuffle();
+    return itemCarouselTemplate(context,
+        label: 'Batteries',
+        carouselSliderController: batteryController,
+        itemDocs: batteryProductDocs);
   }
 
   Widget _allProducts() {
     productDocs.shuffle();
-    return Container(
-      decoration:
-          BoxDecoration(border: Border.all(color: CustomColors.ultimateGray)),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          int maxItemsToDisplay = (constraints.maxWidth / 275).floor();
-          return Column(
-            children: [
-              Row(children: [
-                all20Pix(
-                    child: montserratBlackBold('ALL PRODUCTS', fontSize: 25))
-              ]),
-              Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: productDocs.isNotEmpty
-                      ? MainAxisAlignment.start
-                      : MainAxisAlignment.center,
-                  children: productDocs.isNotEmpty
-                      ? productDocs
-                          .take(maxItemsToDisplay)
-                          .toList()
-                          .map((item) => Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                child: itemEntry(context,
-                                    itemDoc: item,
-                                    onPress: () => GoRouter.of(context).goNamed(
-                                            GoRoutes.selectedProduct,
-                                            pathParameters: {
-                                              PathParameters.productID: item.id
-                                            }),
-                                    fontColor: Colors.white),
-                              ))
-                          .toList()
-                      : [
-                          Center(
-                              child: montserratBlackBold(
-                                  'NO AVAILABLE PRODUCTS TO DISPLAY'))
-                        ]),
-              const Gap(10),
-            ],
-          );
-        },
-      ),
-    );
+    return itemCarouselTemplate(context,
+        label: 'All Products',
+        carouselSliderController: allProductsController,
+        itemDocs: productDocs);
   }
 
   Widget _allServices() {
     serviceDocs.shuffle();
-    return Container(
-      decoration:
-          BoxDecoration(border: Border.all(color: CustomColors.blackBeauty)),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          int maxItemsToDisplay = (constraints.maxWidth / 275).floor();
-          return Column(
-            children: [
-              Row(children: [
-                all20Pix(
-                    child: montserratBlackBold('TOP SERVICES', fontSize: 25))
-              ]),
-              Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: serviceDocs.isNotEmpty
-                      ? MainAxisAlignment.start
-                      : MainAxisAlignment.center,
-                  children: serviceDocs.isNotEmpty
-                      ? serviceDocs
-                          .take(maxItemsToDisplay)
-                          .toList()
-                          .map((item) => Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                child: itemEntry(context,
-                                    itemDoc: item,
-                                    onPress: () => GoRouter.of(context).goNamed(
-                                            GoRoutes.selectedService,
-                                            pathParameters: {
-                                              PathParameters.serviceID: item.id
-                                            }),
-                                    fontColor: Colors.white),
-                              ))
-                          .toList()
-                      : [
-                          montserratBlackBold(
-                              'NO AVAILABLE SERVICES TO DISPLAY')
-                        ]),
-              const Gap(10),
-            ],
-          );
-        },
-      ),
+    return vertical20Pix(
+      child: Container(
+          width: MediaQuery.of(context).size.width,
+          padding: const EdgeInsets.all(10),
+          child: Column(children: [
+            blackSarabunBold("All Services", fontSize: 32),
+            Container(width: 220, height: 8, color: CustomColors.crimson),
+            Gap(10),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              IconButton(
+                  onPressed: () => allServicesController.previousPage(),
+                  icon: blackSarabunRegular('<', fontSize: 60)),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: 400,
+                child: CarouselSlider.builder(
+                  carouselController: allServicesController,
+                  itemCount: serviceDocs.length,
+                  disableGesture: true,
+                  options: CarouselOptions(
+                      viewportFraction: 0.4,
+                      enlargeCenterPage: true,
+                      scrollPhysics: NeverScrollableScrollPhysics(),
+                      enlargeFactor: 0.5),
+                  itemBuilder: (context, index, realIndex) {
+                    return itemEntry(context,
+                        itemDoc: serviceDocs[index],
+                        onPress: () => GoRouter.of(context).goNamed(
+                                GoRoutes.selectedService,
+                                pathParameters: {
+                                  PathParameters.serviceID:
+                                      serviceDocs[index].id
+                                }));
+                  },
+                ),
+              ),
+              IconButton(
+                  onPressed: () => allServicesController.nextPage(),
+                  icon: blackSarabunRegular('>', fontSize: 60)),
+            ])
+          ])),
     );
   }
 
@@ -351,18 +261,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           width: MediaQuery.of(context).size.width * 0.8,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: CustomColors.blackBeauty,
-          ),
+              borderRadius: BorderRadius.circular(20),
+              color: CustomColors.nimbusCloud,
+              boxShadow: [
+                BoxShadow(offset: Offset(4, 4), blurRadius: 4, spreadRadius: -4)
+              ]),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            montserratWhiteBold(
+            blackSarabunRegular(
                 'OVERALL TOTAL SALES: PHP ${formatPrice(totalSales.toDouble())}',
                 fontSize: 30),
-            montserratWhiteBold(
+            blackSarabunRegular(
                 'Best Selling Product: ${bestSellerName.isNotEmpty ? bestSellerName : 'N/A'}',
                 fontSize: 18),
-            montserratWhiteBold(
+            blackSarabunRegular(
                 'Best Selling Service: ${topRatedName.isNotEmpty ? topRatedName : 'N/A'}',
                 fontSize: 18)
           ])),
@@ -373,13 +285,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return vertical20Pix(
       child: Container(
         width: MediaQuery.of(context).size.width * 0.8,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: CustomColors.ultimateGray,
-        ),
         child: Wrap(
-          spacing: MediaQuery.of(context).size.width * 0.01,
-          runSpacing: MediaQuery.of(context).size.height * 0.01,
+          spacing: 50,
+          runSpacing: 50,
           alignment: WrapAlignment.spaceEvenly,
           runAlignment: WrapAlignment.spaceEvenly,
           children: [
@@ -416,7 +324,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return breakdownContainer(context,
         child: Column(
           children: [
-            montserratBlackBold('PAYMENT STATUSES'),
+            blackSarabunBold('PAYMENT STATUSES'),
             PieChart(
                 dataMap: paymentBreakdown,
                 colorList: [

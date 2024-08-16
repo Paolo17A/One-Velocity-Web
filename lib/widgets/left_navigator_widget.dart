@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
 import '../utils/color_util.dart';
@@ -12,7 +11,7 @@ Widget leftNavigator(BuildContext context, {required String path}) {
   return Container(
     width: MediaQuery.of(context).size.width * 0.2,
     height: MediaQuery.of(context).size.height - 60,
-    color: CustomColors.ultimateGray,
+    color: CustomColors.crimson,
     child: Column(
       children: [
         Flexible(
@@ -69,78 +68,72 @@ Widget leftNavigator(BuildContext context, {required String path}) {
 }
 
 Widget clientProfileNavigator(BuildContext context, {required String path}) {
-  return SizedBox(
+  return Container(
     width: MediaQuery.of(context).size.width * 0.2,
     height: MediaQuery.of(context).size.height - 60,
-    child: SingleChildScrollView(
-      child: all20Pix(
-        child: Column(
-          children: [
-            const Gap(12),
-            ListTile(
-                tileColor:
-                    path == GoRoutes.profile ? CustomColors.blackBeauty : null,
+    color: CustomColors.crimson,
+    child: all20Pix(
+        child: ListView(
+            shrinkWrap: false,
+            physics: NeverScrollableScrollPhysics(),
+            children: [
+          Container(
+            color: path == GoRoutes.profile
+                ? CustomColors.grenadine
+                : CustomColors.crimson,
+            child: ListTile(
                 title: Text('ACCOUNT SETTINGS',
-                    style: TextStyle(
-                        color: path == GoRoutes.profile
-                            ? Colors.white
-                            : Colors.black)),
+                    style: TextStyle(color: Colors.white)),
                 onTap: () => GoRouter.of(context).goNamed(GoRoutes.profile)),
-            ListTile(
-                tileColor: path == GoRoutes.bookmarks
-                    ? CustomColors.blackBeauty
-                    : null,
-                title: Text('BOOKMARKS',
-                    style: TextStyle(
-                        color: path == GoRoutes.bookmarks
-                            ? Colors.white
-                            : Colors.black)),
+          ),
+          Container(
+            color: path == GoRoutes.bookmarks
+                ? CustomColors.grenadine
+                : CustomColors.crimson,
+            child: ListTile(
+                title: Text('BOOKMARKS', style: TextStyle(color: Colors.white)),
                 onTap: () => GoRouter.of(context).goNamed(GoRoutes.bookmarks)),
-            ListTile(
-                tileColor: path == GoRoutes.purchaseHistory
-                    ? CustomColors.blackBeauty
-                    : null,
+          ),
+          Container(
+            color: path == GoRoutes.purchaseHistory
+                ? CustomColors.grenadine
+                : CustomColors.crimson,
+            child: ListTile(
                 title: Text('PRODUCT PURCHASE HISTORY',
-                    style: TextStyle(
-                        color: path == GoRoutes.purchaseHistory
-                            ? Colors.white
-                            : Colors.black)),
+                    style: TextStyle(color: Colors.white)),
                 onTap: () =>
                     GoRouter.of(context).goNamed(GoRoutes.purchaseHistory)),
-            ListTile(
-                tileColor: path == GoRoutes.bookingsHistory
-                    ? CustomColors.blackBeauty
-                    : null,
+          ),
+          Container(
+            color: path == GoRoutes.bookingsHistory
+                ? CustomColors.grenadine
+                : CustomColors.crimson,
+            child: ListTile(
                 title: Text('SERVICE BOOKING HISTORY',
-                    style: TextStyle(
-                        color: path == GoRoutes.bookingsHistory
-                            ? Colors.white
-                            : Colors.black)),
+                    style: TextStyle(color: Colors.white)),
                 onTap: () =>
-                    GoRouter.of(context).goNamed(GoRoutes.purchaseHistory)),
-            ListTile(
-                tileColor: path == 3 ? CustomColors.blackBeauty : null,
-                title: Text('CHANGE PASSWORD',
-                    style: TextStyle(
-                        color: path == 3 ? Colors.white : Colors.black)),
-                onTap: () {}),
-            ListTile(
-                title:
-                    Text('LOG-OUT', style: const TextStyle(color: Colors.red)),
-                onTap: () {
-                  displayDeleteEntryDialog(context,
-                      message: 'Are you sure you want to log-out?',
-                      deleteWord: 'Log-Out',
-                      deleteEntry: () =>
-                          FirebaseAuth.instance.signOut().then((value) {
-                            GoRouter.of(context).goNamed(GoRoutes.home);
-                            GoRouter.of(context).pushNamed(GoRoutes.home);
-                          }));
-                })
-          ],
-        ),
-      ),
-    ),
+                    GoRouter.of(context).goNamed(GoRoutes.bookingsHistory)),
+          ),
+          /*ListTile(
+              tileColor:  path == GoRoutes.  ? CustomColors.grenadine
+                  : CustomColors.crimson,
+              title: Text('CHANGE PASSWORD',
+                  style: TextStyle(color: Colors.white)),
+              onTap: () {}),*/
+          ListTile(
+              tileColor: CustomColors.crimson,
+              title: Text('LOG-OUT', style: const TextStyle(color: Colors.red)),
+              onTap: () {
+                displayDeleteEntryDialog(context,
+                    message: 'Are you sure you want to log-out?',
+                    deleteWord: 'Log-Out',
+                    deleteEntry: () =>
+                        FirebaseAuth.instance.signOut().then((value) {
+                          GoRouter.of(context).goNamed(GoRoutes.home);
+                          GoRouter.of(context).pushNamed(GoRoutes.home);
+                        }));
+              })
+        ])),
   );
 }
 
@@ -150,7 +143,7 @@ Widget listTile(BuildContext context,
     required String currentPath}) {
   return Container(
       decoration: BoxDecoration(
-          color: thisPath == currentPath ? CustomColors.blackBeauty : null),
+          color: thisPath == currentPath ? CustomColors.grenadine : null),
       child: ListTile(
           title: Text(label,
               style: const TextStyle(

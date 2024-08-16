@@ -5,7 +5,6 @@ import 'package:one_velocity_web/widgets/text_widgets.dart';
 
 import '../providers/bookings_provider.dart';
 import '../providers/loading_provider.dart';
-import '../utils/color_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
@@ -88,31 +87,20 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
       context,
       child: vertical20Pix(
         child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-              color: CustomColors.ultimateGray,
-              borderRadius: BorderRadius.circular(10)),
           padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              montserratWhiteBold('SERVICE BOOKING HISTORY', fontSize: 28),
-              const Divider(color: Colors.white),
-              ref.read(bookingsProvider).bookingDocs.isNotEmpty
-                  ? ListView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: ref.read(bookingsProvider).bookingDocs.length,
-                      itemBuilder: (context, index) {
-                        return bookingHistoryEntry(
-                            ref.read(bookingsProvider).bookingDocs[index]);
-                      })
-                  : Center(
-                      child: montserratWhiteBold(
-                          'NO SERVICE BOOKING HISTORY AVAILABLE'),
-                    )
-            ],
-          ),
+          child: ref.read(bookingsProvider).bookingDocs.isNotEmpty
+              ? ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: ref.read(bookingsProvider).bookingDocs.length,
+                  itemBuilder: (context, index) {
+                    return bookingHistoryEntry(
+                        ref.read(bookingsProvider).bookingDocs[index]);
+                  })
+              : Center(
+                  child:
+                      whiteSarabunBold('NO SERVICE BOOKING HISTORY AVAILABLE'),
+                ),
         ),
       ),
     );

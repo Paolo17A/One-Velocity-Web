@@ -93,7 +93,7 @@ class _ViewFAQsScreenState extends ConsumerState<ViewFAQsScreen> {
       child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
         ElevatedButton(
             onPressed: () => GoRouter.of(context).goNamed(GoRoutes.addFAQ),
-            child: montserratWhiteBold('ADD FAQ'))
+            child: whiteSarabunBold('ADD FAQ'))
       ]),
     );
   }
@@ -114,9 +114,11 @@ class _ViewFAQsScreenState extends ConsumerState<ViewFAQsScreen> {
 
   Widget _faqLabelRow() {
     return viewContentLabelRow(context, children: [
-      viewFlexLabelTextCell('Question', 2),
+      viewFlexLabelTextCell('Question', 2,
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(20))),
       viewFlexLabelTextCell('Answer', 4),
-      viewFlexLabelTextCell('Actions', 2)
+      viewFlexLabelTextCell('Actions', 2,
+          borderRadius: BorderRadius.only(topRight: Radius.circular(20)))
     ]);
   }
 

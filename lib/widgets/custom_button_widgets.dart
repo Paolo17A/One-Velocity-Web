@@ -28,7 +28,7 @@ Widget backButton(BuildContext context, {required Function onPress}) {
       style: ElevatedButton.styleFrom(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-      child: montserratWhiteBold('BACK'));
+      child: whiteSarabunBold('BACK'));
 }
 
 Widget viewEntryButton(BuildContext context, {required Function onPress}) {
@@ -37,7 +37,7 @@ Widget viewEntryButton(BuildContext context, {required Function onPress}) {
         onPress();
       },
       style: ElevatedButton.styleFrom(backgroundColor: CustomColors.grenadine),
-      child: const Icon(Icons.visibility, color: Colors.white));
+      child: const Icon(Icons.visibility, color: Colors.black));
 }
 
 Widget editEntryButton(BuildContext context, {required Function onPress}) {
@@ -46,7 +46,7 @@ Widget editEntryButton(BuildContext context, {required Function onPress}) {
         onPress();
       },
       style: ElevatedButton.styleFrom(backgroundColor: CustomColors.grenadine),
-      child: const Icon(Icons.edit, color: Colors.white));
+      child: const Icon(Icons.edit, color: Colors.black));
 }
 
 Widget restoreEntryButton(BuildContext context, {required Function onPress}) {
@@ -55,7 +55,7 @@ Widget restoreEntryButton(BuildContext context, {required Function onPress}) {
         onPress();
       },
       style: ElevatedButton.styleFrom(backgroundColor: CustomColors.grenadine),
-      child: const Icon(Icons.restore, color: Colors.white));
+      child: const Icon(Icons.restore, color: Colors.black));
 }
 
 Widget deleteEntryButton(BuildContext context, {required Function onPress}) {
@@ -64,7 +64,7 @@ Widget deleteEntryButton(BuildContext context, {required Function onPress}) {
         onPress();
       },
       style: ElevatedButton.styleFrom(backgroundColor: CustomColors.grenadine),
-      child: const Icon(Icons.delete, color: Colors.white));
+      child: const Icon(Icons.delete, color: Colors.black));
 }
 
 Widget uploadImageButton(String label, Function selectImage) {
@@ -74,7 +74,7 @@ Widget uploadImageButton(String label, Function selectImage) {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
       child: Padding(
-          padding: const EdgeInsets.all(7), child: montserratWhiteBold(label)));
+          padding: const EdgeInsets.all(7), child: whiteSarabunBold(label)));
 }
 
 Widget navigatorButtons(BuildContext context,
@@ -129,5 +129,5 @@ Widget logOutButton(BuildContext context) {
             });
           },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-          child: montserratWhiteBold('LOG-OUT')));
+          child: whiteSarabunBold('LOG-OUT')));
 }

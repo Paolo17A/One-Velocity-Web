@@ -54,7 +54,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
   }
 
   Widget _faqHeader() {
-    return montserratBlackBold('FREQUENTLY ASKED QUESTIONS', fontSize: 40);
+    return blackSarabunBold('FREQUENTLY ASKED QUESTIONS', fontSize: 40);
   }
 
   Widget _faqEntries() {
@@ -68,7 +68,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                   return _faqEntry(allFAQs[index]);
                 }),
           )
-        : montserratBlackBold('NO FAQS AVAILABLE', fontSize: 30);
+        : blackSarabunBold('NO FAQS AVAILABLE', fontSize: 30);
   }
 
   Widget _faqEntry(DocumentSnapshot faqDoc) {
@@ -84,8 +84,8 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
       collapsedShape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: montserratWhiteBold(question, fontSize: 27),
-      children: [vertical20Pix(child: montserratWhiteBold(answer))],
+      title: whiteSarabunBold(question, fontSize: 27),
+      children: [vertical20Pix(child: whiteSarabunBold(answer))],
     ));
   }
 }

@@ -3,7 +3,7 @@ import 'package:one_velocity_web/utils/color_util.dart';
 
 ThemeData themeData = ThemeData(
     colorSchemeSeed: CustomColors.grenadine,
-    scaffoldBackgroundColor: CustomColors.nimbusCloud,
+    scaffoldBackgroundColor: Colors.white,
     appBarTheme: const AppBarTheme(
         centerTitle: false,
         backgroundColor: CustomColors.blackBeauty,

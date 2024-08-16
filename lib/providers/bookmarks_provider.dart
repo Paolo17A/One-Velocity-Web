@@ -19,6 +19,21 @@ class BookMarksNotifier extends ChangeNotifier {
     bookmarkedProducts.remove(product);
     notifyListeners();
   }
+
+  void setBookmarkedServices(List<dynamic> services) {
+    bookmarkedServices = services;
+    notifyListeners();
+  }
+
+  void addServiceToBookmarks(dynamic service) {
+    bookmarkedServices.add(service);
+    notifyListeners();
+  }
+
+  void removeServiceFromBookmarks(dynamic service) {
+    bookmarkedServices.remove(service);
+    notifyListeners();
+  }
 }
 
 final bookmarksProvider =

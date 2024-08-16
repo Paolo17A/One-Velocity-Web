@@ -48,7 +48,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           child: Column(
             children: [
               vertical20Pix(
-                  child: montserratBlackBold('RESET PASSWORD', fontSize: 40)),
+                  child: blackSarabunBold('RESET PASSWORD', fontSize: 40)),
               Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: CustomTextField(

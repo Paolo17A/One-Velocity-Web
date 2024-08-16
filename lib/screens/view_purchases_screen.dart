@@ -70,7 +70,7 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            montserratBlackBold('PURCHASES', fontSize: 40),
+                            blackSarabunBold('PURCHASES', fontSize: 40),
                             _paymentsContainer(),
                           ],
                         )),

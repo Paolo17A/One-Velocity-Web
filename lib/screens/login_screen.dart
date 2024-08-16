@@ -49,10 +49,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _logInContainer() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
-      child: roundedWhiteContainer(context,
+      child: roundedNimbusContainer(context,
           child: Column(
             children: [
-              vertical20Pix(child: montserratBlackBold('LOG-IN', fontSize: 40)),
+              vertical20Pix(child: blackSarabunBold('LOG-IN', fontSize: 40)),
               CustomTextField(
                   text: 'Email Address',
                   controller: emailController,
@@ -77,23 +77,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               TextButton(
                   onPressed: () =>
                       GoRouter.of(context).goNamed(GoRoutes.forgotPassword),
-                  child: montserratBlackBold('Forgot Password?',
-                      fontSize: 16, textDecoration: TextDecoration.underline)),
+                  child: blackSarabunBold('Forgot Password?',
+                      fontSize: 16, decoration: TextDecoration.underline)),
               TextButton(
                   onPressed: () =>
                       GoRouter.of(context).goNamed(GoRoutes.register),
-                  child: montserratBlackBold('Don\'t have an account?',
-                      fontSize: 16, textDecoration: TextDecoration.underline))
+                  child: blackSarabunBold('Don\'t have an account?',
+                      fontSize: 16, decoration: TextDecoration.underline))
             ],
           )),
     );
   }
 
-  Widget roundedWhiteContainer(BuildContext context, {required Widget child}) {
+  Widget roundedNimbusContainer(BuildContext context, {required Widget child}) {
     return Container(
         width: MediaQuery.of(context).size.width * 0.5,
         decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20), color: Colors.white),
+            borderRadius: BorderRadius.circular(20),
+            color: CustomColors.nimbusCloud),
         padding: const EdgeInsets.all(20),
         child: child);
   }

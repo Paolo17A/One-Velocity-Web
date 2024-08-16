@@ -7,7 +7,6 @@ import 'package:one_velocity_web/widgets/text_widgets.dart';
 
 import '../providers/bookings_provider.dart';
 import '../providers/loading_provider.dart';
-import '../utils/color_util.dart';
 import '../utils/delete_entry_dialog_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
@@ -69,8 +68,8 @@ class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             vertical20Pix(
-                                child: montserratBlackBold('BOOKINGS',
-                                    fontSize: 40)),
+                                child:
+                                    blackSarabunBold('BOOKINGS', fontSize: 40)),
                             _bookingsContainer(),
                           ],
                         )),
@@ -96,11 +95,13 @@ class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
 
   Widget _bookingLabelRow() {
     return viewContentLabelRow(context, children: [
-      viewFlexLabelTextCell('Buyer', 3),
+      viewFlexLabelTextCell('Buyer', 3,
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(20))),
       viewFlexLabelTextCell('Service', 3),
       viewFlexLabelTextCell('Date Created', 2),
       viewFlexLabelTextCell('Date Requested', 2),
-      viewFlexLabelTextCell('Status', 2)
+      viewFlexLabelTextCell('Status', 2,
+          borderRadius: BorderRadius.only(topRight: Radius.circular(20)))
     ]);
   }
 
@@ -148,9 +149,7 @@ class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
                 String name = serviceData[ServiceFields.name];
 
                 Color entryColor = Colors.black;
-                Color backgroundColor = index % 2 == 0
-                    ? CustomColors.ultimateGray.withOpacity(0.5)
-                    : CustomColors.nimbusCloud;
+                Color backgroundColor = Colors.white;
 
                 return viewContentEntryRow(context, children: [
                   viewFlexTextCell(formattedName,
@@ -195,12 +194,12 @@ class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
                           serviceStatus == ServiceStatuses.pendingPayment ||
                           serviceStatus == ServiceStatuses.processingPayment ||
                           serviceStatus == ServiceStatuses.serviceCompleted)
-                        montserratBlackBold(serviceStatus, fontSize: 12)
+                        blackSarabunBold(serviceStatus, fontSize: 12)
                       else if (serviceStatus == ServiceStatuses.pendingDropOff)
                         ElevatedButton(
                             onPressed: () => markBookingRequestAsServiceOngoing(
                                 context, ref, bookingID: bookingDoc.id),
-                            child: montserratWhiteBold('MARK AS DROPPED OFF',
+                            child: whiteSarabunBold('MARK AS DROPPED OFF',
                                 fontSize: 12))
                       else if (serviceStatus == ServiceStatuses.serviceOngoing)
                         ElevatedButton(
@@ -209,13 +208,13 @@ class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
                                 bookingID: bookingDoc.id,
                                 serviceName: name,
                                 mobileNumber: mobileNumber),
-                            child: montserratWhiteBold('MARK AS FOR PICK UP',
+                            child: whiteSarabunBold('MARK AS FOR PICK UP',
                                 fontSize: 12))
                       else if (serviceStatus == ServiceStatuses.pendingPickUp)
                         ElevatedButton(
                             onPressed: () => markBookingRequestAsCompleted(
                                 context, ref, bookingID: bookingDoc.id),
-                            child: montserratWhiteBold('MARK AS PICKED UP',
+                            child: whiteSarabunBold('MARK AS PICKED UP',
                                 fontSize: 12))
                     ],
                     flex: 2,

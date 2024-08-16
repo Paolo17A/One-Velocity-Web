@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:one_velocity_web/utils/color_util.dart';
 import 'package:one_velocity_web/utils/string_util.dart';
 import 'package:one_velocity_web/widgets/custom_padding_widgets.dart';
 import 'package:one_velocity_web/widgets/text_widgets.dart';
@@ -13,6 +14,7 @@ PreferredSizeWidget appBarWidget(BuildContext context,
   return AppBar(
       toolbarHeight: 60,
       automaticallyImplyLeading: false,
+      backgroundColor: Colors.white,
       title: InkWell(
         onTap: () {
           GoRouter.of(context).goNamed(GoRoutes.home);
@@ -24,8 +26,12 @@ PreferredSizeWidget appBarWidget(BuildContext context,
                 backgroundColor: Colors.transparent,
                 backgroundImage: AssetImage(ImagePaths.logo)),
             horizontal20Pix(
-                child: montserratWhiteBold('ONE VELOCITY CAR CARE INC.',
-                    fontSize: 24))
+                child: Row(
+              children: [
+                grenadineSarabunRegular('ONE\t '),
+                blackSarabunRegular('VELOCITY CAR CARE INC.')
+              ],
+            ))
           ],
         ),
       ),
@@ -35,28 +41,14 @@ PreferredSizeWidget appBarWidget(BuildContext context,
                 IconButton(
                     onPressed: () =>
                         GoRouter.of(context).goNamed(GoRoutes.bookingsHistory),
-                    icon: const Icon(Icons.receipt, color: Colors.white)),
+                    icon: const Icon(Icons.receipt,
+                        color: CustomColors.ultimateGray)),
               if (hasLoggedInUser())
                 IconButton(
                     onPressed: () =>
                         GoRouter.of(context).goNamed(GoRoutes.cart),
                     icon: const Icon(Icons.shopping_cart_rounded,
-                        color: Colors.white)),
-              if (hasLoggedInUser())
-                TextButton(
-                    onPressed: () =>
-                        GoRouter.of(context).goNamed(GoRoutes.profile),
-                    child: montserratWhiteBold('PROFILE')),
-              if (!hasLoggedInUser())
-                TextButton(
-                    onPressed: () =>
-                        GoRouter.of(context).goNamed(GoRoutes.register),
-                    child: montserratWhiteBold('SIGN-UP')),
-              if (!hasLoggedInUser())
-                TextButton(
-                    onPressed: () =>
-                        GoRouter.of(context).goNamed(GoRoutes.login),
-                    child: montserratWhiteBold('LOG-IN')),
+                        color: CustomColors.ultimateGray)),
               const Gap(20)
             ]
           : null);
@@ -66,6 +58,7 @@ PreferredSizeWidget secondAppBar(BuildContext context) {
   return AppBar(
     toolbarHeight: 40,
     automaticallyImplyLeading: false,
+    backgroundColor: CustomColors.crimson,
     title: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -74,16 +67,34 @@ PreferredSizeWidget secondAppBar(BuildContext context) {
             TextButton(
                 onPressed: () =>
                     GoRouter.of(context).goNamed(GoRoutes.products),
-                child: montserratWhiteBold('PRODUCTS')),
+                child: whiteSarabunRegular('PRODUCTS')),
             TextButton(
                 onPressed: () =>
                     GoRouter.of(context).goNamed(GoRoutes.services),
-                child: montserratWhiteBold('SERVICES'))
+                child: whiteSarabunRegular('SERVICES'))
           ],
         ),
-        TextButton(
-            onPressed: () => GoRouter.of(context).goNamed(GoRoutes.help),
-            child: montserratWhiteBold('HELP')),
+        Row(
+          children: [
+            if (hasLoggedInUser())
+              TextButton(
+                  onPressed: () =>
+                      GoRouter.of(context).goNamed(GoRoutes.profile),
+                  child: whiteSarabunRegular('PROFILE')),
+            TextButton(
+                onPressed: () => GoRouter.of(context).goNamed(GoRoutes.help),
+                child: whiteSarabunRegular('HELP')),
+            if (!hasLoggedInUser())
+              TextButton(
+                  onPressed: () =>
+                      GoRouter.of(context).goNamed(GoRoutes.register),
+                  child: whiteSarabunRegular('SIGN-UP')),
+            if (!hasLoggedInUser())
+              TextButton(
+                  onPressed: () => GoRouter.of(context).goNamed(GoRoutes.login),
+                  child: whiteSarabunRegular('LOG-IN')),
+          ],
+        ),
       ],
     ),
   );

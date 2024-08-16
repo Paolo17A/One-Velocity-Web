@@ -136,13 +136,13 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         ElevatedButton(
             onPressed: () =>
                 GoRouter.of(context).goNamed(GoRoutes.viewProducts),
-            child: montserratWhiteBold('BACK'))
+            child: whiteSarabunBold('BACK'))
       ]),
     );
   }
 
   Widget _newProductHeaderWidget() {
-    return montserratBlackBold(
+    return blackSarabunBold(
       'EDIT PRODUCT',
       textAlign: TextAlign.center,
       fontSize: 38,
@@ -151,7 +151,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
 
   Widget _productNameWidget() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      vertical10Pix(child: montserratBlackBold('Product Name', fontSize: 24)),
+      vertical10Pix(child: blackSarabunBold('Product Name', fontSize: 24)),
       CustomTextField(
           text: 'Product Name',
           controller: nameController,
@@ -164,7 +164,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   Widget _productDescriptionWidget() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       vertical10Pix(
-          child: montserratBlackBold('Product Description', fontSize: 24)),
+          child: blackSarabunBold('Product Description', fontSize: 24)),
       CustomTextField(
           text: 'Product Description',
           controller: descriptionController,
@@ -175,8 +175,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
 
   Widget _productCategoryWidget() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      vertical10Pix(
-          child: montserratBlackBold('Product Category', fontSize: 24)),
+      vertical10Pix(child: blackSarabunBold('Product Category', fontSize: 24)),
       Container(
         decoration: BoxDecoration(
             color: Colors.white, borderRadius: BorderRadius.circular(5)),
@@ -202,7 +201,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           vertical10Pix(
-              child: montserratBlackBold('Starting Quantity', fontSize: 24)),
+              child: blackSarabunBold('Starting Quantity', fontSize: 24)),
           CustomTextField(
               text: 'Starting Quantity',
               controller: quantityController,
@@ -219,7 +218,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          vertical10Pix(child: montserratBlackBold('Price', fontSize: 24)),
+          vertical10Pix(child: blackSarabunBold('Price', fontSize: 24)),
           CustomTextField(
               text: 'Price',
               controller: priceController,
@@ -278,7 +277,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             priceController: priceController),
         child: Padding(
           padding: const EdgeInsets.all(9),
-          child: montserratWhiteBold('SUBMIT'),
+          child: whiteSarabunBold('SUBMIT'),
         ),
       ),
     );

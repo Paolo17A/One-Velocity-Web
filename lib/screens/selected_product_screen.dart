@@ -1,9 +1,12 @@
+import 'package:carousel_slider/carousel_controller.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:one_velocity_web/providers/bookmarks_provider.dart';
 import 'package:one_velocity_web/providers/cart_provider.dart';
+import 'package:one_velocity_web/utils/color_util.dart';
 import 'package:one_velocity_web/widgets/text_widgets.dart';
 
 import '../providers/loading_provider.dart';
@@ -33,6 +36,10 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
   num quantity = 0;
   List<dynamic> imageURLs = [];
   int currentImageIndex = 0;
+
+  List<DocumentSnapshot> relatedProductDocs = [];
+  CarouselSliderController relatedProductsController =
+      CarouselSliderController();
 
   @override
   void initState() {
@@ -70,6 +77,8 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
 
           ref.read(cartProvider).setCartItems(await getCartEntries(context));
         }
+        relatedProductDocs = await getAllProducts();
+        setState(() {});
 
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
@@ -88,15 +97,25 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
     currentImageIndex = ref.watch(pagesProvider.notifier).getCurrentPage();
     return Scaffold(
       appBar: appBarWidget(context),
-      body: Column(
-        children: [
-          secondAppBar(context),
-          switchedLoadingContainer(
-              ref.read(loadingProvider),
-              SingleChildScrollView(
-                child: horizontal5Percent(context, child: _productContainer()),
-              ))
-        ],
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            secondAppBar(context),
+            switchedLoadingContainer(
+                ref.read(loadingProvider),
+                Column(
+                  children: [
+                    horizontal5Percent(context, child: _productContainer()),
+                    Divider(),
+                    if (relatedProductDocs.isNotEmpty)
+                      itemCarouselTemplate(context,
+                          label: 'Related Products',
+                          carouselSliderController: relatedProductsController,
+                          itemDocs: relatedProductDocs)
+                  ],
+                ))
+          ],
+        ),
       ),
     );
   }
@@ -119,12 +138,12 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        montserratBlackBold(name, fontSize: 60),
-                        montserratBlackBold('PHP ${price.toStringAsFixed(2)}',
+                        blackSarabunBold(name, fontSize: 52),
+                        crimsonSarabunBold('PHP ${price.toStringAsFixed(2)}',
                             fontSize: 40),
-                        montserratBlackRegular('Category: $category',
+                        blackSarabunRegular('Category: $category',
                             fontSize: 30),
-                        Gap(30),
+                        Gap(20),
                         Row(
                           children: [
                             IconButton(
@@ -142,7 +161,7 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
                                         .contains(widget.productID)
                                     ? Icons.bookmark
                                     : Icons.bookmark_outline)),
-                            montserratBlackRegular(ref
+                            blackSarabunRegular(ref
                                     .read(bookmarksProvider)
                                     .bookmarkedProducts
                                     .contains(widget.productID)
@@ -158,20 +177,26 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
                                       productID: widget.productID)
                                   : null,
                               style: ElevatedButton.styleFrom(
-                                  shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.zero),
+                                  backgroundColor: CustomColors.crimson,
                                   disabledBackgroundColor: Colors.blueGrey),
-                              child: montserratWhiteRegular('ADD TO CART',
+                              child: whiteSarabunRegular('ADD TO CART',
                                   textAlign: TextAlign.center)),
                         ),
                         vertical10Pix(
-                          child: montserratBlackBold(
+                          child: blackSarabunBold(
                               'Remaining Quantity: $quantity',
                               fontSize: 16),
                         ),
                       ],
                     ),
-                    all20Pix(child: montserratBlackRegular(description)),
+                    vertical10Pix(
+                        child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        blackSarabunBold('Description:'),
+                        blackSarabunRegular(description),
+                      ],
+                    )),
                   ],
                 ),
               )
@@ -230,7 +255,16 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
                         child: const Icon(Icons.arrow_right))
                   ]),
             ),
-          )
+          ),
+        all10Pix(
+          child: Row(
+              children: List.generate(
+                  5,
+                  (index) => Icon(
+                        Icons.star,
+                        color: CustomColors.crimson,
+                      ))),
+        )
       ],
     );
   }
@@ -248,7 +282,7 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
                   children: [
                     TextButton(
                         onPressed: () => GoRouter.of(context).pop(),
-                        child: montserratBlackBold('X'))
+                        child: blackSarabunBold('X'))
                   ],
                 ),
                 Container(
