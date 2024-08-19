@@ -10,6 +10,7 @@ import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
 import '../widgets/custom_text_field_widget.dart';
+import '../widgets/dropdown_widget.dart';
 import '../widgets/left_navigator_widget.dart';
 import '../widgets/text_widgets.dart';
 
@@ -22,6 +23,7 @@ class EditFAQScreen extends ConsumerStatefulWidget {
 }
 
 class _EditFAQScreenState extends ConsumerState<EditFAQScreen> {
+  String selectedCategory = '';
   final questionController = TextEditingController();
   final answerController = TextEditingController();
 
@@ -44,6 +46,7 @@ class _EditFAQScreenState extends ConsumerState<EditFAQScreen> {
         }
         final faq = await getThisFAQDoc(widget.faqID);
         final faqData = faq.data() as Map<dynamic, dynamic>;
+        selectedCategory = faqData[FAQFields.category];
         questionController.text = faqData[FAQFields.question];
         answerController.text = faqData[FAQFields.answer];
         ref.read(loadingProvider.notifier).toggleLoading(false);
@@ -71,6 +74,7 @@ class _EditFAQScreenState extends ConsumerState<EditFAQScreen> {
                     child: Column(children: [
                       _backButton(),
                       _newFAQHeaderWidget(),
+                      _faqCategoryWidget(),
                       _questionWidget(),
                       _answerWidget(),
                       _submitButtonWidget()
@@ -99,6 +103,27 @@ class _EditFAQScreenState extends ConsumerState<EditFAQScreen> {
       textAlign: TextAlign.center,
       fontSize: 38,
     );
+  }
+
+  Widget _faqCategoryWidget() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      vertical10Pix(child: blackSarabunBold('Product Category', fontSize: 24)),
+      Container(
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(5)),
+        child: dropdownWidget(selectedCategory, (newVal) {
+          setState(() {
+            selectedCategory = newVal!;
+          });
+        }, [
+          FAQCategories.location,
+          FAQCategories.paymentMethod,
+          FAQCategories.products,
+          FAQCategories.services
+        ], selectedCategory.isNotEmpty ? selectedCategory : 'Select a category',
+            false),
+      )
+    ]);
   }
 
   Widget _questionWidget() {
@@ -130,6 +155,7 @@ class _EditFAQScreenState extends ConsumerState<EditFAQScreen> {
       child: ElevatedButton(
         onPressed: () => editFAQEntry(context, ref,
             faqID: widget.faqID,
+            selectedCategory: selectedCategory,
             questionController: questionController,
             answerController: answerController),
         child: Padding(

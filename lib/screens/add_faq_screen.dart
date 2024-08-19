@@ -10,6 +10,7 @@ import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
 import '../widgets/custom_text_field_widget.dart';
+import '../widgets/dropdown_widget.dart';
 import '../widgets/left_navigator_widget.dart';
 import '../widgets/text_widgets.dart';
 
@@ -21,6 +22,7 @@ class AddFAQScreen extends ConsumerStatefulWidget {
 }
 
 class _AddFAQScreenState extends ConsumerState<AddFAQScreen> {
+  String selectedCategory = '';
   final questionController = TextEditingController();
   final answerController = TextEditingController();
 
@@ -72,6 +74,7 @@ class _AddFAQScreenState extends ConsumerState<AddFAQScreen> {
                     child: Column(children: [
                       _backButton(),
                       _newFAQHeaderWidget(),
+                      _faqCategoryWidget(),
                       _questionWidget(),
                       _answerWidget(),
                       _submitButtonWidget()
@@ -102,6 +105,27 @@ class _AddFAQScreenState extends ConsumerState<AddFAQScreen> {
     );
   }
 
+  Widget _faqCategoryWidget() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      vertical10Pix(child: blackSarabunBold('Product Category', fontSize: 24)),
+      Container(
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(5)),
+        child: dropdownWidget(selectedCategory, (newVal) {
+          setState(() {
+            selectedCategory = newVal!;
+          });
+        }, [
+          FAQCategories.location,
+          FAQCategories.paymentMethod,
+          FAQCategories.products,
+          FAQCategories.services
+        ], selectedCategory.isNotEmpty ? selectedCategory : 'Select a category',
+            false),
+      )
+    ]);
+  }
+
   Widget _questionWidget() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       vertical10Pix(child: blackSarabunBold('Question', fontSize: 24)),
@@ -130,6 +154,7 @@ class _AddFAQScreenState extends ConsumerState<AddFAQScreen> {
       padding: const EdgeInsets.symmetric(vertical: 50),
       child: ElevatedButton(
         onPressed: () => addFAQEntry(context, ref,
+            selectedCategory: selectedCategory,
             questionController: questionController,
             answerController: answerController),
         child: Padding(

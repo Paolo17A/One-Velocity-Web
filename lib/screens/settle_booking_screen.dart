@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../providers/cart_provider.dart';
 import '../providers/loading_provider.dart';
@@ -28,12 +27,10 @@ class SettleBookingScreen extends ConsumerStatefulWidget {
 }
 
 class _CartScreenState extends ConsumerState<SettleBookingScreen> {
-  String serviceName = '';
-  List<dynamic> imageURLs = [];
-  String description = '';
   DateTime? dateCreated;
   DateTime? dateRequsted;
-  num servicePrice = 0;
+  List<DocumentSnapshot> serviceDocs = [];
+  num totalServicePrice = 0;
 
   @override
   void initState() {
@@ -64,17 +61,13 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
           return;
         }
 
-        final serviceID = bookingData[BookingFields.serviceID];
-        final serviceDoc = await getThisServiceDoc(serviceID);
-        final serviceData = serviceDoc.data() as Map<dynamic, dynamic>;
-        serviceName = serviceData[ServiceFields.name];
-        imageURLs = serviceData[ServiceFields.imageURLs];
-        servicePrice =
-            double.parse(serviceData[ServiceFields.price].toString());
-        description = serviceData[ServiceFields.description];
-
+        List<dynamic> serviceIDs = bookingData[BookingFields.serviceIDs];
+        serviceDocs = await getSelectedServiceDocs(serviceIDs);
+        for (var serviceDoc in serviceDocs) {
+          final serviceData = serviceDoc.data() as Map<dynamic, dynamic>;
+          totalServicePrice += serviceData[ServiceFields.price];
+        }
         ref.read(cartProvider).setSelectedPaymentMethod('');
-        //ref.read(cartProvider).resetProofOfPaymentBytes();
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(
@@ -113,38 +106,42 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            blackSarabunBold('SELECTED SERVICE: $serviceName', fontSize: 40),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (imageURLs.isNotEmpty)
-                  Container(
-                      decoration: BoxDecoration(border: Border.all()),
-                      child: Image.network(imageURLs[0],
-                          width: MediaQuery.of(context).size.width * 0.15,
-                          height: MediaQuery.of(context).size.width * 0.15,
-                          fit: BoxFit.cover)),
-                Gap(20),
-                vertical20Pix(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (dateCreated != null)
-                        blackSarabunRegular(
-                            'Date Booked: ${DateFormat('MMM dd, yyyy').format(dateCreated!)}',
-                            fontSize: 24),
-                      if (dateRequsted != null)
-                        blackSarabunRegular(
-                            'Date Requested: ${DateFormat('MMM dd, yyyy').format(dateRequsted!)}',
-                            fontSize: 24),
-                      Gap(20),
-                      blackSarabunRegular(description,
-                          textAlign: TextAlign.left),
-                    ],
-                  ),
+            blackSarabunBold('REQUESTED SERVICES: ', fontSize: 40),
+            Column(
+                children: serviceDocs.map((serviceDoc) {
+              final serviceData = serviceDoc.data() as Map<dynamic, dynamic>;
+              String name = serviceData[ServiceFields.name];
+              List<dynamic> imageURLs = serviceData[ServiceFields.imageURLs];
+              num price = serviceData[ServiceFields.price];
+              String description = serviceData[ServiceFields.description];
+              return vertical10Pix(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (imageURLs.isNotEmpty)
+                      Container(
+                          decoration: BoxDecoration(border: Border.all()),
+                          child: Image.network(imageURLs[0],
+                              width: 200, height: 200, fit: BoxFit.cover)),
+                    Gap(20),
+                    vertical20Pix(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          blackSarabunBold(name, fontSize: 20),
+                          blackSarabunRegular(
+                              'PHP: ${formatPrice(price.toDouble())}',
+                              fontSize: 20),
+                          Gap(20),
+                          blackSarabunRegular(description,
+                              textAlign: TextAlign.left),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            )
+              );
+            }).toList())
           ],
         ),
       ),
@@ -162,7 +159,7 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
         children: [
           vertical20Pix(
             child: whiteSarabunBold(
-                'PHP ${formatPrice(servicePrice.toDouble())}',
+                'PHP ${formatPrice(totalServicePrice.toDouble())}',
                 fontSize: 40),
           ),
           const Gap(30),
@@ -250,7 +247,7 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
                 onPressed: () => settleBookingRequestPayment(context, ref,
                     bookingID: widget.bookingID,
                     purchaseIDs: [widget.bookingID],
-                    servicePrice: servicePrice),
+                    servicePrice: totalServicePrice),
                 child: whiteSarabunBold('SETTLE PAYMENT')),
           ),
         )

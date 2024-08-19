@@ -94,6 +94,8 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                   physics: NeverScrollableScrollPhysics(),
                   itemCount: ref.read(bookingsProvider).bookingDocs.length,
                   itemBuilder: (context, index) {
+                    // return blackSarabunBold(
+                    //     ref.read(bookingsProvider).bookingDocs[index].id);
                     return bookingHistoryEntry(
                         ref.read(bookingsProvider).bookingDocs[index]);
                   })

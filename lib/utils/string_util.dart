@@ -36,6 +36,14 @@ class UserFields {
 class FAQFields {
   static const String question = 'question';
   static const String answer = 'answer';
+  static const String category = 'category';
+}
+
+class FAQCategories {
+  static const String location = 'LOCATION';
+  static const String paymentMethod = 'PAYMENT METHODS';
+  static const String services = 'SERVICES';
+  static const String products = 'PRODUCTS';
 }
 
 class ProductFields {
@@ -56,8 +64,9 @@ class ProductCategories {
 
 class CartFields {
   static const String clientID = 'clientID';
-  static const String productID = 'productID';
+  static const String itemID = 'itemID';
   static const String quantity = 'quantity';
+  static const String cartType = 'cartType';
 }
 
 class PaymentFields {
@@ -124,7 +133,7 @@ class PurchaseStatuses {
 }
 
 class BookingFields {
-  static const String serviceID = 'serviceID';
+  static const String serviceIDs = 'serviceIDs';
   static const String clientID = 'clientID';
   static const String serviceStatus = 'serviceStatus';
   static const String dateCreated = 'dateCreated';
@@ -141,6 +150,11 @@ class ServiceStatuses {
   static const String serviceCompleted = 'SERVICE COMPLETED';
   static const String denied = 'DENIED';
   static const String cancelled = 'CANCELLED';
+}
+
+class CartTypes {
+  static const String product = 'PRODUCT';
+  static const String service = 'SERVICE';
 }
 
 class PaymentTypes {

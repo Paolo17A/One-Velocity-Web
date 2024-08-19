@@ -40,13 +40,13 @@ PreferredSizeWidget appBarWidget(BuildContext context,
               if (hasLoggedInUser())
                 IconButton(
                     onPressed: () =>
-                        GoRouter.of(context).goNamed(GoRoutes.bookingsHistory),
+                        GoRouter.of(context).goNamed(GoRoutes.serviceCart),
                     icon: const Icon(Icons.receipt,
                         color: CustomColors.ultimateGray)),
               if (hasLoggedInUser())
                 IconButton(
                     onPressed: () =>
-                        GoRouter.of(context).goNamed(GoRoutes.cart),
+                        GoRouter.of(context).goNamed(GoRoutes.productCart),
                     icon: const Icon(Icons.shopping_cart_rounded,
                         color: CustomColors.ultimateGray)),
               const Gap(20)

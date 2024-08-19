@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:one_velocity_web/providers/bookmarks_provider.dart';
 import 'package:one_velocity_web/providers/cart_provider.dart';
+import 'package:one_velocity_web/providers/faq_provider.dart';
 import 'package:one_velocity_web/providers/profile_image_url_provider.dart';
 import 'package:one_velocity_web/providers/purchases_provider.dart';
 
@@ -603,11 +604,24 @@ Future editProductEntry(BuildContext context, WidgetRef ref,
 //==============================================================================
 //==CART--======================================================================
 //==============================================================================
-Future<List<DocumentSnapshot>> getCartEntries(BuildContext context) async {
+Future<List<DocumentSnapshot>> getProductCartEntries(
+    BuildContext context) async {
   final cartProducts = await FirebaseFirestore.instance
       .collection(Collections.cart)
       .where(CartFields.clientID,
           isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+      .where(CartFields.cartType, isEqualTo: CartTypes.product)
+      .get();
+  return cartProducts.docs.map((doc) => doc as DocumentSnapshot).toList();
+}
+
+Future<List<DocumentSnapshot>> getServiceCartEntries(
+    BuildContext context) async {
+  final cartProducts = await FirebaseFirestore.instance
+      .collection(Collections.cart)
+      .where(CartFields.clientID,
+          isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+      .where(CartFields.cartType, isEqualTo: CartTypes.service)
       .get();
   return cartProducts.docs.map((doc) => doc as DocumentSnapshot).toList();
 }
@@ -636,13 +650,45 @@ Future addProductToCart(BuildContext context, WidgetRef ref,
 
     final cartDocReference =
         await FirebaseFirestore.instance.collection(Collections.cart).add({
-      CartFields.productID: productID,
+      CartFields.itemID: productID,
       CartFields.clientID: FirebaseAuth.instance.currentUser!.uid,
-      CartFields.quantity: 1
+      CartFields.quantity: 1,
+      CartFields.cartType: CartTypes.product
     });
     ref.read(cartProvider.notifier).addCartItem(await cartDocReference.get());
     scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Successfully added this item to your cart.')));
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error adding product to cart: $error')));
+  }
+}
+
+Future addServiceToCart(BuildContext context, WidgetRef ref,
+    {required String serviceID}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  if (!hasLoggedInUser()) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Please log-in to your account first.')));
+    return;
+  }
+  try {
+    if (ref.read(cartProvider).cartContainsThisItem(serviceID)) {
+      scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('This service is already in your cart.')));
+      return;
+    }
+
+    final cartDocReference =
+        await FirebaseFirestore.instance.collection(Collections.cart).add({
+      CartFields.itemID: serviceID,
+      CartFields.clientID: FirebaseAuth.instance.currentUser!.uid,
+      CartFields.quantity: 1,
+      CartFields.cartType: CartTypes.service
+    });
+    ref.read(cartProvider.notifier).addCartItem(await cartDocReference.get());
+    scaffoldMessenger.showSnackBar(SnackBar(
+        content: Text('Successfully added this service to your cart.')));
   } catch (error) {
     scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Error adding product to cart: $error')));
@@ -683,7 +729,7 @@ Future changeCartItemQuantity(BuildContext context, WidgetRef ref,
         .collection(Collections.cart)
         .doc(cartEntryDoc.id)
         .update({CartFields.quantity: quantity});
-    ref.read(cartProvider).setCartItems(await getCartEntries(context));
+    ref.read(cartProvider).setCartItems(await getProductCartEntries(context));
   } catch (error) {
     scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Error changing item quantity: $error')));
@@ -707,11 +753,14 @@ Future<DocumentSnapshot> getThisFAQDoc(String faqID) async {
 }
 
 Future addFAQEntry(BuildContext context, WidgetRef ref,
-    {required TextEditingController questionController,
+    {required String selectedCategory,
+    required TextEditingController questionController,
     required TextEditingController answerController}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   final goRouter = GoRouter.of(context);
-  if (questionController.text.isEmpty || answerController.text.isEmpty) {
+  if (selectedCategory.isEmpty ||
+      questionController.text.isEmpty ||
+      answerController.text.isEmpty) {
     scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text('Please fill up all fields.')));
     return;
@@ -723,6 +772,7 @@ Future addFAQEntry(BuildContext context, WidgetRef ref,
         .collection(Collections.faqs)
         .doc(faqID)
         .set({
+      FAQFields.category: selectedCategory,
       FAQFields.question: questionController.text.trim(),
       FAQFields.answer: answerController.text.trim()
     });
@@ -740,11 +790,14 @@ Future addFAQEntry(BuildContext context, WidgetRef ref,
 
 Future editFAQEntry(BuildContext context, WidgetRef ref,
     {required String faqID,
+    required String selectedCategory,
     required TextEditingController questionController,
     required TextEditingController answerController}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   final goRouter = GoRouter.of(context);
-  if (questionController.text.isEmpty || answerController.text.isEmpty) {
+  if (selectedCategory.isEmpty ||
+      questionController.text.isEmpty ||
+      answerController.text.isEmpty) {
     scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text('Please fill up all fields.')));
     return;
@@ -755,6 +808,7 @@ Future editFAQEntry(BuildContext context, WidgetRef ref,
         .collection(Collections.faqs)
         .doc(faqID)
         .update({
+      FAQFields.category: selectedCategory,
       FAQFields.question: questionController.text.trim(),
       FAQFields.answer: answerController.text.trim()
     });
@@ -780,6 +834,7 @@ Future deleteFAQEntry(BuildContext context, WidgetRef ref,
         .collection(Collections.faqs)
         .doc(faqID)
         .delete();
+    ref.read(faqsProvider).setFAQDocs(await getAllFAQs());
     ref.read(loadingProvider.notifier).toggleLoading(false);
 
     scaffoldMessenger.showSnackBar(
@@ -810,7 +865,7 @@ Future<List<DocumentSnapshot>> getThesePurchaseDocs(
   return purchases.docs.reversed.toList();
 }
 
-Future purchaseSelectedCartItem(BuildContext context, WidgetRef ref,
+Future purchaseSelectedProductCartItems(BuildContext context, WidgetRef ref,
     {required Uint8List? proofOfPayment, required num paidAmount}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
@@ -824,7 +879,7 @@ Future purchaseSelectedCartItem(BuildContext context, WidgetRef ref,
       DocumentReference purchaseReference = await FirebaseFirestore.instance
           .collection(Collections.purchases)
           .add({
-        PurchaseFields.productID: cartData[CartFields.productID],
+        PurchaseFields.productID: cartData[CartFields.itemID],
         PurchaseFields.clientID: cartData[CartFields.clientID],
         PurchaseFields.quantity: cartData[CartFields.quantity],
         PurchaseFields.purchaseStatus: PurchaseStatuses.pending,
@@ -837,7 +892,7 @@ Future purchaseSelectedCartItem(BuildContext context, WidgetRef ref,
       //  Added step: update the item's remaining quantity
       await FirebaseFirestore.instance
           .collection(Collections.products)
-          .doc(cartData[CartFields.productID])
+          .doc(cartData[CartFields.itemID])
           .update({
         ProductFields.quantity:
             FieldValue.increment(-cartData[CartFields.quantity])
@@ -884,7 +939,7 @@ Future purchaseSelectedCartItem(BuildContext context, WidgetRef ref,
           .doc(purchaseID)
           .update({PurchaseFields.paymentID: paymentReference.id});
     }
-    ref.read(cartProvider).cartItems = await getCartEntries(context);
+    ref.read(cartProvider).cartItems = await getProductCartEntries(context);
     scaffoldMessenger.showSnackBar(const SnackBar(
         content:
             Text('Successfully settled payment and created purchase order')));
@@ -910,15 +965,12 @@ Future markPurchasesAsReadyForPickUp(BuildContext context, WidgetRef ref,
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
-    print('purchase count: ${purchaseIDs.length}');
     for (var purchaseID in purchaseIDs) {
-      print('Purchase ID: $purchaseID');
       await FirebaseFirestore.instance
           .collection(Collections.purchases)
           .doc(purchaseID)
           .update({PurchaseFields.purchaseStatus: PurchaseStatuses.forPickUp});
     }
-    print('DONE W FOR LOOP');
     ref.read(paymentsProvider).setPaymentDocs(await getAllProductPaymentDocs());
     ref.read(loadingProvider.notifier).toggleLoading(false);
     scaffoldMessenger.showSnackBar(SnackBar(
@@ -1154,6 +1206,18 @@ Future<DocumentSnapshot> getThisServiceDoc(String serviceID) async {
       .get();
 }
 
+Future<List<DocumentSnapshot>> getSelectedServiceDocs(
+    List<dynamic> serviceIDs) async {
+  if (serviceIDs.isEmpty) {
+    return [];
+  }
+  final services = await FirebaseFirestore.instance
+      .collection(Collections.services)
+      .where(FieldPath.documentId, whereIn: serviceIDs)
+      .get();
+  return services.docs.map((doc) => doc as DocumentSnapshot).toList();
+}
+
 Future addServiceEntry(BuildContext context, WidgetRef ref,
     {required TextEditingController nameController,
     required TextEditingController descriptionController,
@@ -1366,17 +1430,32 @@ Future<List<DocumentSnapshot>> getClientBookingDocs(String clientID) async {
 }
 
 Future createNewBookingRequest(BuildContext context, WidgetRef ref,
-    {required String serviceID, required DateTime datePicked}) async {
+    {required DateTime datePicked}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
+    List<dynamic> serviceIDs = [];
+    for (var cartID in ref.read(cartProvider).selectedCartItemIDs) {
+      final cartDoc = await getThisCartEntry(cartID);
+      final cartData = cartDoc.data() as Map<dynamic, dynamic>;
+      serviceIDs.add(cartData[CartFields.itemID]);
+    }
     await FirebaseFirestore.instance.collection(Collections.bookings).add({
-      BookingFields.serviceID: serviceID,
+      BookingFields.serviceIDs: serviceIDs,
       BookingFields.clientID: FirebaseAuth.instance.currentUser!.uid,
       BookingFields.dateCreated: DateTime.now(),
       BookingFields.dateRequested: datePicked,
       BookingFields.serviceStatus: ServiceStatuses.pendingApproval
     });
+
+    for (var cartID in ref.read(cartProvider).selectedCartItemIDs) {
+      await FirebaseFirestore.instance
+          .collection(Collections.cart)
+          .doc(cartID)
+          .delete();
+    }
+    ref.read(cartProvider).resetSelectedCartItems();
+    ref.read(cartProvider).setCartItems(await getServiceCartEntries(context));
 
     scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Successfully requested for this service.')));
@@ -1389,7 +1468,7 @@ Future createNewBookingRequest(BuildContext context, WidgetRef ref,
 }
 
 Future approveThisBookingRequest(BuildContext context, WidgetRef ref,
-    {required String bookingID, required String serviceName}) async {
+    {required String bookingID}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
@@ -1410,7 +1489,7 @@ Future approveThisBookingRequest(BuildContext context, WidgetRef ref,
 }
 
 Future denyThisBookingRequest(BuildContext context, WidgetRef ref,
-    {required String bookingID, required String serviceName}) async {
+    {required String bookingID}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
@@ -1454,9 +1533,7 @@ Future markBookingRequestAsServiceOngoing(BuildContext context, WidgetRef ref,
 }
 
 Future markBookingRequestAsForPickUp(BuildContext context, WidgetRef ref,
-    {required String bookingID,
-    required String serviceName,
-    required String mobileNumber}) async {
+    {required String bookingID}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
@@ -1504,7 +1581,7 @@ Future<List<DocumentSnapshot>> getServiceBookingHistory(
     String serviceID) async {
   final purchases = await FirebaseFirestore.instance
       .collection(Collections.bookings)
-      .where(BookingFields.serviceID, isEqualTo: serviceID)
+      .where(BookingFields.serviceIDs, arrayContains: serviceID)
       .get();
   return purchases.docs.map((doc) => doc as DocumentSnapshot).toList();
 }

@@ -75,7 +75,9 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
               .read(bookmarksProvider)
               .setBookmarkedProducts(userData[UserFields.bookmarkedProducts]);
 
-          ref.read(cartProvider).setCartItems(await getCartEntries(context));
+          ref
+              .read(cartProvider)
+              .setCartItems(await getProductCartEntries(context));
         }
         relatedProductDocs = await getAllProducts();
         setState(() {});

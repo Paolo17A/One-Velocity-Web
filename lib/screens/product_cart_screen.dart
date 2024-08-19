@@ -16,16 +16,15 @@ import '../utils/firebase_util.dart';
 import '../utils/string_util.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
-import '../widgets/dropdown_widget.dart';
 
-class CartScreen extends ConsumerStatefulWidget {
-  const CartScreen({super.key});
+class ProductCartScreen extends ConsumerStatefulWidget {
+  const ProductCartScreen({super.key});
 
   @override
-  ConsumerState<CartScreen> createState() => _CartScreenState();
+  ConsumerState<ProductCartScreen> createState() => _ProductCartScreenState();
 }
 
-class _CartScreenState extends ConsumerState<CartScreen> {
+class _ProductCartScreenState extends ConsumerState<ProductCartScreen> {
   List<DocumentSnapshot> associatedProductDocs = [];
   num paidAmount = 0;
   @override
@@ -43,11 +42,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           return;
         }
 
-        ref.read(cartProvider).setCartItems(await getCartEntries(context));
-        associatedProductDocs = await getSelectedProductDocs(
+        ref
+            .read(cartProvider)
+            .setCartItems(await getProductCartEntries(context));
+        associatedProductDocs = await getSelectedServiceDocs(
             ref.read(cartProvider).cartItems.map((cartDoc) {
           final cartData = cartDoc.data() as Map<dynamic, dynamic>;
-          return cartData[CartFields.productID].toString();
+          return cartData[CartFields.itemID].toString();
         }).toList());
         setState(() {});
         ref.read(loadingProvider.notifier).toggleLoading(false);
@@ -64,7 +65,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     if (pickedFile == null) {
       return;
     }
-    await purchaseSelectedCartItem(context, ref,
+    await purchaseSelectedProductCartItems(context, ref,
         proofOfPayment: pickedFile, paidAmount: paidAmount);
     ref.read(cartProvider).resetSelectedCartItems();
   }
@@ -98,7 +99,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            blackSarabunBold('CART ITEMS', fontSize: 40),
+            blackSarabunBold('PRODUCT CART ITEMS', fontSize: 40),
             ref.read(cartProvider).cartItems.isNotEmpty
                 ? ListView.builder(
                     shrinkWrap: true,
@@ -119,7 +120,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     int quantity = cartData[CartFields.quantity];
     DocumentSnapshot? associatedProductDoc =
         associatedProductDocs.where((productDoc) {
-      return productDoc.id == cartData[CartFields.productID].toString();
+      return productDoc.id == cartData[CartFields.itemID].toString();
     }).firstOrNull;
     if (associatedProductDoc == null)
       return Container();
@@ -161,8 +162,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       child: GestureDetector(
                         onTap: () => GoRouter.of(context)
                             .goNamed(GoRoutes.selectedProduct, pathParameters: {
-                          PathParameters.productID:
-                              cartData[CartFields.productID]
+                          PathParameters.productID: cartData[CartFields.itemID]
                         }),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,9 +177,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               children: [
                                 whiteSarabunBold(name),
                                 whiteSarabunBold(
-                                    'SRP: ${formatPrice(price.toDouble())}'),
+                                    'SRP: ${formatPrice(price.toDouble())}',
+                                    fontSize: 16),
                                 whiteSarabunRegular(
-                                    'Remaining Quantity: $remainingQuantity')
+                                    'Remaining Quantity: $remainingQuantity',
+                                    fontSize: 16)
                               ],
                             )
                           ],
@@ -252,7 +254,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   Widget _checkoutContainer() {
     return Container(
       width: MediaQuery.of(context).size.width * 0.25,
-      height: MediaQuery.of(context).size.height - 92,
+      height: MediaQuery.of(context).size.height - 100,
       color: CustomColors.ultimateGray,
       child: Column(
         children: [
@@ -265,9 +267,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           else
             whiteSarabunBold('TOTAL AMOUNT: PHP 0.00'),
           const Gap(50),
-          _paymentMethod(),
+          paymentMethod(ref),
           if (ref.read(cartProvider).selectedPaymentMethod.isNotEmpty)
-            _uploadPayment(),
+            uploadPayment(ref),
           _checkoutButton()
         ],
       ),
@@ -289,7 +291,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     //  Go through every selected cart item
     for (var cartDoc in selectedCartDocs) {
       final cartData = cartDoc.data() as Map<dynamic, dynamic>;
-      String productID = cartData[CartFields.productID];
+      String productID = cartData[CartFields.itemID];
       num quantity = cartData[CartFields.quantity];
       DocumentSnapshot? productDoc = associatedProductDocs
           .where((item) => item.id == productID)
@@ -304,48 +306,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     paidAmount = totalAmount;
     return whiteSarabunBold(
         'TOTAL AMOUNT: PHP ${formatPrice(totalAmount.toDouble())}');
-  }
-
-  Widget _paymentMethod() {
-    return all10Pix(
-        child: Column(
-      children: [
-        Row(
-          children: [whiteSarabunBold('PAYMENT METHOD')],
-        ),
-        Container(
-          decoration: BoxDecoration(
-              color: Colors.white, borderRadius: BorderRadius.circular(5)),
-          child: dropdownWidget(ref.read(cartProvider).selectedPaymentMethod,
-              (newVal) {
-            ref.read(cartProvider).setSelectedPaymentMethod(newVal!);
-          }, ['GCASH', 'PAYMAYA'], 'Select your payment method', false),
-        )
-      ],
-    ));
-  }
-
-  Widget _uploadPayment() {
-    return all10Pix(
-        child: Column(
-      children: [
-        Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                whiteSarabunBold('SEND YOUR PAYMENT HERE'),
-                if (ref.read(cartProvider).selectedPaymentMethod == 'GCASH')
-                  whiteSarabunBold('GCASH: +639221234567', fontSize: 14)
-                else if (ref.read(cartProvider).selectedPaymentMethod ==
-                    'PAYMAYA')
-                  whiteSarabunBold('PAYMAYA: +639221234567', fontSize: 14)
-              ],
-            )
-          ],
-        ),
-      ],
-    ));
   }
 
   Widget _checkoutButton() {

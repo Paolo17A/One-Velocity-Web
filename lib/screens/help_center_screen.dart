@@ -19,8 +19,9 @@ class HelpCenterScreen extends ConsumerStatefulWidget {
 }
 
 class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
+  String currentCategory = 'VIEW ALL';
   List<DocumentSnapshot> allFAQs = [];
-
+  List<DocumentSnapshot> filteredFAQs = [];
   @override
   void initState() {
     super.initState();
@@ -42,13 +43,78 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
             child: Column(
           children: [
             secondAppBar(context),
-            horizontal5Percent(context,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [_faqHeader(), _faqEntries()],
-                )),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                categoriesNavigator(),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: horizontal5Percent(context,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [_faqHeader(), _faqEntries()],
+                      )),
+                ),
+              ],
+            ),
           ],
         )),
+      ),
+    );
+  }
+
+  Widget categoriesNavigator() {
+    return Container(
+        width: MediaQuery.of(context).size.width * 0.2,
+        height: MediaQuery.of(context).size.height - 60,
+        color: CustomColors.crimson,
+        padding: const EdgeInsets.all(20),
+        child: ListView(
+            shrinkWrap: false,
+            physics: NeverScrollableScrollPhysics(),
+            children: [
+              all10Pix(
+                child: GestureDetector(
+                  onTap: () {
+                    currentCategory = 'VIEW ALL';
+                    setState(() {
+                      filteredFAQs = allFAQs;
+                    });
+                  },
+                  child: Container(
+                      padding: EdgeInsets.all(10),
+                      color: currentCategory == 'VIEW ALL'
+                          ? CustomColors.grenadine
+                          : CustomColors.crimson,
+                      child: whiteSarabunRegular('VIEW ALL',
+                          textAlign: TextAlign.left)),
+                ),
+              ),
+              categoryTemplate(FAQCategories.location),
+              categoryTemplate(FAQCategories.paymentMethod),
+              categoryTemplate(FAQCategories.products),
+              categoryTemplate(FAQCategories.services)
+            ]));
+  }
+
+  Widget categoryTemplate(String category) {
+    return all10Pix(
+      child: GestureDetector(
+        onTap: () {
+          currentCategory = category;
+          setState(() {
+            filteredFAQs = allFAQs.where((faq) {
+              final faqData = faq.data() as Map<dynamic, dynamic>;
+              return currentCategory == faqData[FAQFields.category];
+            }).toList();
+          });
+        },
+        child: Container(
+            padding: EdgeInsets.all(10),
+            color: currentCategory == category
+                ? CustomColors.grenadine
+                : CustomColors.crimson,
+            child: whiteSarabunRegular(category, textAlign: TextAlign.left)),
       ),
     );
   }
@@ -58,17 +124,19 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
   }
 
   Widget _faqEntries() {
-    return allFAQs.isNotEmpty
+    return filteredFAQs.isNotEmpty
         ? SizedBox(
             height: MediaQuery.of(context).size.height * 0.9,
             child: ListView.builder(
                 shrinkWrap: true,
-                itemCount: allFAQs.length,
+                itemCount: filteredFAQs.length,
                 itemBuilder: (context, index) {
-                  return _faqEntry(allFAQs[index]);
+                  return _faqEntry(filteredFAQs[index]);
                 }),
           )
-        : blackSarabunBold('NO FAQS AVAILABLE', fontSize: 30);
+        : blackSarabunBold(
+            'No FAQs Avaialble for ${currentCategory.toLowerCase()}',
+            fontSize: 30);
   }
 
   Widget _faqEntry(DocumentSnapshot faqDoc) {

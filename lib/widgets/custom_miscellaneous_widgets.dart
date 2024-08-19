@@ -3,15 +3,18 @@ import 'dart:typed_data';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../providers/cart_provider.dart';
 import '../utils/color_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
 import 'custom_padding_widgets.dart';
+import 'dropdown_widget.dart';
 import 'item_entry_widget.dart';
 import 'text_widgets.dart';
 
@@ -332,23 +335,26 @@ Widget bookingHistoryEntry(DocumentSnapshot bookingDoc,
     {String userType = UserTypes.client}) {
   final bookingData = bookingDoc.data() as Map<dynamic, dynamic>;
   String serviceStatus = bookingData[BookingFields.serviceStatus];
-  String serviceID = bookingData[BookingFields.serviceID];
+  List<dynamic> serviceIDs = bookingData[BookingFields.serviceIDs];
+  print(serviceIDs);
   DateTime dateCreated =
       (bookingData[BookingFields.dateCreated] as Timestamp).toDate();
   DateTime dateRequsted =
       (bookingData[BookingFields.dateRequested] as Timestamp).toDate();
 
   return FutureBuilder(
-    future: getThisServiceDoc(serviceID),
+    future: getSelectedServiceDocs(serviceIDs),
     builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting ||
           !snapshot.hasData ||
           snapshot.hasError) return snapshotHandler(snapshot);
+      List<dynamic> selectedServices =
+          snapshot.data!.map((e) => e.data() as Map<dynamic, dynamic>).toList();
+      num totalPrice = 0;
+      for (var serviceData in selectedServices) {
+        totalPrice += serviceData[ServiceFields.price];
+      }
 
-      final serviceData = snapshot.data!.data() as Map<dynamic, dynamic>;
-      List<dynamic> imageURLs = serviceData[ServiceFields.imageURLs];
-      String name = serviceData[ServiceFields.name];
-      num price = serviceData[ServiceFields.price];
       return all10Pix(
           child: Container(
         decoration: BoxDecoration(border: Border.all()),
@@ -360,18 +366,30 @@ Widget bookingHistoryEntry(DocumentSnapshot bookingDoc,
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Image.network(
-                  imageURLs[0],
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      blackSarabunBold(name, fontSize: 25),
+                      Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: selectedServices.map((serviceData) {
+                            final List<dynamic> imageURLs =
+                                serviceData[ServiceFields.imageURLs];
+                            return vertical10Pix(
+                              child: Row(
+                                children: [
+                                  Image.network(imageURLs.first,
+                                      width: 50, height: 50, fit: BoxFit.cover),
+                                  Gap(10),
+                                  blackSarabunBold(
+                                      serviceData[ServiceFields.name],
+                                      fontSize: 20,
+                                      textAlign: TextAlign.left),
+                                ],
+                              ),
+                            );
+                          }).toList()),
                       if (serviceStatus != ServiceStatuses.pendingPayment)
                         const Gap(30),
                       blackSarabunRegular('Status: $serviceStatus',
@@ -402,7 +420,8 @@ Widget bookingHistoryEntry(DocumentSnapshot bookingDoc,
                     'Date Requested: ${DateFormat('MMM dd, yyyy').format(dateRequsted)}',
                     fontSize: 17),
                 Gap(15),
-                blackSarabunBold('SRP: PHP ${formatPrice(price.toDouble())}',
+                blackSarabunBold(
+                    'Total: PHP ${formatPrice(totalPrice.toDouble())}',
                     fontSize: 15),
               ],
             )
@@ -437,10 +456,10 @@ Widget itemCarouselTemplate(BuildContext context,
                 itemCount: itemDocs.length,
                 disableGesture: true,
                 options: CarouselOptions(
-                    viewportFraction: 0.4,
+                    viewportFraction: 0.2,
                     enlargeCenterPage: true,
                     scrollPhysics: NeverScrollableScrollPhysics(),
-                    enlargeFactor: 0.5),
+                    enlargeFactor: 0.2),
                 itemBuilder: (context, index, realIndex) {
                   return itemEntry(context, itemDoc: itemDocs[index],
                       onPress: () {
@@ -521,6 +540,7 @@ Widget footerWidget(BuildContext context) {
                   ]),
                   Row(children: [
                     Icon(Icons.location_city, color: CustomColors.ultimateGray),
+                    Gap(20),
                     SizedBox(
                       width: MediaQuery.of(context).size.width * 0.3,
                       child: whiteSarabunRegular(
@@ -552,4 +572,46 @@ Widget footerWidget(BuildContext context) {
       ],
     ),
   );
+}
+
+Widget paymentMethod(WidgetRef ref) {
+  return all10Pix(
+      child: Column(
+    children: [
+      Row(
+        children: [whiteSarabunBold('PAYMENT METHOD')],
+      ),
+      Container(
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(5)),
+        child: dropdownWidget(ref.read(cartProvider).selectedPaymentMethod,
+            (newVal) {
+          ref.read(cartProvider).setSelectedPaymentMethod(newVal!);
+        }, ['GCASH', 'PAYMAYA'], 'Select your payment method', false),
+      )
+    ],
+  ));
+}
+
+Widget uploadPayment(WidgetRef ref) {
+  return all10Pix(
+      child: Column(
+    children: [
+      Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              whiteSarabunBold('SEND YOUR PAYMENT HERE'),
+              if (ref.read(cartProvider).selectedPaymentMethod == 'GCASH')
+                whiteSarabunBold('GCASH: +639221234567', fontSize: 14)
+              else if (ref.read(cartProvider).selectedPaymentMethod ==
+                  'PAYMAYA')
+                whiteSarabunBold('PAYMAYA: +639221234567', fontSize: 14)
+            ],
+          )
+        ],
+      ),
+    ],
+  ));
 }

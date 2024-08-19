@@ -10,8 +10,6 @@ class CartNotifier extends ChangeNotifier {
   List<DocumentSnapshot> cartItems = [];
   List<String> selectedCartItemIDs = [];
   String selectedPaymentMethod = '';
-  /*String selectedCartItem = '';
-  num selectedCartItemSRP = 0;*/
   Uint8List? proofOfPaymentBytes;
 
   void setCartItems(List<DocumentSnapshot> items) {
@@ -49,7 +47,7 @@ class CartNotifier extends ChangeNotifier {
   bool cartContainsThisItem(String itemID) {
     return cartItems.any((cartItem) {
       final cartData = cartItem.data() as Map<dynamic, dynamic>;
-      return cartData[CartFields.productID] == itemID;
+      return cartData[CartFields.itemID] == itemID;
     });
   }
 

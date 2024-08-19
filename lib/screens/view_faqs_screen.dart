@@ -2,9 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:one_velocity_web/providers/faq_provider.dart';
 import '../providers/loading_provider.dart';
-import '../providers/pages_provider.dart';
-import '../utils/color_util.dart';
 import '../utils/delete_entry_dialog_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
@@ -24,8 +23,6 @@ class ViewFAQsScreen extends ConsumerStatefulWidget {
 }
 
 class _ViewFAQsScreenState extends ConsumerState<ViewFAQsScreen> {
-  List<DocumentSnapshot> allFAQDocs = [];
-
   @override
   void initState() {
     super.initState();
@@ -35,23 +32,19 @@ class _ViewFAQsScreenState extends ConsumerState<ViewFAQsScreen> {
       try {
         ref.read(loadingProvider.notifier).toggleLoading(true);
         if (!hasLoggedInUser()) {
+          ref.read(loadingProvider.notifier).toggleLoading(false);
           goRouter.goNamed(GoRoutes.login);
           return;
         }
         final userDoc = await getCurrentUserDoc();
         final userData = userDoc.data() as Map<dynamic, dynamic>;
         if (userData[UserFields.userType] == UserTypes.client) {
+          ref.read(loadingProvider.notifier).toggleLoading(false);
           goRouter.goNamed(GoRoutes.home);
           return;
         }
-        allFAQDocs = await getAllFAQs();
-
-        ref.read(pagesProvider.notifier).setCurrentPage(1);
-        ref
-            .read(pagesProvider.notifier)
-            .setMaxPage((allFAQDocs.length / 10).ceil());
+        ref.read(faqsProvider).setFAQDocs(await getAllFAQs());
         ref.read(loadingProvider.notifier).toggleLoading(false);
-        //setState(() {});
       } catch (error) {
         scaffoldMessenger.showSnackBar(
             SnackBar(content: Text('Error getting FAQs: $error')));
@@ -63,7 +56,6 @@ class _ViewFAQsScreenState extends ConsumerState<ViewFAQsScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(loadingProvider);
-    ref.watch(pagesProvider);
     return Scaffold(
       appBar: appBarWidget(context, showActions: false),
       body: Row(
@@ -104,7 +96,7 @@ class _ViewFAQsScreenState extends ConsumerState<ViewFAQsScreen> {
       child: Column(
         children: [
           _faqLabelRow(),
-          allFAQDocs.isNotEmpty
+          ref.read(faqsProvider).faqDocs.isNotEmpty
               ? _faqEntries()
               : viewContentUnavailable(context, text: 'NO AVAILABLE FAQs'),
         ],
@@ -114,9 +106,10 @@ class _ViewFAQsScreenState extends ConsumerState<ViewFAQsScreen> {
 
   Widget _faqLabelRow() {
     return viewContentLabelRow(context, children: [
-      viewFlexLabelTextCell('Question', 2,
+      viewFlexLabelTextCell('Category', 2,
           borderRadius: BorderRadius.only(topLeft: Radius.circular(20))),
-      viewFlexLabelTextCell('Answer', 4),
+      viewFlexLabelTextCell('Question', 3),
+      viewFlexLabelTextCell('Answer', 3),
       viewFlexLabelTextCell('Actions', 2,
           borderRadius: BorderRadius.only(topRight: Radius.circular(20)))
     ]);
@@ -127,33 +120,26 @@ class _ViewFAQsScreenState extends ConsumerState<ViewFAQsScreen> {
         height: MediaQuery.of(context).size.height * 0.65,
         child: ListView.builder(
             shrinkWrap: true,
-            itemCount: ref.read(pagesProvider.notifier).getCurrentPage() ==
-                        ref.read(pagesProvider.notifier).getMaxPage() &&
-                    allFAQDocs.length % 10 != 0
-                ? allFAQDocs.length % 10
-                : 10,
+            itemCount: ref.read(faqsProvider).faqDocs.length,
             itemBuilder: (context, index) {
-              return _faqEntry(
-                  allFAQDocs[index +
-                      ((ref.read(pagesProvider.notifier).getCurrentPage() - 1) *
-                          10)],
-                  index);
+              return _faqEntry(ref.read(faqsProvider).faqDocs[index], index);
             }));
   }
 
   Widget _faqEntry(DocumentSnapshot faqDoc, int index) {
     final faqData = faqDoc.data() as Map<dynamic, dynamic>;
+    String category = faqData[FAQFields.category];
     String question = faqData[FAQFields.question];
     String answer = faqData[FAQFields.answer];
     Color entryColor = Colors.black;
-    Color backgroundColor = index % 2 == 0
-        ? CustomColors.ultimateGray.withOpacity(0.5)
-        : CustomColors.nimbusCloud;
+    Color backgroundColor = Colors.white;
     return viewContentEntryRow(context, children: [
-      viewFlexTextCell(question,
+      viewFlexTextCell(category,
           flex: 2, backgroundColor: backgroundColor, textColor: entryColor),
+      viewFlexTextCell(question,
+          flex: 3, backgroundColor: backgroundColor, textColor: entryColor),
       viewFlexTextCell(answer,
-          flex: 4, backgroundColor: backgroundColor, textColor: entryColor),
+          flex: 3, backgroundColor: backgroundColor, textColor: entryColor),
       viewFlexActionsCell([
         editEntryButton(context,
             onPress: () => GoRouter.of(context).goNamed(GoRoutes.editFAQ,

@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/bookmarks_provider.dart';
+import '../providers/cart_provider.dart';
 import '../providers/loading_provider.dart';
 import '../providers/pages_provider.dart';
 import '../providers/user_type_provider.dart';
@@ -60,6 +61,16 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
         }
         ref.read(pagesProvider.notifier).setCurrentPage(0);
         ref.read(pagesProvider.notifier).setMaxPage(imageURLs.length);
+        if (hasLoggedInUser()) {
+          final user = await getCurrentUserDoc();
+          final userData = user.data() as Map<dynamic, dynamic>;
+          ref
+              .read(bookmarksProvider)
+              .setBookmarkedServices(userData[UserFields.bookmarkedProducts]);
+          ref
+              .read(cartProvider)
+              .setCartItems(await getServiceCartEntries(context));
+        }
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(
@@ -272,7 +283,7 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
                                                   'Please log-in to your account first.')));
                                       return;
                                     }
-                                    DateTime? datePicked = await showDatePicker(
+                                    /*DateTime? datePicked = await showDatePicker(
                                         context: context,
                                         firstDate: DateTime.now()
                                             .add(Duration(days: 1)),
@@ -280,10 +291,12 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
                                             .add(Duration(days: 7)));
                                     if (datePicked == null) {
                                       return;
-                                    }
-                                    createNewBookingRequest(context, ref,
+                                    }*/
+                                    addServiceToCart(context, ref,
+                                        serviceID: widget.serviceID);
+                                    /*createNewBookingRequest(context, ref,
                                         serviceID: widget.serviceID,
-                                        datePicked: datePicked);
+                                        datePicked: datePicked);*/
                                   }
                                 : null,
                             child: whiteSarabunRegular('REQUEST THIS SERVICE',

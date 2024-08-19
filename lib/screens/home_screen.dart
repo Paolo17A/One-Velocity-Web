@@ -199,10 +199,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   itemCount: serviceDocs.length,
                   disableGesture: true,
                   options: CarouselOptions(
-                      viewportFraction: 0.4,
+                      viewportFraction: 0.2,
                       enlargeCenterPage: true,
                       scrollPhysics: NeverScrollableScrollPhysics(),
-                      enlargeFactor: 0.5),
+                      enlargeFactor: 0.2),
                   itemBuilder: (context, index, realIndex) {
                     return itemEntry(context,
                         itemDoc: serviceDocs[index],

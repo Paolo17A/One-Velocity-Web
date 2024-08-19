@@ -3,12 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:one_velocity_web/screens/add_faq_screen.dart';
 import 'package:one_velocity_web/screens/add_product_screen.dart';
 import 'package:one_velocity_web/screens/bookmarks_screen.dart';
-import 'package:one_velocity_web/screens/cart_screen.dart';
+import 'package:one_velocity_web/screens/product_cart_screen.dart';
 import 'package:one_velocity_web/screens/edit_product_screen.dart';
 import 'package:one_velocity_web/screens/forgot_password_screen.dart';
 import 'package:one_velocity_web/screens/login_screen.dart';
 import 'package:one_velocity_web/screens/purchase_history_screen.dart';
 import 'package:one_velocity_web/screens/register_screen.dart';
+import 'package:one_velocity_web/screens/service_cart_screen.dart';
 import 'package:one_velocity_web/screens/view_faqs_screen.dart';
 import 'package:one_velocity_web/screens/view_products_screen.dart';
 import 'package:one_velocity_web/screens/view_purchases_screen.dart';
@@ -61,7 +62,8 @@ class GoRoutes {
   static const viewBookings = 'viewBookings';
 
   //  CLIENT
-  static const cart = 'cart';
+  static const productCart = 'productCart';
+  static const serviceCart = 'serviceCart';
   static const profile = 'profile';
   static const editProfile = 'editProfile';
   static const bookmarks = 'bookmarks';
@@ -219,10 +221,15 @@ final GoRouter goRoutes = GoRouter(initialLocation: GoRoutes.home, routes: [
         //==CLIENT PAGES========================================================
         //======================================================================
         GoRoute(
-            name: GoRoutes.cart,
-            path: GoRoutes.cart,
+            name: GoRoutes.productCart,
+            path: GoRoutes.productCart,
             pageBuilder: (context, state) =>
-                customTransition(context, state, const CartScreen())),
+                customTransition(context, state, const ProductCartScreen())),
+        GoRoute(
+            name: GoRoutes.serviceCart,
+            path: GoRoutes.serviceCart,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const ServiceCartScreen())),
         GoRoute(
             name: GoRoutes.profile,
             path: GoRoutes.profile,
