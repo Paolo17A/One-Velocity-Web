@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,15 +7,14 @@ import 'package:one_velocity_web/utils/color_util.dart';
 import 'package:one_velocity_web/widgets/text_widgets.dart';
 
 import '../providers/loading_provider.dart';
-import '../providers/pages_provider.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
 import '../widgets/app_bar_widget.dart';
-import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
 import '../widgets/dropdown_widget.dart';
+import '../widgets/floating_chat_widget.dart';
 import '../widgets/item_entry_widget.dart';
 
 class ShopProductsScreen extends ConsumerStatefulWidget {
@@ -45,10 +45,6 @@ class _ShopProductsScreenState extends ConsumerState<ShopProductsScreen> {
         }
         allProductDocs = await getAllProducts();
         filteredProductDocs = allProductDocs;
-        ref.read(pagesProvider.notifier).setCurrentPage(1);
-        ref
-            .read(pagesProvider.notifier)
-            .setMaxPage((allProductDocs.length / 20).ceil());
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(
@@ -63,6 +59,11 @@ class _ShopProductsScreenState extends ConsumerState<ShopProductsScreen> {
     ref.watch(loadingProvider);
     return Scaffold(
       appBar: appBarWidget(context),
+      floatingActionButton: hasLoggedInUser()
+          ? FloatingChatWidget(
+              senderUID: FirebaseAuth.instance.currentUser!.uid,
+              otherUID: adminID)
+          : null,
       body: switchedLoadingContainer(
           ref.read(loadingProvider),
           SingleChildScrollView(
@@ -134,16 +135,12 @@ class _ShopProductsScreenState extends ConsumerState<ShopProductsScreen> {
   }
 
   Widget _availableProducts() {
-    int currentPage = ref.read(pagesProvider.notifier).getCurrentPage();
-    int maxPage = ref.read(pagesProvider.notifier).getMaxPage();
     return Column(
       children: [
         all20Pix(
             child: filteredProductDocs.isNotEmpty
                 ? Wrap(
-                    alignment: currentPage == maxPage
-                        ? WrapAlignment.start
-                        : WrapAlignment.spaceEvenly,
+                    alignment: WrapAlignment.start,
                     spacing: 100,
                     runSpacing: 100,
                     children: filteredProductDocs.map((item) {
@@ -156,19 +153,6 @@ class _ShopProductsScreenState extends ConsumerState<ShopProductsScreen> {
                                   }));
                     }).toList())
                 : blackSarabunBold('NO PRODUCTS AVAILABLE', fontSize: 32)),
-        if (allProductDocs.length > 20)
-          navigatorButtons(context,
-              pageNumber: currentPage,
-              onPrevious: () => currentPage == 1
-                  ? null
-                  : ref
-                      .read(pagesProvider.notifier)
-                      .setCurrentPage(currentPage + 1),
-              onNext: () => currentPage == maxPage
-                  ? null
-                  : ref
-                      .read(pagesProvider.notifier)
-                      .setCurrentPage(currentPage - 1))
       ],
     );
   }

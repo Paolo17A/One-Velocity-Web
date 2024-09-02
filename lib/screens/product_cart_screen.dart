@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
@@ -16,6 +17,7 @@ import '../utils/firebase_util.dart';
 import '../utils/string_util.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
+import '../widgets/floating_chat_widget.dart';
 
 class ProductCartScreen extends ConsumerStatefulWidget {
   const ProductCartScreen({super.key});
@@ -45,7 +47,8 @@ class _ProductCartScreenState extends ConsumerState<ProductCartScreen> {
         ref
             .read(cartProvider)
             .setCartItems(await getProductCartEntries(context));
-        associatedProductDocs = await getSelectedServiceDocs(
+        print('items: ${ref.read(cartProvider).cartItems.length}');
+        associatedProductDocs = await getSelectedProductDocs(
             ref.read(cartProvider).cartItems.map((cartDoc) {
           final cartData = cartDoc.data() as Map<dynamic, dynamic>;
           return cartData[CartFields.itemID].toString();
@@ -76,6 +79,8 @@ class _ProductCartScreenState extends ConsumerState<ProductCartScreen> {
     ref.watch(cartProvider);
     return Scaffold(
       appBar: appBarWidget(context),
+      floatingActionButton: FloatingChatWidget(
+          senderUID: FirebaseAuth.instance.currentUser!.uid, otherUID: adminID),
       body: SingleChildScrollView(
         child: Column(
           children: [

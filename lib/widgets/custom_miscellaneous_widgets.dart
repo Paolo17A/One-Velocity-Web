@@ -35,6 +35,16 @@ Widget switchedLoadingContainer(bool isLoading, Widget child) {
   return isLoading ? const Center(child: CircularProgressIndicator()) : child;
 }
 
+Widget roundedNimbusContainer(BuildContext context, {required Widget child}) {
+  return Container(
+      width: MediaQuery.of(context).size.width * 0.5,
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: CustomColors.nimbusCloud),
+      padding: const EdgeInsets.all(20),
+      child: child);
+}
+
 Widget buildProfileImage({required String profileImageURL}) {
   return profileImageURL.isNotEmpty
       ? CircleAvatar(
@@ -549,7 +559,7 @@ Widget footerWidget(BuildContext context) {
                     )
                   ]),
                   Row(children: [
-                    Icon(Icons.phone),
+                    Icon(Icons.phone, color: CustomColors.ultimateGray),
                     Gap(20),
                     whiteSarabunRegular('(049) 536-2526')
                   ])

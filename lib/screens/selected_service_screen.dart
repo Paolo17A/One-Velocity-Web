@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
@@ -17,6 +18,7 @@ import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
+import '../widgets/floating_chat_widget.dart';
 import '../widgets/left_navigator_widget.dart';
 import '../widgets/text_widgets.dart';
 
@@ -87,6 +89,12 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
     currentImageIndex = ref.watch(pagesProvider.notifier).getCurrentPage();
     return Scaffold(
         appBar: appBarWidget(context),
+        floatingActionButton:
+            hasLoggedInUser() && ref.read(userTypeProvider) == UserTypes.client
+                ? FloatingChatWidget(
+                    senderUID: FirebaseAuth.instance.currentUser!.uid,
+                    otherUID: adminID)
+                : null,
         body: hasLoggedInUser() && ref.read(userTypeProvider) == UserTypes.admin
             ? _adminView()
             : _clientWidgets());

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,7 @@ import '../utils/string_util.dart';
 import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
+import '../widgets/floating_chat_widget.dart';
 import '../widgets/left_navigator_widget.dart';
 
 class BookingHistoryScreen extends ConsumerStatefulWidget {
@@ -59,6 +61,8 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
     ref.watch(bookingsProvider);
     return Scaffold(
       appBar: appBarWidget(context),
+      floatingActionButton: FloatingChatWidget(
+          senderUID: FirebaseAuth.instance.currentUser!.uid, otherUID: adminID),
       body: switchedLoadingContainer(
           ref.read(loadingProvider),
           SingleChildScrollView(

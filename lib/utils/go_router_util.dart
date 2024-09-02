@@ -11,6 +11,7 @@ import 'package:one_velocity_web/screens/purchase_history_screen.dart';
 import 'package:one_velocity_web/screens/register_screen.dart';
 import 'package:one_velocity_web/screens/service_cart_screen.dart';
 import 'package:one_velocity_web/screens/view_faqs_screen.dart';
+import 'package:one_velocity_web/screens/view_messages_screen.dart';
 import 'package:one_velocity_web/screens/view_products_screen.dart';
 import 'package:one_velocity_web/screens/view_purchases_screen.dart';
 import 'package:one_velocity_web/screens/view_transactions_screen.dart';
@@ -60,6 +61,7 @@ class GoRoutes {
   static const addFAQ = 'addFAQ';
   static const editFAQ = 'editFAQ';
   static const viewBookings = 'viewBookings';
+  static const messages = 'messages';
 
   //  CLIENT
   static const productCart = 'productCart';
@@ -217,6 +219,11 @@ final GoRouter goRoutes = GoRouter(initialLocation: GoRoutes.home, routes: [
             path: GoRoutes.viewBookings,
             pageBuilder: (context, state) =>
                 customTransition(context, state, const ViewBookingsScreen())),
+        GoRoute(
+            name: GoRoutes.messages,
+            path: GoRoutes.messages,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const ViewMessagesScreen())),
         //======================================================================
         //==CLIENT PAGES========================================================
         //======================================================================

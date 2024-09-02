@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
@@ -14,6 +15,7 @@ import '../providers/loading_provider.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
+import '../widgets/floating_chat_widget.dart';
 
 class BookMarksScreen extends ConsumerStatefulWidget {
   const BookMarksScreen({super.key});
@@ -71,6 +73,9 @@ class _BookMarksScreenState extends ConsumerState<BookMarksScreen>
       child: Scaffold(
         appBar: appBarWidget(context),
         backgroundColor: Colors.white,
+        floatingActionButton: FloatingChatWidget(
+            senderUID: FirebaseAuth.instance.currentUser!.uid,
+            otherUID: adminID),
         body: SingleChildScrollView(
           child: Column(
             children: [

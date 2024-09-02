@@ -7,6 +7,7 @@ import '../providers/loading_provider.dart';
 import '../utils/color_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
+import '../utils/string_util.dart';
 import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
@@ -48,9 +49,24 @@ class _LoginScreenState extends ConsumerState<RegisterScreen> {
       body: stackedLoadingContainer(
         context,
         ref.read(loadingProvider),
-        SingleChildScrollView(
-          child: Column(
-            children: [secondAppBar(context), _registerContainer()],
+        Container(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+          decoration: BoxDecoration(
+              image: DecorationImage(
+                  image: AssetImage(ImagePaths.background), fit: BoxFit.cover)),
+          child: Stack(
+            children: [
+              Container(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                  color: Colors.white.withOpacity(0.8)),
+              SingleChildScrollView(
+                child: Column(
+                  children: [secondAppBar(context), _registerContainer()],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -60,7 +76,7 @@ class _LoginScreenState extends ConsumerState<RegisterScreen> {
   Widget _registerContainer() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
-      child: roundedWhiteContainer(context,
+      child: roundedNimbusContainer(context,
           child: Column(
             children: [
               vertical20Pix(child: blackSarabunBold('REGISTER', fontSize: 40)),

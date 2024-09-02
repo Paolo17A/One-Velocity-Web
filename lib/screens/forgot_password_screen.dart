@@ -7,6 +7,7 @@ import 'package:one_velocity_web/widgets/custom_miscellaneous_widgets.dart';
 import 'package:one_velocity_web/widgets/custom_padding_widgets.dart';
 import 'package:one_velocity_web/widgets/text_widgets.dart';
 
+import '../utils/string_util.dart';
 import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_text_field_widget.dart';
 
@@ -34,9 +35,27 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       body: stackedLoadingContainer(
           context,
           ref.read(loadingProvider),
-          SingleChildScrollView(
-            child: Column(
-                children: [secondAppBar(context), forgotPasswordContainer()]),
+          Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: AssetImage(ImagePaths.background),
+                    fit: BoxFit.cover)),
+            child: Stack(
+              children: [
+                Container(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
+                    color: Colors.white.withOpacity(0.8)),
+                SingleChildScrollView(
+                  child: Column(children: [
+                    secondAppBar(context),
+                    forgotPasswordContainer()
+                  ]),
+                ),
+              ],
+            ),
           )),
     );
   }
@@ -44,7 +63,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Widget forgotPasswordContainer() {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 40),
-      child: roundedWhiteContainer(context,
+      child: roundedNimbusContainer(context,
           child: Column(
             children: [
               vertical20Pix(

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
@@ -15,6 +16,7 @@ import 'package:one_velocity_web/widgets/left_navigator_widget.dart';
 import 'package:one_velocity_web/widgets/text_widgets.dart';
 
 import '../utils/url_util.dart';
+import '../widgets/floating_chat_widget.dart';
 
 class PurchaseHistoryScreen extends ConsumerStatefulWidget {
   const PurchaseHistoryScreen({super.key});
@@ -57,6 +59,8 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen> {
     ref.watch(purchaseHistoryProvider);
     return Scaffold(
       appBar: appBarWidget(context),
+      floatingActionButton: FloatingChatWidget(
+          senderUID: FirebaseAuth.instance.currentUser!.uid, otherUID: adminID),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(

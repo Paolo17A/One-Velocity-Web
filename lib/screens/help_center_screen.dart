@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:one_velocity_web/utils/string_util.dart';
@@ -10,6 +11,7 @@ import '../utils/firebase_util.dart';
 import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
+import '../widgets/floating_chat_widget.dart';
 
 class HelpCenterScreen extends ConsumerStatefulWidget {
   const HelpCenterScreen({super.key});
@@ -37,6 +39,11 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
     ref.watch(loadingProvider);
     return Scaffold(
       appBar: appBarWidget(context),
+      floatingActionButton: hasLoggedInUser()
+          ? FloatingChatWidget(
+              senderUID: FirebaseAuth.instance.currentUser!.uid,
+              otherUID: adminID)
+          : null,
       body: switchedLoadingContainer(
         ref.read(loadingProvider),
         SingleChildScrollView(

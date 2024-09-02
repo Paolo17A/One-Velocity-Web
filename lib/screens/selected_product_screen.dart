@@ -1,5 +1,6 @@
 import 'package:carousel_slider/carousel_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
@@ -17,6 +18,7 @@ import '../utils/string_util.dart';
 import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
+import '../widgets/floating_chat_widget.dart';
 
 class SelectedProductScreen extends ConsumerStatefulWidget {
   final String productID;
@@ -99,6 +101,11 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
     currentImageIndex = ref.watch(pagesProvider.notifier).getCurrentPage();
     return Scaffold(
       appBar: appBarWidget(context),
+      floatingActionButton: hasLoggedInUser()
+          ? FloatingChatWidget(
+              senderUID: FirebaseAuth.instance.currentUser!.uid,
+              otherUID: adminID)
+          : null,
       body: SingleChildScrollView(
         child: Column(
           children: [

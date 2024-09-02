@@ -45,6 +45,10 @@ Widget leftNavigator(BuildContext context, {required String path}) {
                 thisPath: GoRoutes.viewBookings,
                 currentPath: path),
             listTile(context,
+                label: 'Messages',
+                thisPath: GoRoutes.messages,
+                currentPath: path),
+            listTile(context,
                 label: 'FAQs', thisPath: GoRoutes.viewFAQs, currentPath: path),
           ],
         )),
@@ -122,7 +126,8 @@ Widget clientProfileNavigator(BuildContext context, {required String path}) {
               onTap: () {}),*/
           ListTile(
               tileColor: CustomColors.crimson,
-              title: Text('LOG-OUT', style: const TextStyle(color: Colors.red)),
+              title:
+                  Text('LOG-OUT', style: const TextStyle(color: Colors.white)),
               onTap: () {
                 displayDeleteEntryDialog(context,
                     message: 'Are you sure you want to log-out?',

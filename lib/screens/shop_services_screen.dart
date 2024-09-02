@@ -1,22 +1,20 @@
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:one_velocity_web/widgets/text_widgets.dart';
 
 import '../providers/loading_provider.dart';
-import '../providers/pages_provider.dart';
 import '../utils/color_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
 import '../widgets/app_bar_widget.dart';
-import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
 import '../widgets/dropdown_widget.dart';
+import '../widgets/floating_chat_widget.dart';
 import '../widgets/item_entry_widget.dart';
 
 class ShopServicesScreen extends ConsumerStatefulWidget {
@@ -46,10 +44,6 @@ class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
         }
         allServiceDocs = await getAllServices();
         filteredServiceDocs = allServiceDocs;
-        ref.read(pagesProvider.notifier).setCurrentPage(1);
-        ref
-            .read(pagesProvider.notifier)
-            .setMaxPage((allServiceDocs.length / 20).ceil());
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(
@@ -64,6 +58,11 @@ class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
     ref.watch(loadingProvider);
     return Scaffold(
       appBar: appBarWidget(context),
+      floatingActionButton: hasLoggedInUser()
+          ? FloatingChatWidget(
+              senderUID: FirebaseAuth.instance.currentUser!.uid,
+              otherUID: adminID)
+          : null,
       body: switchedLoadingContainer(
           ref.read(loadingProvider),
           SingleChildScrollView(
@@ -129,24 +128,17 @@ class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
   }
 
   Widget _availableServices() {
-    int currentPage = ref.read(pagesProvider.notifier).getCurrentPage();
-    int maxPage = ref.read(pagesProvider.notifier).getMaxPage();
-    List<DocumentSnapshot> servicesSublist = filteredServiceDocs.sublist(
-        (currentPage - 1) * 20,
-        min(filteredServiceDocs.length, ((currentPage - 1) * 20) + 20));
     return Column(
       children: [
         all20Pix(
             child: filteredServiceDocs.isNotEmpty
                 ? Wrap(
-                    alignment: currentPage == maxPage
-                        ? WrapAlignment.start
-                        : WrapAlignment.spaceEvenly,
+                    alignment: WrapAlignment.start,
                     spacing: 100,
                     runSpacing: 100,
-                    children: servicesSublist.asMap().entries.map((item) {
+                    children: filteredServiceDocs.asMap().entries.map((item) {
                       DocumentSnapshot thisService =
-                          allServiceDocs[item.key + ((currentPage - 1) * 20)];
+                          filteredServiceDocs[item.key];
                       return itemEntry(context,
                           itemDoc: thisService,
                           onPress: () => GoRouter.of(context).goNamed(
@@ -156,19 +148,6 @@ class _ShopServicesScreenState extends ConsumerState<ShopServicesScreen> {
                                   }));
                     }).toList())
                 : blackSarabunBold('NO SERVICES AVAILABLE', fontSize: 44)),
-        if (allServiceDocs.length > 20)
-          navigatorButtons(context,
-              pageNumber: currentPage,
-              onPrevious: () => currentPage == 1
-                  ? null
-                  : ref
-                      .read(pagesProvider.notifier)
-                      .setCurrentPage(currentPage + 1),
-              onNext: () => currentPage == maxPage
-                  ? null
-                  : ref
-                      .read(pagesProvider.notifier)
-                      .setCurrentPage(currentPage - 1))
       ],
     );
   }

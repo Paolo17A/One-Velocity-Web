@@ -1,11 +1,13 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:one_velocity_web/utils/color_util.dart';
 import 'package:one_velocity_web/widgets/app_bar_widget.dart';
+import 'package:one_velocity_web/widgets/floating_chat_widget.dart';
 import 'package:pie_chart/pie_chart.dart';
 
 import '../providers/loading_provider.dart';
@@ -117,6 +119,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: appBarWidget(context,
           showActions: !hasLoggedInUser() ||
               ref.read(userTypeProvider) == UserTypes.client),
+      floatingActionButton: hasLoggedInUser()
+          ? FloatingChatWidget(
+              senderUID: FirebaseAuth.instance.currentUser!.uid,
+              otherUID: adminID)
+          : null,
       body: switchedLoadingContainer(
         ref.read(loadingProvider),
         hasLoggedInUser() && ref.read(userTypeProvider) == UserTypes.admin
@@ -150,6 +157,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         image: DecorationImage(
             image: AssetImage(ImagePaths.landing), fit: BoxFit.fill),
       ),
+      /*child: hasLoggedInUser()
+            ? Stack(children: [
+                Positioned(
+                    bottom: 20,
+                    right: 20,
+                    child: FloatingChatWidget(
+                        senderUID: FirebaseAuth.instance.currentUser!.uid,
+                        otherUID: adminID))
+              ])
+            : null*/
     );
   }
 

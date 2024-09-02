@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
@@ -14,6 +15,7 @@ import '../utils/string_util.dart';
 import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
+import '../widgets/floating_chat_widget.dart';
 import '../widgets/text_widgets.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -78,6 +80,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     profileImageURL = ref.watch(profileImageURLProvider).profileImageURL;
     return Scaffold(
       appBar: appBarWidget(context),
+      floatingActionButton: FloatingChatWidget(
+          senderUID: FirebaseAuth.instance.currentUser!.uid, otherUID: adminID),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(

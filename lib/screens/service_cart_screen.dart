@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
@@ -15,6 +16,7 @@ import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
 import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_padding_widgets.dart';
+import '../widgets/floating_chat_widget.dart';
 import '../widgets/text_widgets.dart';
 
 class ServiceCartScreen extends ConsumerStatefulWidget {
@@ -74,6 +76,8 @@ class _ServiceCartScreenState extends ConsumerState<ServiceCartScreen> {
     ref.watch(cartProvider);
     return Scaffold(
       appBar: appBarWidget(context),
+      floatingActionButton: FloatingChatWidget(
+          senderUID: FirebaseAuth.instance.currentUser!.uid, otherUID: adminID),
       body: switchedLoadingContainer(
         ref.read(loadingProvider),
         SingleChildScrollView(

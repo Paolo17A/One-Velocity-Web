@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:one_velocity_web/utils/firebase_util.dart';
+import 'package:one_velocity_web/utils/string_util.dart';
 
 import '../providers/loading_provider.dart';
 import '../utils/color_util.dart';
@@ -40,8 +41,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: stackedLoadingContainer(
           context,
           ref.read(loadingProvider),
-          Column(
-            children: [secondAppBar(context), _logInContainer()],
+          Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: AssetImage(ImagePaths.background),
+                    fit: BoxFit.cover)),
+            child: Stack(
+              children: [
+                Container(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
+                    color: Colors.white.withOpacity(0.8)),
+                Column(children: [secondAppBar(context), _logInContainer()]),
+              ],
+            ),
           )),
     );
   }
@@ -87,15 +102,5 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ],
           )),
     );
-  }
-
-  Widget roundedNimbusContainer(BuildContext context, {required Widget child}) {
-    return Container(
-        width: MediaQuery.of(context).size.width * 0.5,
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: CustomColors.nimbusCloud),
-        padding: const EdgeInsets.all(20),
-        child: child);
   }
 }
