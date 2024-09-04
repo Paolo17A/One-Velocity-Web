@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:one_velocity_web/screens/add_faq_screen.dart';
 import 'package:one_velocity_web/screens/add_product_screen.dart';
 import 'package:one_velocity_web/screens/bookmarks_screen.dart';
+import 'package:one_velocity_web/screens/change_password_screen.dart';
 import 'package:one_velocity_web/screens/product_cart_screen.dart';
 import 'package:one_velocity_web/screens/edit_product_screen.dart';
 import 'package:one_velocity_web/screens/forgot_password_screen.dart';
@@ -72,6 +73,7 @@ class GoRoutes {
   static const purchaseHistory = 'purchaseHistory';
   static const bookingsHistory = 'bookingsHistory';
   static const settleBooking = 'settleBooking';
+  static const changePassword = 'changePassword';
 }
 
 CustomTransitionPage customTransition(
@@ -290,5 +292,10 @@ final GoRouter goRoutes = GoRouter(initialLocation: GoRoutes.home, routes: [
                 SettleBookingScreen(
                     bookingID:
                         state.pathParameters[PathParameters.bookingID]!))),
+        GoRoute(
+            name: GoRoutes.changePassword,
+            path: GoRoutes.changePassword,
+            pageBuilder: (context, state) =>
+                customTransition(context, state, const ChangePasswordScreen())),
       ])
 ]);

@@ -118,12 +118,14 @@ Widget clientProfileNavigator(BuildContext context, {required String path}) {
                 onTap: () =>
                     GoRouter.of(context).goNamed(GoRoutes.bookingsHistory)),
           ),
-          /*ListTile(
-              tileColor:  path == GoRoutes.  ? CustomColors.grenadine
+          ListTile(
+              tileColor: path == GoRoutes.changePassword
+                  ? CustomColors.grenadine
                   : CustomColors.crimson,
               title: Text('CHANGE PASSWORD',
                   style: TextStyle(color: Colors.white)),
-              onTap: () {}),*/
+              onTap: () =>
+                  GoRouter.of(context).goNamed(GoRoutes.changePassword)),
           ListTile(
               tileColor: CustomColors.crimson,
               title:

@@ -179,6 +179,62 @@ Future sendResetPasswordEmail(BuildContext context, WidgetRef ref,
   }
 }
 
+Future updatePassword(BuildContext context, WidgetRef ref,
+    {required TextEditingController currentPasswordController,
+    required TextEditingController newPasswordController,
+    required TextEditingController confirmNewPasswordController}) async {
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  if (currentPasswordController.text.isEmpty ||
+      newPasswordController.text.isEmpty ||
+      confirmNewPasswordController.text.isEmpty) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Please fill up all the given fields.')));
+    return;
+  }
+  if (confirmNewPasswordController.text != newPasswordController.text) {
+    scaffoldMessenger
+        .showSnackBar(SnackBar(content: Text('The passwords do not match.')));
+    return;
+  }
+  if (newPasswordController.text.length < 6) {
+    scaffoldMessenger.showSnackBar(SnackBar(
+        content:
+            Text('Your new password must be at least 6 characters long.')));
+    return;
+  }
+  try {
+    ref.read(loadingProvider.notifier).toggleLoading(true);
+    final user = await getCurrentUserDoc();
+    final userData = user.data() as Map<dynamic, dynamic>;
+    if (currentPasswordController.text != userData[UserFields.password]) {
+      ref.read(loadingProvider.notifier).toggleLoading(false);
+      scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Your old password is incorrect.')));
+      return;
+    }
+
+    await FirebaseAuth.instance.currentUser!.reauthenticateWithCredential(
+        EmailAuthProvider.credential(
+            email: userData[UserFields.email],
+            password: userData[UserFields.password]));
+    await FirebaseAuth.instance.currentUser!
+        .updatePassword(newPasswordController.text);
+    await FirebaseFirestore.instance
+        .collection(Collections.users)
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .update({UserFields.password: newPasswordController.text});
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Successfully updated your password.')));
+    currentPasswordController.clear();
+    newPasswordController.clear();
+    confirmNewPasswordController.clear();
+    ref.read(loadingProvider.notifier).toggleLoading(false);
+  } catch (error) {
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error updating password: $error')));
+  }
+}
+
 Future<DocumentSnapshot> getCurrentUserDoc() async {
   return await getThisUserDoc(FirebaseAuth.instance.currentUser!.uid);
 }
