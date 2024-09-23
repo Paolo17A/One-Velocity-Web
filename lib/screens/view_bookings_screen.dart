@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -38,6 +39,13 @@ class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
         }
 
         ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
+        ref.read(bookingsProvider).bookingDocs.sort((a, b) {
+          DateTime aTime =
+              (a[PurchaseFields.dateCreated] as Timestamp).toDate();
+          DateTime bTime =
+              (b[PurchaseFields.dateCreated] as Timestamp).toDate();
+          return bTime.compareTo(aTime);
+        });
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(

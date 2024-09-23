@@ -54,13 +54,21 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen>
         List<DocumentSnapshot> bookingDocs = await getUserBookingDocs();
         ongoingBookingDocs = bookingDocs.where((bookingDoc) {
           final bookingData = bookingDoc.data() as Map<dynamic, dynamic>;
-          return bookingData[BookingFields.serviceStatus] !=
-              ServiceStatuses.serviceCompleted;
+          return bookingData[BookingFields.serviceStatus] ==
+                  ServiceStatuses.pendingApproval ||
+              bookingData[BookingFields.serviceStatus] ==
+                  ServiceStatuses.pendingDropOff ||
+              bookingData[BookingFields.serviceStatus] ==
+                  ServiceStatuses.pendingPayment;
         }).toList();
         completedBookingDocs = bookingDocs.where((bookingDoc) {
           final bookingData = bookingDoc.data() as Map<dynamic, dynamic>;
           return bookingData[BookingFields.serviceStatus] ==
-              ServiceStatuses.serviceCompleted;
+                  ServiceStatuses.serviceCompleted ||
+              bookingData[BookingFields.serviceStatus] ==
+                  ServiceStatuses.denied ||
+              bookingData[BookingFields.serviceStatus] ==
+                  ServiceStatuses.cancelled;
         }).toList();
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {

@@ -55,13 +55,19 @@ class _PurchaseHistoryScreenState extends ConsumerState<PurchaseHistoryScreen>
         });
         ongoingPurchaseDocs = purchaseHistoryDocs.where((purchaseDoc) {
           final purchaseData = purchaseDoc.data() as Map<dynamic, dynamic>;
-          return purchaseData[PurchaseFields.purchaseStatus] !=
-              PurchaseStatuses.pickedUp;
+          return purchaseData[PurchaseFields.purchaseStatus] ==
+                  PurchaseStatuses.pending ||
+              purchaseData[PurchaseFields.purchaseStatus] ==
+                  PurchaseStatuses.forPickUp ||
+              purchaseData[PurchaseFields.purchaseStatus] ==
+                  PurchaseStatuses.processing;
         }).toList();
         completedPurchaseDocs = purchaseHistoryDocs.where((purchaseDoc) {
           final purchaseData = purchaseDoc.data() as Map<dynamic, dynamic>;
           return purchaseData[PurchaseFields.purchaseStatus] ==
-              PurchaseStatuses.pickedUp;
+                  PurchaseStatuses.pickedUp ||
+              purchaseData[PurchaseFields.purchaseStatus] ==
+                  PurchaseStatuses.denied;
         }).toList();
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {

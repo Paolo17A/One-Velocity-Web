@@ -1157,6 +1157,11 @@ Future approveThisPayment(BuildContext context, WidgetRef ref,
     }
 
     ref.read(paymentsProvider).setPaymentDocs(await getAllPaymentDocs());
+    ref.read(paymentsProvider).paymentDocs.sort((a, b) {
+      DateTime aTime = (a[PaymentFields.dateCreated] as Timestamp).toDate();
+      DateTime bTime = (b[PaymentFields.dateCreated] as Timestamp).toDate();
+      return bTime.compareTo(aTime);
+    });
     scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Successfully approved this payment')));
     ref.read(loadingProvider.notifier).toggleLoading(false);
@@ -1199,6 +1204,11 @@ Future denyThisPayment(BuildContext context, WidgetRef ref,
       }
     }
     ref.read(paymentsProvider).setPaymentDocs(await getAllPaymentDocs());
+    ref.read(paymentsProvider).paymentDocs.sort((a, b) {
+      DateTime aTime = (a[PaymentFields.dateCreated] as Timestamp).toDate();
+      DateTime bTime = (b[PaymentFields.dateCreated] as Timestamp).toDate();
+      return bTime.compareTo(aTime);
+    });
     scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Successfully denied this payment')));
     ref.read(loadingProvider.notifier).toggleLoading(false);
@@ -1218,10 +1228,8 @@ Future settleBookingRequestPayment(BuildContext context, WidgetRef ref,
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
     //  1. Generate a payment document in Firestore
-    await FirebaseFirestore.instance
-        .collection(Collections.payments)
-        .doc(bookingID)
-        .set({
+    final paymentReference =
+        await FirebaseFirestore.instance.collection(Collections.payments).add({
       PaymentFields.clientID: FirebaseAuth.instance.currentUser!.uid,
       PaymentFields.paidAmount: servicePrice,
       PaymentFields.paymentVerified: false,
@@ -1234,33 +1242,35 @@ Future settleBookingRequestPayment(BuildContext context, WidgetRef ref,
       PaymentFields.purchaseIDs: purchaseIDs
     });
 
-    //  3. Upload the proof of payment image to Firebase Storage
+    //  2. Upload the proof of payment image to Firebase Storage
     final storageRef = FirebaseStorage.instance
         .ref()
         .child(StorageFields.payments)
-        .child('${bookingID}.png');
+        .child('${paymentReference.id}.png');
     final uploadTask =
         storageRef.putData(ref.read(cartProvider).proofOfPaymentBytes!);
     final taskSnapshot = await uploadTask;
     final downloadURL = await taskSnapshot.ref.getDownloadURL();
     await FirebaseFirestore.instance
         .collection(Collections.payments)
-        .doc(bookingID)
+        .doc(paymentReference.id)
         .update({PaymentFields.proofOfPayment: downloadURL});
 
-    //  2. Change bookings status
+    //  3. Change bookings status
     await FirebaseFirestore.instance
         .collection(Collections.bookings)
         .doc(bookingID)
-        .update(
-            {BookingFields.serviceStatus: ServiceStatuses.processingPayment});
+        .update({
+      BookingFields.serviceStatus: ServiceStatuses.processingPayment,
+      BookingFields.paymentID: paymentReference.id
+    });
     scaffoldMessenger.showSnackBar(SnackBar(
         content: Text('Successfully settled booking request payment!')));
     goRouter.goNamed(GoRoutes.bookingsHistory);
     ref.read(loadingProvider.notifier).toggleLoading(false);
   } catch (error) {
     scaffoldMessenger.showSnackBar(SnackBar(
-        content: Text('Error seetling booking request payment: $error')));
+        content: Text('Error settling booking request payment: $error')));
     ref.read(loadingProvider.notifier).toggleLoading(false);
   }
 }
@@ -1518,6 +1528,7 @@ Future createNewBookingRequest(BuildContext context, WidgetRef ref,
     await FirebaseFirestore.instance.collection(Collections.bookings).add({
       BookingFields.serviceIDs: serviceIDs,
       BookingFields.clientID: FirebaseAuth.instance.currentUser!.uid,
+      BookingFields.paymentID: '',
       BookingFields.dateCreated: DateTime.now(),
       BookingFields.dateRequested: datePicked,
       BookingFields.serviceStatus: ServiceStatuses.pendingApproval
@@ -1553,6 +1564,11 @@ Future approveThisBookingRequest(BuildContext context, WidgetRef ref,
         .doc(bookingID)
         .update({BookingFields.serviceStatus: ServiceStatuses.pendingPayment});
     ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
+    ref.read(bookingsProvider).bookingDocs.sort((a, b) {
+      DateTime aTime = (a[PurchaseFields.dateCreated] as Timestamp).toDate();
+      DateTime bTime = (b[PurchaseFields.dateCreated] as Timestamp).toDate();
+      return bTime.compareTo(aTime);
+    });
     scaffoldMessenger.showSnackBar(const SnackBar(
         content: Text('Successfully approved this booking request')));
     ref.read(loadingProvider.notifier).toggleLoading(false);
@@ -1574,6 +1590,11 @@ Future denyThisBookingRequest(BuildContext context, WidgetRef ref,
         .doc(bookingID)
         .update({BookingFields.serviceStatus: ServiceStatuses.denied});
     ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
+    ref.read(bookingsProvider).bookingDocs.sort((a, b) {
+      DateTime aTime = (a[PurchaseFields.dateCreated] as Timestamp).toDate();
+      DateTime bTime = (b[PurchaseFields.dateCreated] as Timestamp).toDate();
+      return bTime.compareTo(aTime);
+    });
     scaffoldMessenger.showSnackBar(const SnackBar(
         content: Text('Successfully denied this booking request')));
     ref.read(loadingProvider.notifier).toggleLoading(false);
@@ -1595,6 +1616,11 @@ Future markBookingRequestAsServiceOngoing(BuildContext context, WidgetRef ref,
         .doc(bookingID)
         .update({BookingFields.serviceStatus: ServiceStatuses.serviceOngoing});
     ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
+    ref.read(bookingsProvider).bookingDocs.sort((a, b) {
+      DateTime aTime = (a[PurchaseFields.dateCreated] as Timestamp).toDate();
+      DateTime bTime = (b[PurchaseFields.dateCreated] as Timestamp).toDate();
+      return bTime.compareTo(aTime);
+    });
     scaffoldMessenger.showSnackBar(const SnackBar(
         content:
             Text('Successfully marked booking request as service ongoing.')));
@@ -1618,6 +1644,11 @@ Future markBookingRequestAsForPickUp(BuildContext context, WidgetRef ref,
         .doc(bookingID)
         .update({BookingFields.serviceStatus: ServiceStatuses.pendingPickUp});
     ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
+    ref.read(bookingsProvider).bookingDocs.sort((a, b) {
+      DateTime aTime = (a[PurchaseFields.dateCreated] as Timestamp).toDate();
+      DateTime bTime = (b[PurchaseFields.dateCreated] as Timestamp).toDate();
+      return bTime.compareTo(aTime);
+    });
     scaffoldMessenger.showSnackBar(const SnackBar(
         content:
             Text('Successfully marked booking request as pending pick up.')));
@@ -1656,6 +1687,11 @@ Future markBookingRequestAsCompleted(BuildContext context, WidgetRef ref,
         .doc(paymentID)
         .update({PaymentFields.invoiceURL: downloadURL});
     ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
+    ref.read(bookingsProvider).bookingDocs.sort((a, b) {
+      DateTime aTime = (a[PurchaseFields.dateCreated] as Timestamp).toDate();
+      DateTime bTime = (b[PurchaseFields.dateCreated] as Timestamp).toDate();
+      return bTime.compareTo(aTime);
+    });
     scaffoldMessenger.showSnackBar(const SnackBar(
         content: Text('Successfully marked service request as completed')));
     ref.read(loadingProvider.notifier).toggleLoading(false);
