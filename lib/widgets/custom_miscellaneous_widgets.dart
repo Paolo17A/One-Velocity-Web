@@ -219,26 +219,15 @@ Widget selectedMemoryImageDisplay(
   );
 }
 
-Widget selectedNetworkImageDisplay(String imageSource, Function deleteImage) {
+Widget selectedNetworkImageDisplay(String imageSource) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 40),
     child: Container(
       decoration: BoxDecoration(border: Border.all(color: Colors.black)),
       child: Padding(
         padding: const EdgeInsets.all(10),
-        child: Column(
-          children: [
-            SizedBox(
-                width: 150, height: 150, child: Image.network(imageSource)),
-            const SizedBox(height: 5),
-            SizedBox(
-              width: 90,
-              child: ElevatedButton(
-                  onPressed: () => deleteImage(),
-                  child: const Icon(Icons.delete, color: Colors.white)),
-            )
-          ],
-        ),
+        child: SizedBox(
+            width: 150, height: 150, child: Image.network(imageSource)),
       ),
     ),
   );

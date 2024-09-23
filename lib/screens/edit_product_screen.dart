@@ -91,6 +91,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(loadingProvider);
+    ref.watch(uploadedImagesProvider);
     selectedItemImages = ref.watch(uploadedImagesProvider).uploadedImages;
     return Scaffold(
       appBar: appBarWidget(context, showActions: false),
@@ -239,23 +240,18 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 uploadImageButton('UPLOAD IMAGES', _pickLogoImage),
-                if (imageURLs.isNotEmpty)
-                  vertical10Pix(
-                    child: Wrap(
-                        children: imageURLs.map((imageURL) {
-                      return selectedNetworkImageDisplay(imageURL, () {});
-                    }).toList()),
-                  ),
                 if (selectedItemImages.isNotEmpty)
                   vertical10Pix(
-                      child: Wrap(
-                          children: selectedItemImages.map((imageByte) {
-                    return selectedMemoryImageDisplay(
-                        imageByte,
-                        () => ref
-                            .read(uploadedImagesProvider.notifier)
-                            .removeImage(imageByte));
-                  }).toList()))
+                    child: Wrap(
+                        children: selectedItemImages.map((itemByte) {
+                      return selectedMemoryImageDisplay(itemByte!, () {
+                        ref.read(uploadedImagesProvider).removeImage(itemByte);
+                      });
+                    }).toList()),
+                  )
+                else if (!ref.read(loadingProvider))
+                  vertical10Pix(
+                      child: selectedNetworkImageDisplay(imageURLs.first))
               ],
             ),
           ],

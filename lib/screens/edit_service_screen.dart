@@ -141,7 +141,7 @@ class _EditServiceScreenState extends ConsumerState<EditServiceScreen> {
 
   Widget _editServiceHeaderWidget() {
     return blackSarabunBold(
-      'EDIT Service',
+      'EDIT SERVICE',
       textAlign: TextAlign.center,
       fontSize: 38,
     );
@@ -247,6 +247,9 @@ class _EditServiceScreenState extends ConsumerState<EditServiceScreen> {
                       });
                     }).toList()),
                   )
+                else if (!ref.read(loadingProvider))
+                  vertical10Pix(
+                      child: selectedNetworkImageDisplay(imageURLs.first))
               ],
             ),
           ],
