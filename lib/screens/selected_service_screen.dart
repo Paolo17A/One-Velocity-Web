@@ -204,7 +204,8 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
                               bookingHistoryDocs[index]);
                         })
                     : Center(
-                        child: whiteSarabunBold('NO BOOKING HISTORY AVAILABLE'),
+                        child: blackSarabunBold(
+                            'This service has not yet been booked.'),
                       )
               ],
             ),
