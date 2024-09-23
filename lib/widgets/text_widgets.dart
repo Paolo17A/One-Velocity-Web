@@ -99,7 +99,10 @@ Text whiteSarabunRegular(String label,
     textAlign: textAlign,
     overflow: textOverflow,
     style: GoogleFonts.sarabun(
-        decoration: decoration, fontSize: fontSize, color: Colors.white),
+        decorationColor: Colors.white,
+        decoration: decoration,
+        fontSize: fontSize,
+        color: Colors.white),
   );
 }
 

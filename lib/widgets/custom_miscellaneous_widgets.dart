@@ -13,6 +13,7 @@ import '../utils/color_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
+import '../utils/url_util.dart';
 import 'custom_padding_widgets.dart';
 import 'dropdown_widget.dart';
 import 'item_entry_widget.dart';
@@ -45,20 +46,21 @@ Widget roundedNimbusContainer(BuildContext context, {required Widget child}) {
       child: child);
 }
 
-Widget buildProfileImage({required String profileImageURL}) {
+Widget buildProfileImage(
+    {required String profileImageURL, double radius = 70}) {
   return profileImageURL.isNotEmpty
       ? CircleAvatar(
-          radius: 70,
+          radius: radius,
           backgroundColor: CustomColors.blackBeauty,
           backgroundImage: NetworkImage(profileImageURL),
         )
-      : const CircleAvatar(
-          radius: 70,
+      : CircleAvatar(
+          radius: radius,
           backgroundColor: CustomColors.blackBeauty,
           child: Icon(
             Icons.person,
             color: Colors.white,
-            size: 80,
+            size: radius + 10,
           ));
 }
 
@@ -281,16 +283,17 @@ Widget serviceBookingHistoryEntry(DocumentSnapshot bookingDoc) {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                buildProfileImage(profileImageURL: profileImageURL),
+                buildProfileImage(profileImageURL: profileImageURL, radius: 50),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      whiteSarabunBold(name, fontSize: 25),
-                      whiteSarabunRegular('Status: $serviceStatus',
-                          fontSize: 15),
+                      blackSarabunBold(name, fontSize: 20),
+                      blackSarabunRegular('Status: $serviceStatus',
+                          fontSize: 16),
                     ],
                   ),
                 ),
@@ -299,12 +302,12 @@ Widget serviceBookingHistoryEntry(DocumentSnapshot bookingDoc) {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                whiteSarabunRegular(
+                blackSarabunRegular(
                     'Date Booked: ${DateFormat('MMM dd, yyyy').format(dateCreated)}',
-                    fontSize: 17),
-                whiteSarabunRegular(
+                    fontSize: 16),
+                blackSarabunRegular(
                     'Date Requested: ${DateFormat('MMM dd, yyyy').format(dateRequsted)}',
-                    fontSize: 17),
+                    fontSize: 16),
               ],
             )
           ],
@@ -346,7 +349,7 @@ Widget bookingHistoryEntry(DocumentSnapshot bookingDoc,
   final bookingData = bookingDoc.data() as Map<dynamic, dynamic>;
   String serviceStatus = bookingData[BookingFields.serviceStatus];
   List<dynamic> serviceIDs = bookingData[BookingFields.serviceIDs];
-  print(serviceIDs);
+  String paymentID = bookingData[BookingFields.paymentID];
   DateTime dateCreated =
       (bookingData[BookingFields.dateCreated] as Timestamp).toDate();
   DateTime dateRequsted =
@@ -433,6 +436,8 @@ Widget bookingHistoryEntry(DocumentSnapshot bookingDoc,
                 blackSarabunBold(
                     'Total: PHP ${formatPrice(totalPrice.toDouble())}',
                     fontSize: 15),
+                if (serviceStatus == ServiceStatuses.serviceCompleted)
+                  _downloadInvoiceFutureBuilder(paymentID)
               ],
             )
           ],
@@ -624,4 +629,111 @@ Widget uploadPayment(WidgetRef ref) {
       ),
     ],
   ));
+}
+
+Widget purchaseHistoryEntry(DocumentSnapshot purchaseDoc,
+    {String userType = UserTypes.client}) {
+  final purchaseData = purchaseDoc.data() as Map<dynamic, dynamic>;
+  String status = purchaseData[PurchaseFields.purchaseStatus];
+  String productID = purchaseData[PurchaseFields.productID];
+  num quantity = purchaseData[PurchaseFields.quantity];
+  DateTime dateCreated =
+      (purchaseData[PurchaseFields.dateCreated] as Timestamp).toDate();
+  String paymentID = purchaseData[PurchaseFields.paymentID];
+  return FutureBuilder(
+    future: getThisProductDoc(productID),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting ||
+          !snapshot.hasData ||
+          snapshot.hasError) return snapshotHandler(snapshot);
+
+      final productData = snapshot.data!.data() as Map<dynamic, dynamic>;
+      List<dynamic> imageURLs = productData[ProductFields.imageURLs];
+      String name = productData[ProductFields.name];
+      num price = productData[ProductFields.price];
+      return MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+            onTap: userType == UserTypes.client
+                ? () {
+                    GoRouter.of(context).goNamed(GoRoutes.selectedProduct,
+                        pathParameters: {PathParameters.productID: productID});
+                    GoRouter.of(context).pushNamed(GoRoutes.selectedProduct,
+                        pathParameters: {PathParameters.productID: productID});
+                  }
+                : null,
+            child: all10Pix(
+                child: Container(
+              decoration: BoxDecoration(border: Border.all()),
+              padding: EdgeInsets.all(10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                              image: DecorationImage(
+                                  image: NetworkImage(imageURLs[0]),
+                                  fit: BoxFit.cover))),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            blackSarabunBold(name, fontSize: 25),
+                            Row(
+                              children: [
+                                blackSarabunRegular(
+                                    'SRP: PHP ${formatPrice(price.toDouble())}',
+                                    fontSize: 15),
+                                const Gap(15),
+                                blackSarabunRegular(
+                                    'Quantity: ${quantity.toString()}',
+                                    fontSize: 15),
+                              ],
+                            ),
+                            blackSarabunRegular(
+                                'Date Purchased: ${(DateFormat('MMM dd, yyyy').format(dateCreated))}',
+                                fontSize: 12),
+                            const Gap(15),
+                            blackSarabunRegular('Status: $status',
+                                fontSize: 15),
+                            if (status == PurchaseStatuses.pickedUp)
+                              _downloadInvoiceFutureBuilder(paymentID)
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  all20Pix(
+                      child: whiteSarabunBold(
+                          'PHP ${(price * quantity).toStringAsFixed(2)}'))
+                ],
+              ),
+            ))),
+      );
+    },
+  );
+}
+
+Widget _downloadInvoiceFutureBuilder(String paymentID) {
+  return FutureBuilder(
+    future: getThisPaymentDoc(paymentID),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting ||
+          !snapshot.hasData ||
+          snapshot.hasError) return snapshotHandler(snapshot);
+      final paymentData = snapshot.data!.data() as Map<dynamic, dynamic>;
+      String invoiceURL = paymentData[PaymentFields.invoiceURL];
+      return TextButton(
+          onPressed: () async => launchThisURL(context, invoiceURL),
+          child: blackSarabunRegular('Download Invoice',
+              fontSize: 12,
+              textAlign: TextAlign.left,
+              decoration: TextDecoration.underline));
+    },
+  );
 }

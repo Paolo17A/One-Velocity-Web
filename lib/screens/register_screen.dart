@@ -54,7 +54,7 @@ class _LoginScreenState extends ConsumerState<RegisterScreen> {
           height: MediaQuery.of(context).size.height,
           decoration: BoxDecoration(
               image: DecorationImage(
-                  image: AssetImage(ImagePaths.background), fit: BoxFit.cover)),
+                  image: AssetImage(ImagePaths.background), fit: BoxFit.fill)),
           child: Stack(
             children: [
               Container(

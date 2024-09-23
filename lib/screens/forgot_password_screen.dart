@@ -41,7 +41,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             decoration: BoxDecoration(
                 image: DecorationImage(
                     image: AssetImage(ImagePaths.background),
-                    fit: BoxFit.cover)),
+                    fit: BoxFit.fill)),
             child: Stack(
               children: [
                 Container(

@@ -130,21 +130,14 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
   }
 
   Widget _serviceEntries() {
-    return SizedBox(
-        height: MediaQuery.of(context).size.height * 0.65,
+    return Container(
+        height: allServiceDocs.length > 10 ? null : 500,
+        decoration: BoxDecoration(border: Border.all()),
         child: ListView.builder(
             shrinkWrap: true,
-            itemCount: ref.read(pagesProvider.notifier).getCurrentPage() ==
-                        ref.read(pagesProvider.notifier).getMaxPage() &&
-                    allServiceDocs.length % 10 != 0
-                ? allServiceDocs.length % 10
-                : 10,
+            itemCount: allServiceDocs.length,
             itemBuilder: (context, index) {
-              return _serviceEntry(
-                  allServiceDocs[index +
-                      ((ref.read(pagesProvider.notifier).getCurrentPage() - 1) *
-                          10)],
-                  index);
+              return _serviceEntry(allServiceDocs[index], index);
             }));
   }
 
@@ -163,7 +156,10 @@ class _ViewServicesScreenState extends ConsumerState<ViewServicesScreen> {
       viewFlexTextCell(category,
           flex: 1, backgroundColor: backgroundColor, textColor: entryColor),
       viewFlexActionsCell([
-        viewEntryButton(context, onPress: () {}),
+        viewEntryButton(context,
+            onPress: () => GoRouter.of(context).goNamed(
+                GoRoutes.selectedService,
+                pathParameters: {PathParameters.serviceID: serviceDoc.id})),
         editEntryButton(context,
             onPress: () => GoRouter.of(context).goNamed(GoRoutes.editService,
                 pathParameters: {PathParameters.serviceID: serviceDoc.id})),

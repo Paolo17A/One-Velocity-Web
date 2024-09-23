@@ -122,24 +122,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      buildProfileImage(profileImageURL: profileImageURL),
-                      Column(
+                      Stack(
                         children: [
-                          if (profileImageURL.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: ElevatedButton(
-                                  onPressed: () =>
-                                      removeProfilePic(context, ref),
-                                  child: whiteSarabunRegular('REMOVE PICTURE')),
-                            )
-                          else
-                            Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: ElevatedButton(
-                                  onPressed: () => _pickImage(),
-                                  child: whiteSarabunRegular('UPLOAD PICTURE')),
-                            ),
+                          buildProfileImage(profileImageURL: profileImageURL),
+                          Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: GestureDetector(
+                                onTap: () => _pickImage(),
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                      border: Border.all(),
+                                      color: CustomColors.ultimateGray,
+                                      shape: BoxShape.circle),
+                                  child: Icon(Icons.photo_camera),
+                                ),
+                              ))
                         ],
                       ),
                     ],

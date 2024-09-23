@@ -121,21 +121,14 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
   }
 
   Widget _productEntries() {
-    return SizedBox(
-        height: MediaQuery.of(context).size.height * 0.65,
+    return Container(
+        height: allProductDocs.length > 10 ? null : 500,
+        decoration: BoxDecoration(border: Border.all()),
         child: ListView.builder(
             shrinkWrap: true,
-            itemCount: ref.read(pagesProvider.notifier).getCurrentPage() ==
-                        ref.read(pagesProvider.notifier).getMaxPage() &&
-                    allProductDocs.length % 10 != 0
-                ? allProductDocs.length % 10
-                : 10,
+            itemCount: allProductDocs.length,
             itemBuilder: (context, index) {
-              return _productEntry(
-                  allProductDocs[index +
-                      ((ref.read(pagesProvider.notifier).getCurrentPage() - 1) *
-                          10)],
-                  index);
+              return _productEntry(allProductDocs[index], index);
             }));
   }
 
@@ -154,7 +147,10 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
       viewFlexTextCell(quantity.toString(),
           flex: 2, backgroundColor: backgroundColor, textColor: entryColor),
       viewFlexActionsCell([
-        viewEntryButton(context, onPress: () {}),
+        viewEntryButton(context,
+            onPress: () => GoRouter.of(context).goNamed(
+                GoRoutes.selectedProduct,
+                pathParameters: {PathParameters.productID: productDoc.id})),
         editEntryButton(context,
             onPress: () => GoRouter.of(context).goNamed(GoRoutes.editProduct,
                 pathParameters: {PathParameters.productID: productDoc.id})),

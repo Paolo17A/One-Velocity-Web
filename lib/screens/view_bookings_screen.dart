@@ -32,6 +32,7 @@ class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
       try {
         if (hasLoggedInUser() &&
             await getCurrentUserType() == UserTypes.client) {
+          ref.read(loadingProvider.notifier).toggleLoading(false);
           goRouter.goNamed(GoRoutes.home);
           return;
         }
@@ -92,14 +93,17 @@ class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
   }*/
 
   Widget _bookingsContainer() {
-    return Wrap(
-        spacing: 20,
-        runSpacing: 20,
-        children: ref
-            .read(bookingsProvider)
-            .bookingDocs
-            .map((bookingDoc) =>
-                ServicePaymentWidget(ref: ref, bookingDoc: bookingDoc))
-            .toList());
+    return ref.read(bookingsProvider).bookingDocs.isNotEmpty
+        ? Wrap(
+            spacing: 20,
+            runSpacing: 20,
+            children: ref
+                .read(bookingsProvider)
+                .bookingDocs
+                .map((bookingDoc) =>
+                    ServicePaymentWidget(ref: ref, bookingDoc: bookingDoc))
+                .toList())
+        : Center(
+            child: blackSarabunBold('NO BOOKINGS AVAILABLE', fontSize: 28));
   }
 }

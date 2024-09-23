@@ -13,6 +13,7 @@ import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
 import '../widgets/left_navigator_widget.dart';
+import '../widgets/text_widgets.dart';
 
 class ViewUsersScreen extends ConsumerStatefulWidget {
   const ViewUsersScreen({super.key});
@@ -65,6 +66,7 @@ class _ViewUsersScreenState extends ConsumerState<ViewUsersScreen> {
     return Scaffold(
       appBar: appBarWidget(context, showActions: false),
       body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           leftNavigator(context, path: GoRoutes.viewUsers),
           SizedBox(
@@ -75,7 +77,9 @@ class _ViewUsersScreenState extends ConsumerState<ViewUsersScreen> {
                   child: horizontal5Percent(context,
                       child: viewContentContainer(context,
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              blackSarabunBold('USERS', fontSize: 40),
                               _usersLabelRow(),
                               allUserDocs.isNotEmpty
                                   ? _userEntries()
@@ -100,15 +104,12 @@ class _ViewUsersScreenState extends ConsumerState<ViewUsersScreen> {
   }
 
   Widget _userEntries() {
-    return SizedBox(
-        height: MediaQuery.of(context).size.height * 0.65,
+    return Container(
+        height: allUserDocs.length > 10 ? null : 500,
+        decoration: BoxDecoration(border: Border.all()),
         child: ListView.builder(
             shrinkWrap: true,
-            itemCount: ref.read(pagesProvider.notifier).getCurrentPage() ==
-                        ref.read(pagesProvider.notifier).getMaxPage() &&
-                    allUserDocs.length % 10 != 0
-                ? allUserDocs.length % 10
-                : 10,
+            itemCount: allUserDocs.length,
             itemBuilder: (context, index) {
               return _userEntry(
                   allUserDocs[index +

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -42,6 +43,14 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
             .read(paymentsProvider)
             .setPaymentDocs(await getAllProductPaymentDocs());
 
+        ref.read(paymentsProvider).paymentDocs.sort((a, b) {
+          DateTime aTime =
+              (a[PurchaseFields.dateCreated] as Timestamp).toDate();
+          DateTime bTime =
+              (b[PurchaseFields.dateCreated] as Timestamp).toDate();
+          return bTime.compareTo(aTime);
+        });
+
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(
@@ -81,14 +90,18 @@ class _ViewPurchasesScreenState extends ConsumerState<ViewPurchasesScreen> {
   }
 
   Widget _paymentsContainer() {
-    return Wrap(
-        spacing: 20,
-        runSpacing: 20,
-        children: ref
-            .read(paymentsProvider)
-            .paymentDocs
-            .map((productPayment) => ProductPaymentWidget(
-                ref: ref, productPaymentDoc: productPayment))
-            .toList());
+    return vertical20Pix(
+      child: Center(
+        child: Wrap(
+            spacing: 20,
+            runSpacing: 20,
+            children: ref
+                .read(paymentsProvider)
+                .paymentDocs
+                .map((productPayment) => ProductPaymentWidget(
+                    ref: ref, productPaymentDoc: productPayment))
+                .toList()),
+      ),
+    );
   }
 }

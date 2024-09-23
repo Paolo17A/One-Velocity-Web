@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,8 +9,11 @@ import 'package:one_velocity_web/utils/string_util.dart';
 
 import '../utils/color_util.dart';
 import '../utils/firebase_util.dart';
+import '../utils/url_util.dart';
 import 'custom_miscellaneous_widgets.dart';
+import 'pdf_widgets.dart';
 import 'text_widgets.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class ServicePaymentWidget extends StatefulWidget {
   final WidgetRef ref;
@@ -26,8 +31,8 @@ class _ServicePaymentWidgetState extends State<ServicePaymentWidget> {
   DateTime? dateCreated;
   DateTime? datePaid;
   num paidAmount = 0;
-  String paymentStatus = '';
   String serviceStatus = '';
+  String paymentID = '';
   List<DocumentSnapshot> serviceDocs = [];
   @override
   void initState() {
@@ -37,6 +42,7 @@ class _ServicePaymentWidgetState extends State<ServicePaymentWidget> {
       dateCreated =
           (bookingData[BookingFields.dateCreated] as Timestamp).toDate();
       serviceStatus = bookingData[BookingFields.serviceStatus];
+      paymentID = bookingData[BookingFields.paymentID];
       //  Get client data
       String clientID = bookingData[BookingFields.clientID];
       final clientDoc = await getThisUserDoc(clientID);
@@ -44,7 +50,7 @@ class _ServicePaymentWidgetState extends State<ServicePaymentWidget> {
       clientName =
           '${clientData[UserFields.firstName]} ${clientData[UserFields.lastName]}';
 
-      //  Get products data
+      //  Get services data
       final List<dynamic> serviceIDs = bookingData[BookingFields.serviceIDs];
       if (serviceIDs.isNotEmpty) {
         serviceDocs = await getSelectedServiceDocs(serviceIDs);
@@ -122,8 +128,7 @@ class _ServicePaymentWidgetState extends State<ServicePaymentWidget> {
     else if (serviceStatus == ServiceStatuses.denied ||
         serviceStatus == ServiceStatuses.pendingPayment ||
         serviceStatus == ServiceStatuses.processingPayment ||
-        serviceStatus == ServiceStatuses.cancelled ||
-        serviceStatus == ServiceStatuses.serviceCompleted)
+        serviceStatus == ServiceStatuses.cancelled)
       return whiteSarabunBold(serviceStatus);
     else if (serviceStatus == ServiceStatuses.pendingDropOff)
       return ElevatedButton(
@@ -138,11 +143,55 @@ class _ServicePaymentWidgetState extends State<ServicePaymentWidget> {
           child: whiteSarabunBold('MARK AS FOR PICK UP', fontSize: 12));
     else if (serviceStatus == ServiceStatuses.pendingPickUp)
       return ElevatedButton(
-          onPressed: () => markBookingRequestAsCompleted(context, widget.ref,
-              bookingID: widget.bookingDoc.id),
+          onPressed: () async {
+            final document = pw.Document();
+
+            List<Map<dynamic, dynamic>> serviceEntries = [];
+            for (var serviceDoc in serviceDocs) {
+              final serviceData = serviceDoc.data() as Map<dynamic, dynamic>;
+              String serviceName = serviceData[ServiceFields.name];
+              num price = serviceData[ProductFields.price];
+              Map<dynamic, dynamic> productEntry = {
+                ProductFields.name: serviceName,
+                PurchaseFields.quantity: 1,
+                ProductFields.price: formatPrice(price.toDouble())
+              };
+              serviceEntries.add(productEntry);
+            }
+            document.addPage(pw.Page(
+                build: (context) => invoicePage(
+                    formattedName: clientName,
+                    productData: serviceEntries,
+                    totalAmount: paidAmount,
+                    datePaid: DateTime.now())));
+            Uint8List savedPDF = await document.save();
+            markBookingRequestAsCompleted(context, widget.ref,
+                bookingID: widget.bookingDoc.id,
+                paymentID: paymentID,
+                pdfBytes: savedPDF);
+          },
           child: whiteSarabunBold('MARK AS PICKED UP', fontSize: 12));
+    else if (serviceStatus == ServiceStatuses.serviceCompleted)
+      return _downloadInvoiceFutureBuilder();
     else
       return Container();
+  }
+
+  Widget _downloadInvoiceFutureBuilder() {
+    return FutureBuilder(
+      future: getThisPaymentDoc(paymentID),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            !snapshot.hasData ||
+            snapshot.hasError) return snapshotHandler(snapshot);
+        final paymentData = snapshot.data!.data() as Map<dynamic, dynamic>;
+        String invoiceURL = paymentData[PaymentFields.invoiceURL];
+        return ElevatedButton(
+            onPressed: () async => launchThisURL(context, invoiceURL),
+            child: whiteSarabunRegular('COMPLETED (Download Invoice)',
+                fontSize: 12));
+      },
+    );
   }
 
   Widget _servicesContainer() {

@@ -10,7 +10,6 @@ import '../providers/cart_provider.dart';
 import '../providers/loading_provider.dart';
 import '../providers/pages_provider.dart';
 import '../providers/user_type_provider.dart';
-import '../utils/color_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
@@ -58,20 +57,26 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
         isAvailable = serviceData[ServiceFields.isAvailable];
         imageURLs = serviceData[ServiceFields.imageURLs];
         category = serviceData[ServiceFields.category];
-        if (ref.read(userTypeProvider) == UserTypes.admin) {
-          bookingHistoryDocs = await getServiceBookingHistory(widget.serviceID);
-        }
+
         ref.read(pagesProvider.notifier).setCurrentPage(0);
         ref.read(pagesProvider.notifier).setMaxPage(imageURLs.length);
         if (hasLoggedInUser()) {
           final user = await getCurrentUserDoc();
           final userData = user.data() as Map<dynamic, dynamic>;
           ref
-              .read(bookmarksProvider)
-              .setBookmarkedServices(userData[UserFields.bookmarkedProducts]);
-          ref
-              .read(cartProvider)
-              .setCartItems(await getServiceCartEntries(context));
+              .read(userTypeProvider.notifier)
+              .setUserType(userData[UserFields.userType]);
+          if (ref.read(userTypeProvider) == UserTypes.client) {
+            ref
+                .read(bookmarksProvider)
+                .setBookmarkedServices(userData[UserFields.bookmarkedProducts]);
+            ref
+                .read(cartProvider)
+                .setCartItems(await getServiceCartEntries(context));
+          } else if (ref.read(userTypeProvider) == UserTypes.admin) {
+            bookingHistoryDocs =
+                await getServiceBookingHistory(widget.serviceID);
+          }
         }
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
@@ -114,15 +119,16 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.8,
             child: SingleChildScrollView(
-              child: horizontal5Percent(context,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _backButton(),
-                      _productBasicDetails(),
-                      _purchaseHistory()
-                    ],
-                  )),
+              child: Column(
+                children: [
+                  _backButton(),
+                  horizontal5Percent(context,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [_productBasicDetails(), _purchaseHistory()],
+                      )),
+                ],
+              ),
             ),
           )
         ],
@@ -131,18 +137,17 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
   }
 
   Widget _backButton() {
-    return vertical20Pix(
-      child: backButton(context,
-          onPress: () => GoRouter.of(context).goNamed(GoRoutes.viewServices)),
-    );
+    return all20Pix(
+        child: Row(children: [
+      backButton(context,
+          onPress: () => GoRouter.of(context).goNamed(GoRoutes.viewServices))
+    ]));
   }
 
   Widget _productBasicDetails() {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-          color: CustomColors.ultimateGray.withOpacity(0.25),
-          borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(border: Border.all()),
       padding: const EdgeInsets.all(10),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(
@@ -179,30 +184,32 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
 
   Widget _purchaseHistory() {
     return vertical20Pix(
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-            color: CustomColors.ultimateGray,
-            borderRadius: BorderRadius.circular(10)),
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            whiteSarabunBold('SERVICE BOOKING HISTORY', fontSize: 28),
-            const Divider(color: Colors.white),
-            bookingHistoryDocs.isNotEmpty
-                ? ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: bookingHistoryDocs.length,
-                    itemBuilder: (context, index) {
-                      return serviceBookingHistoryEntry(
-                          bookingHistoryDocs[index]);
-                    })
-                : Center(
-                    child: whiteSarabunBold('NO BOOKING HISTORY AVAILABLE'),
-                  )
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          blackSarabunBold('BOOKING HISTORY', fontSize: 28),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(border: Border.all()),
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                bookingHistoryDocs.isNotEmpty
+                    ? ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: bookingHistoryDocs.length,
+                        itemBuilder: (context, index) {
+                          return serviceBookingHistoryEntry(
+                              bookingHistoryDocs[index]);
+                        })
+                    : Center(
+                        child: whiteSarabunBold('NO BOOKING HISTORY AVAILABLE'),
+                      )
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

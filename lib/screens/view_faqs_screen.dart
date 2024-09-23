@@ -116,8 +116,9 @@ class _ViewFAQsScreenState extends ConsumerState<ViewFAQsScreen> {
   }
 
   Widget _faqEntries() {
-    return SizedBox(
-        height: MediaQuery.of(context).size.height * 0.65,
+    return Container(
+        height: ref.read(faqsProvider).faqDocs.length > 10 ? null : 500,
+        decoration: BoxDecoration(border: Border.all()),
         child: ListView.builder(
             shrinkWrap: true,
             itemCount: ref.read(faqsProvider).faqDocs.length,

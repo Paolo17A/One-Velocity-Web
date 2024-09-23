@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/loading_provider.dart';
@@ -22,14 +23,20 @@ class SelectedUserScreen extends ConsumerStatefulWidget {
   ConsumerState<SelectedUserScreen> createState() => _SelectedUserScreenState();
 }
 
-class _SelectedUserScreenState extends ConsumerState<SelectedUserScreen> {
+class _SelectedUserScreenState extends ConsumerState<SelectedUserScreen>
+    with TickerProviderStateMixin {
   String formattedName = '';
   String profileImageURL = '';
   String mobileNumber = '';
 
+  late TabController tabController;
+  List<DocumentSnapshot> purchaseHistoryDocs = [];
+  List<DocumentSnapshot> bookingHistoryDocs = [];
+
   @override
   void initState() {
     super.initState();
+    tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
       final goRouter = GoRouter.of(context);
@@ -51,6 +58,21 @@ class _SelectedUserScreenState extends ConsumerState<SelectedUserScreen> {
             '${selectedUserData[UserFields.firstName]} ${selectedUserData[UserFields.lastName]}';
         profileImageURL = selectedUserData[UserFields.profileImageURL];
         mobileNumber = selectedUserData[UserFields.mobileNumber];
+
+        purchaseHistoryDocs = await getClientPurchaseHistory(widget.userID);
+        purchaseHistoryDocs.sort((a, b) {
+          DateTime aTime =
+              (a[PurchaseFields.dateCreated] as Timestamp).toDate();
+          DateTime bTime =
+              (b[PurchaseFields.dateCreated] as Timestamp).toDate();
+          return bTime.compareTo(aTime);
+        });
+        bookingHistoryDocs.sort((a, b) {
+          DateTime aTime = (a[BookingFields.dateCreated] as Timestamp).toDate();
+          DateTime bTime = (b[BookingFields.dateCreated] as Timestamp).toDate();
+          return bTime.compareTo(aTime);
+        });
+        bookingHistoryDocs = await getClientBookingDocs(widget.userID);
         ref.read(loadingProvider.notifier).toggleLoading(false);
         setState(() {});
       } catch (error) {
@@ -64,48 +86,106 @@ class _SelectedUserScreenState extends ConsumerState<SelectedUserScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(loadingProvider);
-    return Scaffold(
-      appBar: appBarWidget(context, showActions: false),
-      body: Row(
-        children: [
-          leftNavigator(context, path: GoRoutes.viewUsers),
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 0.8,
-            child: switchedLoadingContainer(
-                ref.read(loadingProvider),
-                horizontal5Percent(
-                  context,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      vertical20Pix(
-                        child: backButton(context,
-                            onPress: () => GoRouter.of(context)
-                                .goNamed(GoRoutes.viewUsers)),
-                      ),
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20)),
-                        padding: EdgeInsets.all(20),
-                        child: Column(
+    return DefaultTabController(
+      initialIndex: 0,
+      length: 2,
+      child: Scaffold(
+        appBar: appBarWidget(context, showActions: false),
+        body: Row(
+          children: [
+            leftNavigator(context, path: GoRoutes.viewUsers),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.8,
+              height: MediaQuery.of(context).size.height,
+              child: switchedLoadingContainer(
+                  ref.read(loadingProvider),
+                  SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Row(children: [
+                          all20Pix(
+                              child: backButton(context,
+                                  onPress: () => GoRouter.of(context)
+                                      .goNamed(GoRoutes.viewUsers)))
+                        ]),
+                        horizontal5Percent(
+                          context,
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              buildProfileImage(
-                                  profileImageURL: profileImageURL),
-                              blackSarabunBold(formattedName, fontSize: 40),
-                              Text('Mobile Number: $mobileNumber',
-                                  style: const TextStyle(
-                                      color: Colors.black, fontSize: 20))
-                            ]),
-                      )
-                    ],
-                  ),
-                )),
-          )
-        ],
+                              _profileContainer(),
+                              Gap(20),
+                              _historiesContainer()
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            )
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _profileContainer() {
+    return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(color: Colors.white, border: Border.all()),
+        padding: EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          buildProfileImage(profileImageURL: profileImageURL),
+          blackSarabunBold(formattedName, fontSize: 40),
+          blackSarabunRegular('Mobile Number: $mobileNumber')
+        ]));
+  }
+
+  Widget _historiesContainer() {
+    return Column(
+      children: [
+        TabBar(tabs: [
+          Tab(child: blackSarabunBold('PURCHASES')),
+          Tab(child: blackSarabunBold('BOOKINGS'))
+        ]),
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.5,
+          child: TabBarView(physics: NeverScrollableScrollPhysics(), children: [
+            _purchaseHistory(),
+            _bookingHistory(),
+          ]),
+        )
+      ],
+    );
+  }
+
+  Widget _purchaseHistory() {
+    return purchaseHistoryDocs.isNotEmpty
+        ? ListView.builder(
+            shrinkWrap: true,
+            itemCount: purchaseHistoryDocs.length,
+            itemBuilder: (context, index) {
+              return purchaseHistoryEntry(purchaseHistoryDocs[index],
+                  userType: UserTypes.admin);
+            })
+        : Center(
+            child: blackSarabunBold('YOU HAVE NOT COMPLETED ANY PURCHASES YET',
+                fontSize: 30),
+          );
+  }
+
+  Widget _bookingHistory() {
+    return bookingHistoryDocs.isNotEmpty
+        ? ListView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: bookingHistoryDocs.length,
+            itemBuilder: (context, index) {
+              return bookingHistoryEntry(bookingHistoryDocs[index],
+                  userType: UserTypes.admin);
+            })
+        : Center(
+            child: blackSarabunBold(
+                'NO ONGOING SERVICE BOOKING HISTORY AVAILABLE'));
   }
 }

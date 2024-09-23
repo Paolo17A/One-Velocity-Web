@@ -95,6 +95,7 @@ class PurchaseFields {
   static const String quantity = 'quantity';
   static const String purchaseStatus = 'purchaseStatus';
   static const String datePickedUp = 'datePickedUp';
+  static const String dateCreated = 'dateCreated';
   static const String rating = 'rating';
 }
 
@@ -139,6 +140,7 @@ class PurchaseStatuses {
 class BookingFields {
   static const String serviceIDs = 'serviceIDs';
   static const String clientID = 'clientID';
+  static const String paymentID = 'paymentID';
   static const String serviceStatus = 'serviceStatus';
   static const String dateCreated = 'dateCreated';
   static const String dateRequested = 'dateRequsted';

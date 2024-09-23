@@ -125,9 +125,9 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
 
   Widget dynamicButton() {
     if (purchaseStatus == PurchaseStatuses.pending)
-      return blackSarabunRegular('PENDING PAYMENT APPROVAL');
+      return whiteSarabunRegular('PENDING PAYMENT APPROVAL');
     else if (purchaseStatus == PurchaseStatuses.denied)
-      return blackSarabunRegular('PAYMENT DENIED');
+      return whiteSarabunRegular('PAYMENT DENIED');
     else if (purchaseStatus == PurchaseStatuses.processing)
       return ElevatedButton(
           onPressed: () => markPurchasesAsReadyForPickUp(context, widget.ref,
@@ -214,15 +214,37 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
                   .toList()),
           if (purchaseDocs.length > 2)
             TextButton(
-                onPressed: () {},
-                child: whiteSarabunRegular(
-                  'VIEW ALL',
-                  fontSize: 16,
-                  decoration: TextDecoration.underline,
-                ))
+                onPressed: displayAllProducts,
+                child: whiteSarabunRegular('VIEW ALL',
+                    fontSize: 16, decoration: TextDecoration.underline))
         ],
       ),
     );
+  }
+
+  void displayAllProducts() {
+    showDialog(
+        context: context,
+        builder: (_) => Dialog(
+              backgroundColor: CustomColors.ultimateGray,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.3,
+                padding: EdgeInsets.all(20),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      whiteSarabunBold('ALL PURCHASED PRODUCTS', fontSize: 28),
+                      Column(
+                          children: purchaseDocs
+                              .map(
+                                  (purchaseDoc) => _purchaseWidget(purchaseDoc))
+                              .toList())
+                    ],
+                  ),
+                ),
+              ),
+            ));
   }
 
   Widget _purchaseWidget(DocumentSnapshot purchaseDoc) {

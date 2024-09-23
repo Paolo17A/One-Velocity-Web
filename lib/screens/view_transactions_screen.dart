@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:one_velocity_web/providers/payments_provider.dart';
 import 'package:one_velocity_web/utils/go_router_util.dart';
 import 'package:one_velocity_web/widgets/app_bar_widget.dart';
@@ -46,6 +48,20 @@ class _ViewTransactionsScreenState
           return;
         }
         ref.read(paymentsProvider).setPaymentDocs(await getAllPaymentDocs());
+        for (var paymentDoc in ref.read(paymentsProvider).paymentDocs) {
+          final paymentData = paymentDoc.data() as Map<dynamic, dynamic>;
+          if (!paymentData.containsKey(PaymentFields.dateCreated)) {
+            await FirebaseFirestore.instance
+                .collection(Collections.payments)
+                .doc(paymentDoc.id)
+                .update({PaymentFields.dateCreated: DateTime.now()});
+          }
+        }
+        ref.read(paymentsProvider).paymentDocs.sort((a, b) {
+          DateTime aTime = (a[PaymentFields.dateCreated] as Timestamp).toDate();
+          DateTime bTime = (b[PaymentFields.dateCreated] as Timestamp).toDate();
+          return bTime.compareTo(aTime);
+        });
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(
@@ -71,9 +87,11 @@ class _ViewTransactionsScreenState
             child: switchedLoadingContainer(
                 ref.read(loadingProvider),
                 SingleChildScrollView(
-                  child: all5Percent(context,
+                  child: horizontal5Percent(context,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          blackSarabunBold('TRANSACTIONS', fontSize: 40),
                           _paymentsContainer(),
                         ],
                       )),
@@ -104,6 +122,7 @@ class _ViewTransactionsScreenState
       viewFlexLabelTextCell('Buyer', 3,
           borderRadius: BorderRadius.only(topLeft: Radius.circular(20))),
       viewFlexLabelTextCell('Amount Paid', 2),
+      viewFlexLabelTextCell('Date Created', 2),
       viewFlexLabelTextCell('Payment', 2),
       viewFlexLabelTextCell('Actions', 2,
           borderRadius: BorderRadius.only(topRight: Radius.circular(20)))
@@ -111,8 +130,9 @@ class _ViewTransactionsScreenState
   }
 
   Widget _paymentEntries() {
-    return SizedBox(
-      height: 500,
+    return Container(
+      height: ref.read(paymentsProvider).paymentDocs.length > 10 ? null : 500,
+      decoration: BoxDecoration(border: Border.all()),
       child: ListView.builder(
           shrinkWrap: true,
           itemCount: ref.read(paymentsProvider).paymentDocs.length,
@@ -127,6 +147,9 @@ class _ViewTransactionsScreenState
             String proofOfPayment = paymentData[PaymentFields.proofOfPayment];
             List<dynamic> purchaseIDs = paymentData[PaymentFields.purchaseIDs];
             String paymentType = paymentData[PaymentFields.paymentType];
+            DateTime dateCreated =
+                (paymentData[PaymentFields.dateCreated] as Timestamp).toDate();
+
             return FutureBuilder(
                 future: getThisUserDoc(clientID),
                 builder: (context, snapshot) {
@@ -140,6 +163,8 @@ class _ViewTransactionsScreenState
                       '${clientData[UserFields.firstName]} ${clientData[UserFields.lastName]}';
                   Color entryColor = Colors.black;
                   Color backgroundColor = Colors.white;
+                  print(
+                      'got everything from ${ref.read(paymentsProvider).paymentDocs[index].id}');
                   return viewContentEntryRow(
                     context,
                     children: [
@@ -149,6 +174,11 @@ class _ViewTransactionsScreenState
                           textColor: entryColor),
                       viewFlexTextCell(
                           'PHP ${formatPrice(totalAmount.toDouble())}',
+                          flex: 2,
+                          backgroundColor: backgroundColor,
+                          textColor: entryColor),
+                      viewFlexTextCell(
+                          DateFormat('MMM dd, yyyy').format(dateCreated),
                           flex: 2,
                           backgroundColor: backgroundColor,
                           textColor: entryColor),
@@ -165,7 +195,8 @@ class _ViewTransactionsScreenState
                       ),
                       viewFlexActionsCell([
                         if (paymentData[PaymentFields.paymentVerified])
-                          blackSarabunBold('VERIFIED'),
+                          blackSarabunBold(
+                              paymentData[PaymentFields.paymentStatus]),
                         if (!paymentData[PaymentFields.paymentVerified])
                           ElevatedButton(
                               onPressed: () => approveThisPayment(context, ref,

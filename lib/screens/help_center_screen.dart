@@ -30,6 +30,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(loadingProvider.notifier).toggleLoading(true);
       allFAQs = await getAllFAQs();
+      filteredFAQs = allFAQs;
       ref.read(loadingProvider.notifier).toggleLoading(false);
     });
   }
@@ -151,7 +152,14 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
     String question = faqData[FAQFields.question];
     String answer = faqData[FAQFields.answer];
     return vertical10Pix(
-        child: ExpansionTile(
+        child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        blackSarabunBold(question, fontSize: 27),
+        all10Pix(child: blackSarabunRegular(answer))
+      ],
+    )
+        /*ExpansionTile(
       collapsedBackgroundColor: CustomColors.blackBeauty,
       backgroundColor: CustomColors.blackBeauty.withOpacity(0.8),
       collapsedIconColor: Colors.white,
@@ -161,6 +169,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: whiteSarabunBold(question, fontSize: 27),
       children: [vertical20Pix(child: whiteSarabunBold(answer))],
-    ));
+    )*/
+        );
   }
 }

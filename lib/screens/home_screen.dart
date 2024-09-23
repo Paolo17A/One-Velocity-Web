@@ -39,12 +39,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     'DENIED': 0
   };
   num totalSales = 0;
+  String bestSellingProduct = '';
+  num ongoingBookings = 0;
+  String bestSellingService = '';
   //  CLIENT
   List<DocumentSnapshot> productDocs = [];
   List<DocumentSnapshot> wheelProductDocs = [];
   List<DocumentSnapshot> batteryProductDocs = [];
   List<DocumentSnapshot> serviceDocs = [];
   List<DocumentSnapshot> paymentDocs = [];
+  List<DocumentSnapshot> purchaseDocs = [];
+  List<DocumentSnapshot> bookingDocs = [];
 
   CarouselSliderController wheelsController = CarouselSliderController();
   CarouselSliderController batteryController = CarouselSliderController();
@@ -84,6 +89,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     paymentBreakdown[PaymentStatuses.denied]! + 1;
               }
             }
+            purchaseDocs = await getAllPurchaseDocs();
+            await _establishBestSellingProduct();
+            bookingDocs = await getAllBookingDocs();
+            ongoingBookings = bookingDocs
+                .where((bookingDoc) {
+                  final bookingData =
+                      bookingDoc.data() as Map<dynamic, dynamic>;
+                  return bookingData[BookingFields.serviceStatus] ==
+                          ServiceStatuses.serviceOngoing ||
+                      bookingData[BookingFields.serviceStatus] ==
+                          ServiceStatuses.pendingDropOff;
+                })
+                .toList()
+                .length;
+            await _establishBestSellingService();
           } else {
             productDocs = await getAllProducts();
             serviceDocs = await getAllServices();
@@ -102,7 +122,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           return productData[ProductFields.category] ==
               ProductCategories.battery;
         }).toList();
-
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -112,6 +131,83 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
+  Future _establishBestSellingProduct() async {
+    Map<String, int> productsCountMap = {};
+    int highestCount = 0;
+    String highestCountProductID = '';
+    List<DocumentSnapshot> filteredPurchaseDocs =
+        purchaseDocs.where((purchaseDoc) {
+      final purchaseData = purchaseDoc.data() as Map<dynamic, dynamic>;
+      return purchaseData[PurchaseFields.purchaseStatus] ==
+              PurchaseStatuses.pickedUp ||
+          purchaseData[PurchaseFields.purchaseStatus] ==
+              PurchaseStatuses.processing ||
+          purchaseData[PurchaseFields.purchaseStatus] ==
+              PurchaseStatuses.forPickUp;
+    }).toList();
+    for (var purchase in filteredPurchaseDocs) {
+      final purchaseData = purchase.data() as Map<dynamic, dynamic>;
+      String productID = purchaseData[PurchaseFields.productID];
+      if (productsCountMap.containsKey(productID)) {
+        productsCountMap[productID] = productsCountMap[productID]! + 1;
+      } else {
+        productsCountMap[productID] = 1;
+      }
+    }
+    if (productsCountMap.isEmpty) return;
+    productsCountMap.forEach((productID, count) {
+      if (count > highestCount) {
+        highestCountProductID = productID;
+        highestCount = count;
+      }
+    });
+    if (purchaseDocs.isNotEmpty && highestCountProductID.isNotEmpty) {
+      DocumentSnapshot bestProduct =
+          await getThisProductDoc(highestCountProductID);
+      final productData = bestProduct.data() as Map<dynamic, dynamic>;
+      bestSellingProduct = productData[ProductFields.name];
+    }
+  }
+
+  Future _establishBestSellingService() async {
+    Map<String, int> servicesCountMap = {};
+    int highestCount = 0;
+    String highestCountServicesID = '';
+    List<DocumentSnapshot> filteredBookingDocs =
+        bookingDocs.where((bookingDoc) {
+      final bookingData = bookingDoc.data() as Map<dynamic, dynamic>;
+      return bookingData[BookingFields.serviceStatus] !=
+              ServiceStatuses.cancelled &&
+          bookingData[BookingFields.serviceStatus] != ServiceStatuses.denied &&
+          bookingData[BookingFields.serviceStatus] !=
+              ServiceStatuses.pendingApproval;
+    }).toList();
+    for (var booking in filteredBookingDocs) {
+      final bookingData = booking.data() as Map<dynamic, dynamic>;
+      List<dynamic> serviceIDs = bookingData[BookingFields.serviceIDs];
+      for (var serviceID in serviceIDs) {
+        if (servicesCountMap.containsKey(serviceID)) {
+          servicesCountMap[serviceID] = servicesCountMap[serviceID]! + 1;
+        } else {
+          servicesCountMap[serviceID] = 1;
+        }
+      }
+    }
+    if (servicesCountMap.isEmpty) return;
+    servicesCountMap.forEach((productID, count) {
+      if (count > highestCount) {
+        highestCountServicesID = productID;
+        highestCount = count;
+      }
+    });
+    if (bookingDocs.isNotEmpty && highestCountServicesID.isNotEmpty) {
+      DocumentSnapshot bestService =
+          await getThisServiceDoc(highestCountServicesID);
+      final serviceData = bestService.data() as Map<dynamic, dynamic>;
+      bestSellingService = serviceData[ServiceFields.name];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(loadingProvider);
@@ -119,7 +215,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: appBarWidget(context,
           showActions: !hasLoggedInUser() ||
               ref.read(userTypeProvider) == UserTypes.client),
-      floatingActionButton: hasLoggedInUser()
+      floatingActionButton: hasLoggedInUser() &&
+              ref.read(userTypeProvider.notifier) == UserTypes.client
           ? FloatingChatWidget(
               senderUID: FirebaseAuth.instance.currentUser!.uid,
               otherUID: adminID)
@@ -134,16 +231,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget regularHome() {
-    return SingleChildScrollView(
-      child: Column(
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
+      decoration: BoxDecoration(
+          image: DecorationImage(
+              image: AssetImage(ImagePaths.background), fit: BoxFit.cover)),
+      child: Stack(
         children: [
-          secondAppBar(context),
-          landingWidget(),
-          if (wheelProductDocs.isNotEmpty) _wheelProducts(),
-          if (batteryProductDocs.isNotEmpty) _batteryProducts(),
-          if (productDocs.isNotEmpty) _allProducts(),
-          if (serviceDocs.isNotEmpty) _allServices(),
-          footerWidget(context)
+          Container(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              color: Colors.white.withOpacity(0.8)),
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                secondAppBar(context),
+                landingWidget(),
+                if (wheelProductDocs.isNotEmpty) _wheelProducts(),
+                if (batteryProductDocs.isNotEmpty) _batteryProducts(),
+                if (productDocs.isNotEmpty) _allProducts(),
+                if (serviceDocs.isNotEmpty) _allServices(),
+                footerWidget(context)
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -270,9 +382,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _platformSummary() {
-    String topRatedName = '';
-    String bestSellerName = '';
-
     return vertical20Pix(
       child: Container(
           width: MediaQuery.of(context).size.width * 0.8,
@@ -289,10 +398,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 'OVERALL TOTAL SALES: PHP ${formatPrice(totalSales.toDouble())}',
                 fontSize: 30),
             blackSarabunRegular(
-                'Best Selling Product: ${bestSellerName.isNotEmpty ? bestSellerName : 'N/A'}',
+                'Best Selling Product: ${bestSellingProduct.isNotEmpty ? bestSellingProduct : 'N/A'}',
                 fontSize: 18),
             blackSarabunRegular(
-                'Best Selling Service: ${topRatedName.isNotEmpty ? topRatedName : 'N/A'}',
+                'Best Selling Service: ${bestSellingService.isNotEmpty ? bestSellingService : 'N/A'}',
                 fontSize: 18)
           ])),
     );
@@ -327,10 +436,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onPress: () =>
                     GoRouter.of(context).goNamed(GoRoutes.viewUsers)),
             analyticReportWidget(context,
-                count: '0',
+                count: ongoingBookings.toString(),
                 demographic: 'Ongoing Job Orders',
                 displayIcon: const Icon(Icons.online_prediction_sharp),
-                onPress: () {}),
+                onPress: () =>
+                    GoRouter.of(context).goNamed(GoRoutes.viewBookings)),
           ],
         ),
       ),

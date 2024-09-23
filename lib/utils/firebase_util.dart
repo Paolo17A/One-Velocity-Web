@@ -939,8 +939,9 @@ Future purchaseSelectedProductCartItems(BuildContext context, WidgetRef ref,
         PurchaseFields.clientID: cartData[CartFields.clientID],
         PurchaseFields.quantity: cartData[CartFields.quantity],
         PurchaseFields.purchaseStatus: PurchaseStatuses.pending,
+        PurchaseFields.dateCreated: DateTime.now(),
         PurchaseFields.datePickedUp: DateTime(1970),
-        PurchaseFields.rating: ''
+        PurchaseFields.rating: '',
       });
 
       purchaseIDs.add(purchaseReference.id);
@@ -972,7 +973,8 @@ Future purchaseSelectedProductCartItems(BuildContext context, WidgetRef ref,
       PaymentFields.dateCreated: DateTime.now(),
       PaymentFields.dateApproved: DateTime(1970),
       PaymentFields.invoiceURL: '',
-      PaymentFields.purchaseIDs: purchaseIDs
+      PaymentFields.purchaseIDs: purchaseIDs,
+      PaymentFields.paymentType: PaymentTypes.product
     });
 
     //  2. Upload the proof of payment image to Firebase Storage
@@ -1007,11 +1009,28 @@ Future purchaseSelectedProductCartItems(BuildContext context, WidgetRef ref,
   }
 }
 
-Future<List<DocumentSnapshot>> getClientPurchaseHistory() async {
+Future<List<DocumentSnapshot>> getUserPurchaseHistory() async {
   final purchases = await FirebaseFirestore.instance
       .collection(Collections.purchases)
       .where(PurchaseFields.clientID,
           isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+      .get();
+  return purchases.docs.map((doc) => doc as DocumentSnapshot).toList();
+}
+
+Future<List<DocumentSnapshot>> getClientPurchaseHistory(String clientID) async {
+  final purchases = await FirebaseFirestore.instance
+      .collection(Collections.purchases)
+      .where(PurchaseFields.clientID, isEqualTo: clientID)
+      .get();
+  return purchases.docs.map((doc) => doc as DocumentSnapshot).toList();
+}
+
+Future<List<DocumentSnapshot>> getProductPurchaseHistory(
+    String productID) async {
+  final purchases = await FirebaseFirestore.instance
+      .collection(Collections.purchases)
+      .where(PurchaseFields.productID, isEqualTo: productID)
       .get();
   return purchases.docs.map((doc) => doc as DocumentSnapshot).toList();
 }
@@ -1612,7 +1631,9 @@ Future markBookingRequestAsForPickUp(BuildContext context, WidgetRef ref,
 }
 
 Future markBookingRequestAsCompleted(BuildContext context, WidgetRef ref,
-    {required String bookingID}) async {
+    {required String bookingID,
+    required String paymentID,
+    required Uint8List pdfBytes}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   try {
     ref.read(loadingProvider.notifier).toggleLoading(true);
@@ -1622,6 +1643,18 @@ Future markBookingRequestAsCompleted(BuildContext context, WidgetRef ref,
         .doc(bookingID)
         .update(
             {BookingFields.serviceStatus: ServiceStatuses.serviceCompleted});
+
+    final storageRef = FirebaseStorage.instance
+        .ref()
+        .child(StorageFields.invoices)
+        .child('$bookingID.pdf');
+    final uploadTask = storageRef.putData(pdfBytes);
+    final taskSnapshot = await uploadTask;
+    final downloadURL = await taskSnapshot.ref.getDownloadURL();
+    await FirebaseFirestore.instance
+        .collection(Collections.payments)
+        .doc(paymentID)
+        .update({PaymentFields.invoiceURL: downloadURL});
     ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
     scaffoldMessenger.showSnackBar(const SnackBar(
         content: Text('Successfully marked service request as completed')));

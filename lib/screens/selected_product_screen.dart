@@ -5,15 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:one_velocity_web/providers/bookmarks_provider.dart';
 import 'package:one_velocity_web/providers/cart_provider.dart';
+import 'package:one_velocity_web/providers/user_type_provider.dart';
 import 'package:one_velocity_web/utils/color_util.dart';
+import 'package:one_velocity_web/utils/go_router_util.dart';
+import 'package:one_velocity_web/widgets/custom_button_widgets.dart';
+import 'package:one_velocity_web/widgets/left_navigator_widget.dart';
 import 'package:one_velocity_web/widgets/text_widgets.dart';
 
 import '../providers/loading_provider.dart';
 import '../providers/pages_provider.dart';
 import '../utils/firebase_util.dart';
-import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
 import '../widgets/app_bar_widget.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
@@ -38,7 +42,7 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
   num quantity = 0;
   List<dynamic> imageURLs = [];
   int currentImageIndex = 0;
-
+  List<DocumentSnapshot> purchaseDocs = [];
   List<DocumentSnapshot> relatedProductDocs = [];
   CarouselSliderController relatedProductsController =
       CarouselSliderController();
@@ -49,14 +53,7 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       ref.read(loadingProvider.notifier).toggleLoading(true);
       final scaffoldMessenger = ScaffoldMessenger.of(context);
-      final goRouter = GoRouter.of(context);
       try {
-        if (hasLoggedInUser() &&
-            await getCurrentUserType() == UserTypes.admin) {
-          ref.read(loadingProvider.notifier).toggleLoading(false);
-          goRouter.goNamed(GoRoutes.home);
-          return;
-        }
         //  GET PRODUCT DATA
         final product = await getThisProductDoc(widget.productID);
         final productData = product.data() as Map<dynamic, dynamic>;
@@ -74,12 +71,43 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
           final user = await getCurrentUserDoc();
           final userData = user.data() as Map<dynamic, dynamic>;
           ref
-              .read(bookmarksProvider)
-              .setBookmarkedProducts(userData[UserFields.bookmarkedProducts]);
+              .read(userTypeProvider.notifier)
+              .setUserType(userData[UserFields.userType]);
+          if (ref.read(userTypeProvider) == UserTypes.client) {
+            ref
+                .read(bookmarksProvider)
+                .setBookmarkedProducts(userData[UserFields.bookmarkedProducts]);
 
-          ref
-              .read(cartProvider)
-              .setCartItems(await getProductCartEntries(context));
+            ref
+                .read(cartProvider)
+                .setCartItems(await getProductCartEntries(context));
+          } else if (ref.read(userTypeProvider) == UserTypes.admin) {
+            purchaseDocs = await getProductPurchaseHistory(widget.productID);
+
+            // FIXERS FOR OUTDATED ENTRIES
+            for (var purchaseDoc in purchaseDocs) {
+              final purchaseData = purchaseDoc.data() as Map<dynamic, dynamic>;
+              if (!purchaseData.containsKey(PurchaseFields.dateCreated) &&
+                  purchaseData.containsKey(PurchaseFields.paymentID)) {
+                final payment = await getThisPaymentDoc(
+                    purchaseData[PurchaseFields.paymentID]);
+                final paymentData = payment.data() as Map<dynamic, dynamic>;
+                final dateCreated = paymentData[PurchaseFields.dateCreated];
+                await FirebaseFirestore.instance
+                    .collection(Collections.purchases)
+                    .doc(purchaseDoc.id)
+                    .update({PurchaseFields.dateCreated: dateCreated});
+              }
+            }
+
+            purchaseDocs.sort((a, b) {
+              DateTime aTime =
+                  (a[PurchaseFields.dateCreated] as Timestamp).toDate();
+              DateTime bTime =
+                  (b[PurchaseFields.dateCreated] as Timestamp).toDate();
+              return bTime.compareTo(aTime);
+            });
+          }
         }
         relatedProductDocs = await getAllProducts();
         setState(() {});
@@ -101,31 +129,182 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
     currentImageIndex = ref.watch(pagesProvider.notifier).getCurrentPage();
     return Scaffold(
       appBar: appBarWidget(context),
-      floatingActionButton: hasLoggedInUser()
-          ? FloatingChatWidget(
-              senderUID: FirebaseAuth.instance.currentUser!.uid,
-              otherUID: adminID)
-          : null,
+      floatingActionButton:
+          hasLoggedInUser() && ref.read(userTypeProvider) == UserTypes.client
+              ? FloatingChatWidget(
+                  senderUID: FirebaseAuth.instance.currentUser!.uid,
+                  otherUID: adminID)
+              : null,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            secondAppBar(context),
-            switchedLoadingContainer(
-                ref.read(loadingProvider),
-                Column(
-                  children: [
-                    horizontal5Percent(context, child: _productContainer()),
-                    Divider(),
-                    if (relatedProductDocs.isNotEmpty)
-                      itemCarouselTemplate(context,
-                          label: 'Related Products',
-                          carouselSliderController: relatedProductsController,
-                          itemDocs: relatedProductDocs)
-                  ],
-                ))
+            if (!hasLoggedInUser() ||
+                ref.read(userTypeProvider) == UserTypes.client)
+              _regularUserWidgets()
+            else
+              _adminWidgets()
           ],
         ),
       ),
+    );
+  }
+
+  //============================================================================
+  //ADMIN WIDGETS=============================================================
+  //============================================================================
+
+  Widget _adminWidgets() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        leftNavigator(context, path: GoRoutes.viewProducts),
+        SizedBox(
+          width: MediaQuery.of(context).size.width * 0.8,
+          child: switchedLoadingContainer(
+              ref.read(loadingProvider),
+              SingleChildScrollView(
+                  child: Column(
+                children: [
+                  _backButton(),
+                  horizontal5Percent(context,
+                      child: Column(
+                        children: [
+                          _adminProductContainer(),
+                          _adminProductPurchaseHistory()
+                        ],
+                      )),
+                ],
+              ))),
+        )
+      ],
+    );
+  }
+
+  Widget _backButton() {
+    return all20Pix(
+      child: Row(
+        children: [
+          backButton(context,
+              onPress: () =>
+                  GoRouter.of(context).goNamed(GoRoutes.viewProducts))
+        ],
+      ),
+    );
+  }
+
+  Widget _adminProductContainer() {
+    return Container(
+      decoration: BoxDecoration(border: Border.all()),
+      padding: EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (imageURLs.isNotEmpty)
+            Container(
+              width: MediaQuery.of(context).size.width * 0.1,
+              height: MediaQuery.of(context).size.width * 0.1,
+              decoration: BoxDecoration(
+                  border: Border.all(),
+                  image: DecorationImage(
+                      fit: BoxFit.fill,
+                      image: NetworkImage(imageURLs[currentImageIndex]))),
+            ),
+          Gap(12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              blackSarabunBold(name, fontSize: 40),
+              blackSarabunRegular('PHP ${price.toStringAsFixed(2)}',
+                  fontSize: 28),
+              blackSarabunRegular('Category: $category', fontSize: 28),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _adminProductPurchaseHistory() {
+    return vertical10Pix(
+        child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        blackSarabunBold('PURCHASE HISTORY', fontSize: 28),
+        Container(
+          width: double.infinity,
+          height: purchaseDocs.isEmpty ? 500 : null,
+          child: purchaseDocs.isNotEmpty
+              ? ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: purchaseDocs.length,
+                  itemBuilder: (context, index) =>
+                      _purchaseHistoryEntry(purchaseDocs[index]))
+              : Center(
+                  child: blackSarabunBold(
+                      'This product has not yet been purchased')),
+        ),
+      ],
+    ));
+  }
+
+  Widget _purchaseHistoryEntry(DocumentSnapshot purchaseDoc) {
+    final purchaseData = purchaseDoc.data() as Map<dynamic, dynamic>;
+    num quantity = purchaseData[PurchaseFields.quantity];
+    DateTime dateCreated =
+        (purchaseData[PurchaseFields.dateCreated] as Timestamp).toDate();
+    String purchaseStatus = purchaseData[PurchaseFields.purchaseStatus];
+    String clientID = purchaseData[PurchaseFields.clientID];
+    return FutureBuilder(
+      future: getThisUserDoc(clientID),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            !snapshot.hasData ||
+            snapshot.hasError) return snapshotHandler(snapshot);
+        final userData = snapshot.data!.data() as Map<dynamic, dynamic>;
+        String profileImageURL = userData[UserFields.profileImageURL];
+        String formattedName =
+            '${userData[UserFields.firstName]} ${userData[UserFields.lastName]}';
+        return Container(
+            decoration: BoxDecoration(border: Border.all()),
+            padding: EdgeInsets.all(8),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              buildProfileImage(profileImageURL: profileImageURL, radius: 50),
+              Gap(12),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                blackSarabunBold(formattedName, fontSize: 20),
+                blackSarabunRegular('Quantity: $quantity', fontSize: 12),
+                blackSarabunRegular(
+                    'Date Purchased: ${DateFormat('MMM dd, yyyy').format(dateCreated)}',
+                    fontSize: 12),
+                blackSarabunRegular('Status: $purchaseStatus', fontSize: 12),
+              ])
+            ]));
+      },
+    );
+  }
+
+  //============================================================================
+  //REGULAR WIDGETS=============================================================
+  //============================================================================
+
+  Widget _regularUserWidgets() {
+    return Column(
+      children: [
+        secondAppBar(context),
+        switchedLoadingContainer(
+            ref.read(loadingProvider),
+            Column(
+              children: [
+                horizontal5Percent(context, child: _productContainer()),
+                Divider(),
+                if (relatedProductDocs.isNotEmpty)
+                  itemCarouselTemplate(context,
+                      label: 'Related Products',
+                      carouselSliderController: relatedProductsController,
+                      itemDocs: relatedProductDocs)
+              ],
+            ))
+      ],
     );
   }
 
@@ -268,11 +447,7 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
         all10Pix(
           child: Row(
               children: List.generate(
-                  5,
-                  (index) => Icon(
-                        Icons.star,
-                        color: CustomColors.crimson,
-                      ))),
+                  5, (index) => Icon(Icons.star, color: CustomColors.crimson))),
         )
       ],
     );
