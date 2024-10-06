@@ -1740,7 +1740,8 @@ Future<String> getChatDocumentId(
       MessageFields.dateTimeCreated: DateTime.now(),
       MessageFields.dateTimeSent: DateTime.now(),
       MessageFields.adminUnread: 0,
-      MessageFields.clientUnread: 0
+      MessageFields.clientUnread: 0,
+      MessageFields.lastMessageSent: DateTime.now()
     });
     return newChatDocRef.id;
   }

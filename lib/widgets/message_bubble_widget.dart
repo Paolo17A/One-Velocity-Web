@@ -44,8 +44,6 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
@@ -81,8 +79,7 @@ class MessageBubble extends StatelessWidget {
                   style: GoogleFonts.nunitoSans(
                       textStyle: TextStyle(
                     height: 1.3,
-                    color:
-                        isMe ? Colors.black87 : theme.colorScheme.onSecondary,
+                    color: Colors.black87,
                   )),
                   softWrap: true,
                 ),

@@ -90,7 +90,7 @@ class _ViewMessagesScreenState extends ConsumerState<ViewMessagesScreen> {
               .snapshots(includeMetadataChanges: true),
           builder: (context, snapshots) {
             if (snapshots.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
+              return Center(child: const CircularProgressIndicator());
             }
             if (!snapshots.hasData || snapshots.data!.docs.isEmpty) {
               return const Center(child: Text('No message threads found'));
@@ -98,7 +98,10 @@ class _ViewMessagesScreenState extends ConsumerState<ViewMessagesScreen> {
             if (snapshots.hasError) {
               return const Center(child: Text('Something went wrong...'));
             }
-            final messageThreadDocs = snapshots.data!.docs;
+            final messageThreadDocs = snapshots.data!.docs.where((messageDoc) {
+              final messageData = messageDoc.data();
+              return messageData.containsKey(MessageFields.lastMessageSent);
+            }).toList();
             messageThreadDocs.sort((a, b) {
               DateTime aTime =
                   (a[MessageFields.lastMessageSent] as Timestamp).toDate();
@@ -117,6 +120,14 @@ class _ViewMessagesScreenState extends ConsumerState<ViewMessagesScreen> {
   Widget messageThreadEntry(DocumentSnapshot messageDoc) {
     final messageData = messageDoc.data() as Map<dynamic, dynamic>;
     String clientUID = messageData[MessageFields.clientID];
+    String adminUID = messageData[MessageFields.adminID];
+    if (clientUID == adminUID) {
+      FirebaseFirestore.instance
+          .collection(Collections.messages)
+          .doc(messageDoc.id)
+          .delete();
+      return Container();
+    }
     return StreamBuilder(
         stream: messageDoc.reference
             .collection(MessageFields.messageThread)
@@ -128,6 +139,7 @@ class _ViewMessagesScreenState extends ConsumerState<ViewMessagesScreen> {
               snapshots.hasError) {
             return Container();
           }
+
           final latestMessageData = snapshots.data!.docs.first.data();
           DateTime dateTimeSent =
               (latestMessageData[MessageFields.dateTimeSent] as Timestamp)

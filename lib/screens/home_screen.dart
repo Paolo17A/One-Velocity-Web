@@ -211,16 +211,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(loadingProvider);
+    ref.watch(userTypeProvider);
+    print(ref.read(userTypeProvider));
+    print(hasLoggedInUser());
     return Scaffold(
       appBar: appBarWidget(context,
           showActions: !hasLoggedInUser() ||
               ref.read(userTypeProvider) == UserTypes.client),
-      floatingActionButton: hasLoggedInUser() &&
-              ref.read(userTypeProvider.notifier) == UserTypes.client
-          ? FloatingChatWidget(
-              senderUID: FirebaseAuth.instance.currentUser!.uid,
-              otherUID: adminID)
-          : null,
+      floatingActionButton:
+          hasLoggedInUser() && ref.read(userTypeProvider) == UserTypes.client
+              ? FloatingChatWidget(
+                  senderUID: FirebaseAuth.instance.currentUser!.uid,
+                  otherUID: adminID)
+              : null,
       body: switchedLoadingContainer(
         ref.read(loadingProvider),
         hasLoggedInUser() && ref.read(userTypeProvider) == UserTypes.admin
@@ -263,23 +266,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget landingWidget() {
     return Container(
-      width: double.infinity,
-      height: 600,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-            image: AssetImage(ImagePaths.landing), fit: BoxFit.fill),
-      ),
-      /*child: hasLoggedInUser()
-            ? Stack(children: [
-                Positioned(
-                    bottom: 20,
-                    right: 20,
-                    child: FloatingChatWidget(
-                        senderUID: FirebaseAuth.instance.currentUser!.uid,
-                        otherUID: adminID))
-              ])
-            : null*/
-    );
+        width: double.infinity,
+        height: 600,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+              image: AssetImage(ImagePaths.landing), fit: BoxFit.fill),
+        ));
   }
 
   Widget _wheelProducts() {
