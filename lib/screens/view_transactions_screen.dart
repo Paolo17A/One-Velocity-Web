@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +19,7 @@ import '../providers/pages_provider.dart';
 import '../utils/delete_entry_dialog_util.dart';
 import '../utils/firebase_util.dart';
 import '../utils/string_util.dart';
+import '../widgets/custom_button_widgets.dart';
 
 class ViewTransactionsScreen extends ConsumerStatefulWidget {
   const ViewTransactionsScreen({super.key});
@@ -28,6 +31,10 @@ class ViewTransactionsScreen extends ConsumerStatefulWidget {
 
 class _ViewTransactionsScreenState
     extends ConsumerState<ViewTransactionsScreen> {
+  List<DocumentSnapshot> currentDisplayedTransactions = [];
+  int currentPage = 0;
+  int maxPage = 0;
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +69,9 @@ class _ViewTransactionsScreenState
           DateTime bTime = (b[PaymentFields.dateCreated] as Timestamp).toDate();
           return bTime.compareTo(aTime);
         });
+        maxPage = (ref.read(paymentsProvider).paymentDocs.length / 10).floor();
+        if (ref.read(paymentsProvider).paymentDocs.length % 10 == 0) maxPage--;
+        setDisplayedPayments();
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(
@@ -69,6 +79,20 @@ class _ViewTransactionsScreenState
         ref.read(loadingProvider.notifier).toggleLoading(false);
       }
     });
+  }
+
+  void setDisplayedPayments() {
+    if (ref.read(paymentsProvider).paymentDocs.length > 10) {
+      currentDisplayedTransactions = ref
+          .read(paymentsProvider)
+          .paymentDocs
+          .getRange(
+              currentPage * 10,
+              min((currentPage * 10) + 10,
+                  ref.read(paymentsProvider).paymentDocs.length))
+          .toList();
+    } else
+      currentDisplayedTransactions = ref.read(paymentsProvider).paymentDocs;
   }
 
   @override
@@ -112,6 +136,22 @@ class _ViewTransactionsScreenState
               ? _paymentEntries()
               : viewContentUnavailable(context,
                   text: 'NO AVAILABLE TRANSACTIONS'),
+          if (ref.read(paymentsProvider).paymentDocs.length > 10)
+            pageNavigatorButtons(
+                currentPage: currentPage,
+                maxPage: maxPage,
+                onPreviousPage: () {
+                  currentPage--;
+                  setState(() {
+                    setDisplayedPayments();
+                  });
+                },
+                onNextPage: () {
+                  currentPage++;
+                  setState(() {
+                    setDisplayedPayments();
+                  });
+                })
         ],
       ),
     );
@@ -131,16 +171,14 @@ class _ViewTransactionsScreenState
 
   Widget _paymentEntries() {
     return Container(
-      height: ref.read(paymentsProvider).paymentDocs.length > 10 ? null : 500,
+      height: 500,
       decoration: BoxDecoration(border: Border.all()),
       child: ListView.builder(
           shrinkWrap: true,
-          itemCount: ref.read(paymentsProvider).paymentDocs.length,
+          itemCount: currentDisplayedTransactions.length,
           itemBuilder: (context, index) {
-            final paymentData = ref
-                .read(paymentsProvider)
-                .paymentDocs[index]
-                .data() as Map<dynamic, dynamic>;
+            final paymentData = currentDisplayedTransactions[index].data()
+                as Map<dynamic, dynamic>;
             String clientID = paymentData[PaymentFields.clientID];
             num totalAmount = paymentData[PaymentFields.paidAmount];
             String paymentMethod = paymentData[PaymentFields.paymentMethod];
@@ -163,8 +201,7 @@ class _ViewTransactionsScreenState
                       '${clientData[UserFields.firstName]} ${clientData[UserFields.lastName]}';
                   Color entryColor = Colors.black;
                   Color backgroundColor = Colors.white;
-                  print(
-                      'got everything from ${ref.read(paymentsProvider).paymentDocs[index].id}');
+
                   return viewContentEntryRow(
                     context,
                     children: [
@@ -200,10 +237,8 @@ class _ViewTransactionsScreenState
                         if (!paymentData[PaymentFields.paymentVerified])
                           ElevatedButton(
                               onPressed: () => approveThisPayment(context, ref,
-                                  paymentID: ref
-                                      .read(paymentsProvider)
-                                      .paymentDocs[index]
-                                      .id,
+                                  paymentID:
+                                      currentDisplayedTransactions[index].id,
                                   purchaseIDs: purchaseIDs,
                                   paymentType: paymentType),
                               child: Icon(
@@ -218,10 +253,9 @@ class _ViewTransactionsScreenState
                                   deleteWord: 'Deny',
                                   deleteEntry: () => denyThisPayment(
                                       context, ref,
-                                      paymentID: ref
-                                          .read(paymentsProvider)
-                                          .paymentDocs[index]
-                                          .id,
+                                      paymentID:
+                                          currentDisplayedTransactions[index]
+                                              .id,
                                       purchaseIDs: purchaseIDs,
                                       paymentType: paymentType)),
                               child: Icon(Icons.block, color: Colors.white))

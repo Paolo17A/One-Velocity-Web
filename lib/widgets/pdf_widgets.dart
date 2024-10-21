@@ -11,14 +11,16 @@ Widget invoicePage(
     Text('Customer Name: $formattedName', style: TextStyle(fontSize: 20)),
     SizedBox(height: 20),
     for (var product in productData)
-      Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-                '${product[ProductFields.name].toString()} (${product[PurchaseFields.quantity].toString()})'),
-            Text(product[ProductFields.price].toString())
-          ]),
+      Container(
+          decoration: BoxDecoration(border: Border.all()),
+          child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                    '${product[ProductFields.name].toString()} (${product[PurchaseFields.quantity].toString()})'),
+                Text(product[ProductFields.price].toString())
+              ])),
     //Text('Purchased Product: $productName'),
     Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
       Text('Total: ', style: TextStyle(fontWeight: FontWeight.bold)),

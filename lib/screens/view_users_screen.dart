@@ -1,10 +1,11 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/loading_provider.dart';
-import '../providers/pages_provider.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
@@ -24,7 +25,9 @@ class ViewUsersScreen extends ConsumerStatefulWidget {
 
 class _ViewUsersScreenState extends ConsumerState<ViewUsersScreen> {
   List<DocumentSnapshot> allUserDocs = [];
-
+  List<DocumentSnapshot> currentDisplayedUsers = [];
+  int currentPage = 0;
+  int maxPage = 0;
   @override
   void initState() {
     super.initState();
@@ -45,12 +48,11 @@ class _ViewUsersScreenState extends ConsumerState<ViewUsersScreen> {
         }
         allUserDocs = await getAllClientDocs();
 
-        ref.read(pagesProvider.notifier).setCurrentPage(1);
-        ref
-            .read(pagesProvider.notifier)
-            .setMaxPage((allUserDocs.length / 10).ceil());
+        currentPage = 0;
+        maxPage = (allUserDocs.length / 10).floor();
+        if (allUserDocs.length % 10 == 0) maxPage--;
+        setDisplayedUsers();
         ref.read(loadingProvider.notifier).toggleLoading(false);
-        //setState(() {});
       } catch (error) {
         scaffoldMessenger.showSnackBar(
             SnackBar(content: Text('Error getting registered users: $error')));
@@ -59,10 +61,19 @@ class _ViewUsersScreenState extends ConsumerState<ViewUsersScreen> {
     });
   }
 
+  void setDisplayedUsers() {
+    if (allUserDocs.length > 10) {
+      currentDisplayedUsers = allUserDocs
+          .getRange(currentPage * 10,
+              min((currentPage * 10) + 10, allUserDocs.length))
+          .toList();
+    } else
+      currentDisplayedUsers = allUserDocs;
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(loadingProvider);
-    ref.watch(pagesProvider);
     return Scaffold(
       appBar: appBarWidget(context, showActions: false),
       body: Row(
@@ -85,6 +96,22 @@ class _ViewUsersScreenState extends ConsumerState<ViewUsersScreen> {
                                   ? _userEntries()
                                   : viewContentUnavailable(context,
                                       text: 'NO AVAILABLE USERS'),
+                              if (allUserDocs.length > 10)
+                                pageNavigatorButtons(
+                                    currentPage: currentPage,
+                                    maxPage: maxPage,
+                                    onPreviousPage: () {
+                                      currentPage--;
+                                      setState(() {
+                                        setDisplayedUsers();
+                                      });
+                                    },
+                                    onNextPage: () {
+                                      currentPage++;
+                                      setState(() {
+                                        setDisplayedUsers();
+                                      });
+                                    })
                             ],
                           ))),
                 )),
@@ -105,17 +132,14 @@ class _ViewUsersScreenState extends ConsumerState<ViewUsersScreen> {
 
   Widget _userEntries() {
     return Container(
-        height: allUserDocs.length > 10 ? null : 500,
+        height: 500,
         decoration: BoxDecoration(border: Border.all()),
         child: ListView.builder(
             shrinkWrap: true,
-            itemCount: allUserDocs.length,
+            itemCount: currentDisplayedUsers.length,
+            physics: NeverScrollableScrollPhysics(),
             itemBuilder: (context, index) {
-              return _userEntry(
-                  allUserDocs[index +
-                      ((ref.read(pagesProvider.notifier).getCurrentPage() - 1) *
-                          10)],
-                  index);
+              return _userEntry(currentDisplayedUsers[index], index);
             }));
   }
 

@@ -212,8 +212,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     ref.watch(loadingProvider);
     ref.watch(userTypeProvider);
-    print(ref.read(userTypeProvider));
-    print(hasLoggedInUser());
     return Scaffold(
       appBar: appBarWidget(context,
           showActions: !hasLoggedInUser() ||

@@ -119,6 +119,41 @@ Widget pageButton(BuildContext context,
   );
 }
 
+Widget pageNavigatorButtons(
+    {required int currentPage,
+    required int maxPage,
+    required Function onPreviousPage,
+    required Function onNextPage}) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.end,
+    children: [
+      TextButton(
+          onPressed: currentPage == 0
+              ? null
+              : () {
+                  onPreviousPage();
+                  // setState(() {
+                  //   currentPage--;
+                  //   setDisplayedPlantillas();
+                  // });
+                },
+          child: Icon(Icons.arrow_back)),
+      crimsonSarabunBold((currentPage + 1).toString()),
+      TextButton(
+          onPressed: currentPage == maxPage
+              ? null
+              : () {
+                  onNextPage();
+                  // setState(() {
+                  //   currentPage++;
+                  //   setDisplayedPlantillas();
+                  // });
+                },
+          child: Icon(Icons.arrow_forward))
+    ],
+  );
+}
+
 Widget logOutButton(BuildContext context) {
   return all20Pix(
       child: ElevatedButton(

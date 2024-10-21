@@ -1,10 +1,11 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/loading_provider.dart';
-import '../providers/pages_provider.dart';
 import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
@@ -24,7 +25,9 @@ class ViewProductsScreen extends ConsumerStatefulWidget {
 
 class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
   List<DocumentSnapshot> allProductDocs = [];
-
+  List<DocumentSnapshot> currentDisplayedProducts = [];
+  int currentPage = 0;
+  int maxPage = 0;
   @override
   void initState() {
     super.initState();
@@ -45,10 +48,10 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
         }
         allProductDocs = await getAllProducts();
 
-        ref.read(pagesProvider.notifier).setCurrentPage(1);
-        ref
-            .read(pagesProvider.notifier)
-            .setMaxPage((allProductDocs.length / 10).ceil());
+        currentPage = 0;
+        maxPage = (allProductDocs.length / 10).floor();
+        if (allProductDocs.length % 10 == 0) maxPage--;
+        setDisplayedProducts();
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(
@@ -58,10 +61,19 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
     });
   }
 
+  void setDisplayedProducts() {
+    if (allProductDocs.length > 10) {
+      currentDisplayedProducts = allProductDocs
+          .getRange(currentPage * 10,
+              min((currentPage * 10) + 10, allProductDocs.length))
+          .toList();
+    } else
+      currentDisplayedProducts = allProductDocs;
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(loadingProvider);
-    ref.watch(pagesProvider);
     return Scaffold(
       appBar: appBarWidget(context, showActions: false),
       body: Row(
@@ -104,6 +116,22 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
           allProductDocs.isNotEmpty
               ? _productEntries()
               : viewContentUnavailable(context, text: 'NO AVAILABLE PRODUCTS'),
+          if (allProductDocs.length > 10)
+            pageNavigatorButtons(
+                currentPage: currentPage,
+                maxPage: maxPage,
+                onPreviousPage: () {
+                  currentPage--;
+                  setState(() {
+                    setDisplayedProducts();
+                  });
+                },
+                onNextPage: () {
+                  currentPage++;
+                  setState(() {
+                    setDisplayedProducts();
+                  });
+                })
         ],
       ),
     );
@@ -122,13 +150,13 @@ class _ViewProductsScreenState extends ConsumerState<ViewProductsScreen> {
 
   Widget _productEntries() {
     return Container(
-        height: allProductDocs.length > 10 ? null : 500,
+        height: 500,
         decoration: BoxDecoration(border: Border.all()),
         child: ListView.builder(
             shrinkWrap: true,
-            itemCount: allProductDocs.length,
+            itemCount: currentDisplayedProducts.length,
             itemBuilder: (context, index) {
-              return _productEntry(allProductDocs[index], index);
+              return _productEntry(currentDisplayedProducts[index], index);
             }));
   }
 

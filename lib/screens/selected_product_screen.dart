@@ -382,7 +382,10 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         blackSarabunBold('Description:'),
-                        blackSarabunRegular(description),
+                        SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.6,
+                            child: blackSarabunRegular(description,
+                                textAlign: TextAlign.justify)),
                       ],
                     )),
                   ],
