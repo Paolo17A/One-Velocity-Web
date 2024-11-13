@@ -28,6 +28,7 @@ class ServicePaymentWidget extends StatefulWidget {
 class _ServicePaymentWidgetState extends State<ServicePaymentWidget> {
   bool _isLoading = true;
   String clientName = '';
+  String contactNumber = '';
   DateTime? dateCreated;
   DateTime? datePaid;
   num paidAmount = 0;
@@ -49,6 +50,7 @@ class _ServicePaymentWidgetState extends State<ServicePaymentWidget> {
       final clientData = clientDoc.data() as Map<dynamic, dynamic>;
       clientName =
           '${clientData[UserFields.firstName]} ${clientData[UserFields.lastName]}';
+      contactNumber = clientData[UserFields.mobileNumber];
 
       //  Get services data
       final List<dynamic> serviceIDs = bookingData[BookingFields.serviceIDs];
@@ -160,6 +162,7 @@ class _ServicePaymentWidgetState extends State<ServicePaymentWidget> {
             }
             document.addPage(pw.Page(
                 build: (context) => invoicePage(
+                    contactNumber: contactNumber,
                     formattedName: clientName,
                     productData: serviceEntries,
                     totalAmount: paidAmount,

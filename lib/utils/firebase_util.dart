@@ -13,6 +13,7 @@ import 'package:one_velocity_web/providers/cart_provider.dart';
 import 'package:one_velocity_web/providers/faq_provider.dart';
 import 'package:one_velocity_web/providers/profile_image_url_provider.dart';
 import 'package:one_velocity_web/providers/purchases_provider.dart';
+//import 'package:one_velocity_web/utils/url_util.dart';
 
 import '../providers/bookings_provider.dart';
 import '../providers/loading_provider.dart';
@@ -1047,6 +1048,7 @@ Future markPurchasesAsReadyForPickUp(BuildContext context, WidgetRef ref,
           .update({PurchaseFields.purchaseStatus: PurchaseStatuses.forPickUp});
     }
     ref.read(paymentsProvider).setPaymentDocs(await getAllProductPaymentDocs());
+    ref.read(paymentsProvider).sortPaymentsByDate();
     ref.read(loadingProvider.notifier).toggleLoading(false);
     scaffoldMessenger.showSnackBar(SnackBar(
         content: Text('Successfully marked purchases as ready for pick-up')));
@@ -1086,8 +1088,10 @@ Future markPurchaseAsPickedUp(BuildContext context, WidgetRef ref,
         .collection(Collections.payments)
         .doc(paymentID)
         .update({PaymentFields.invoiceURL: downloadURL});
+    //launchThisURL(context, downloadURL);
 
     ref.read(purchasesProvider).setPurchaseDocs(await getAllPurchaseDocs());
+    ref.read(purchasesProvider).sortPurchasesByDate();
     scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Successfully marked purchase picked up')));
     ref.read(loadingProvider.notifier).toggleLoading(false);
@@ -1686,6 +1690,7 @@ Future markBookingRequestAsCompleted(BuildContext context, WidgetRef ref,
         .collection(Collections.payments)
         .doc(paymentID)
         .update({PaymentFields.invoiceURL: downloadURL});
+    //launchThisURL(context, downloadURL);
     ref.read(bookingsProvider).setBookingDocs(await getAllBookingDocs());
     ref.read(bookingsProvider).bookingDocs.sort((a, b) {
       DateTime aTime = (a[PurchaseFields.dateCreated] as Timestamp).toDate();

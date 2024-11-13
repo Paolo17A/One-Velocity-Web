@@ -29,6 +29,7 @@ class ProductPaymentWidget extends StatefulWidget {
 class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
   bool _isLoading = true;
   String clientName = '';
+  String contactNumber = '';
   DateTime? dateCreated;
   DateTime? datePaid;
   num paidAmount = 0;
@@ -56,6 +57,7 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
       final clientData = clientDoc.data() as Map<dynamic, dynamic>;
       clientName =
           '${clientData[UserFields.firstName]} ${clientData[UserFields.lastName]}';
+      contactNumber = clientData[UserFields.mobileNumber];
 
       //  Get products data
       final List<dynamic> purchaseIDs = paymentData[PaymentFields.purchaseIDs];
@@ -102,6 +104,7 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.15,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        //Text(widget.productPaymentDoc.id),
         whiteSarabunBold('Buyer: $clientName',
             fontSize: 22,
             textOverflow: TextOverflow.ellipsis,
@@ -168,6 +171,7 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
           }
           document.addPage(pw.Page(
               build: (context) => invoicePage(
+                  contactNumber: contactNumber,
                   formattedName: clientName,
                   productData: productEntries,
                   totalAmount: paidAmount,
@@ -278,6 +282,7 @@ class _ProductPaymentWidgetState extends State<ProductPaymentWidget> {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      //Text(purchaseDoc.id),
                       whiteSarabunBold(name,
                           fontSize: 14, textOverflow: TextOverflow.ellipsis),
                       whiteSarabunRegular('Quanitity: $quantity',
