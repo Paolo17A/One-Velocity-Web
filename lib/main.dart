@@ -18,7 +18,8 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
+  static final searchController = TextEditingController();
+  static bool displaySearchBar = false;
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {

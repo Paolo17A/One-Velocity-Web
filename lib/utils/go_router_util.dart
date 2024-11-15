@@ -27,6 +27,7 @@ import '../screens/edit_service_screen.dart';
 import '../screens/help_center_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/search_result_screen.dart';
 import '../screens/selected_product_screen.dart';
 import '../screens/selected_service_screen.dart';
 import '../screens/selected_user_screen.dart';
@@ -46,6 +47,7 @@ class GoRoutes {
   static const services = 'services';
   static const selectedService = 'selectedService';
   static const help = 'help';
+  static const search = 'search';
 
   //  ADMIN
   static const viewProducts = 'viewProducts';
@@ -149,7 +151,15 @@ final GoRouter goRoutes = GoRouter(initialLocation: GoRoutes.home, routes: [
             path: GoRoutes.help,
             pageBuilder: (context, state) =>
                 customTransition(context, state, const HelpCenterScreen())),
-
+        GoRoute(
+            name: GoRoutes.search,
+            path: '${GoRoutes.search}/:${PathParameters.searchInput}',
+            pageBuilder: (context, state) => customTransition(
+                context,
+                state,
+                SearchResultScreen(
+                    searchInput:
+                        state.pathParameters[PathParameters.searchInput]!))),
         //======================================================================
         //==ADMIN PAGES=========================================================
         //======================================================================

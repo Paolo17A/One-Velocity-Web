@@ -127,6 +127,10 @@ Future logInUser(BuildContext context, WidgetRef ref,
           .doc(FirebaseAuth.instance.currentUser!.uid)
           .update({UserFields.password: passwordController.text});
     }
+    await FirebaseFirestore.instance
+        .collection(Collections.users)
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .update({UserFields.lastActive: DateTime.now()});
     ref.read(loadingProvider.notifier).toggleLoading(false);
     goRouter.goNamed(GoRoutes.home);
     goRouter.pushReplacementNamed(GoRoutes.home);
@@ -913,6 +917,19 @@ Future<List<DocumentSnapshot>> getAllPurchaseDocs() async {
   return purchases.docs.reversed.toList();
 }
 
+Future<List<DocumentSnapshot>> searchForTheseProducts(String input) async {
+  String searchInput = input.toLowerCase().trim();
+  final items =
+      await FirebaseFirestore.instance.collection(Collections.products).get();
+  List<DocumentSnapshot> filteredItems = items.docs.where((item) {
+    final itemData = item.data() as Map<dynamic, dynamic>;
+    String name = itemData[ProductFields.name].toString().toLowerCase();
+    String category = itemData[ProductFields.category].toString().toLowerCase();
+    return name.contains(searchInput) || category.contains(searchInput);
+  }).toList();
+  return filteredItems;
+}
+
 Future<List<DocumentSnapshot>> getThesePurchaseDocs(
     List<dynamic> purchaseIDs) async {
   final purchases = await FirebaseFirestore.instance
@@ -1288,6 +1305,19 @@ Future<List<DocumentSnapshot>> getAllServices() async {
   return services.docs;
 }
 
+Future<List<DocumentSnapshot>> searchForTheseServices(String input) async {
+  String searchInput = input.toLowerCase().trim();
+  final items =
+      await FirebaseFirestore.instance.collection(Collections.services).get();
+  List<DocumentSnapshot> filteredItems = items.docs.where((item) {
+    final itemData = item.data() as Map<dynamic, dynamic>;
+    String name = itemData[ServiceFields.name].toString().toLowerCase();
+    String category = itemData[ServiceFields.category].toString().toLowerCase();
+    return name.contains(searchInput) || category.contains(searchInput);
+  }).toList();
+  return filteredItems;
+}
+
 Future<DocumentSnapshot> getThisServiceDoc(String serviceID) async {
   return await FirebaseFirestore.instance
       .collection(Collections.services)
@@ -1389,7 +1419,8 @@ Future editServiceEntry(BuildContext context, WidgetRef ref,
     required TextEditingController descriptionController,
     required bool isAvailable,
     required String selectedCategory,
-    required TextEditingController priceController}) async {
+    required TextEditingController priceController,
+    required List<dynamic> imageURLs}) async {
   final scaffoldMessenger = ScaffoldMessenger.of(context);
   final goRouter = GoRouter.of(context);
   if (nameController.text.isEmpty ||
@@ -1415,20 +1446,19 @@ Future editServiceEntry(BuildContext context, WidgetRef ref,
     ref.read(loadingProvider.notifier).toggleLoading(true);
 
     //  Upload Item Images to Firebase Storage
-    List<String> imageURLs = [];
-    for (int i = 0;
-        i < ref.read(uploadedImagesProvider).uploadedImages.length;
-        i++) {
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child(Collections.services)
-          .child(serviceID)
-          .child('${generateRandomHexString(6)}.png');
-      final uploadTask = storageRef
-          .putData(ref.read(uploadedImagesProvider).uploadedImages[i]!);
-      final taskSnapshot = await uploadTask;
-      final downloadURL = await taskSnapshot.ref.getDownloadURL();
-      imageURLs.add(downloadURL);
+    List<dynamic> downloadURLs = imageURLs;
+    if (ref.read(uploadedImagesProvider).uploadedImages.isNotEmpty) {
+      for (var itemByte in ref.read(uploadedImagesProvider).uploadedImages) {
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child(Collections.services)
+            .child(serviceID)
+            .child('${generateRandomHexString(6)}.png');
+        final uploadTask = storageRef.putData(itemByte!);
+        final taskSnapshot = await uploadTask;
+        final downloadURL = await taskSnapshot.ref.getDownloadURL();
+        downloadURLs.add(downloadURL);
+      }
     }
 
     await FirebaseFirestore.instance
@@ -1439,8 +1469,9 @@ Future editServiceEntry(BuildContext context, WidgetRef ref,
       ServiceFields.description: descriptionController.text.trim(),
       ServiceFields.isAvailable: isAvailable,
       ServiceFields.price: double.parse(priceController.text),
-      ServiceFields.imageURLs: FieldValue.arrayUnion(imageURLs),
-      ServiceFields.category: selectedCategory
+      //ServiceFields.imageURLs: FieldValue.arrayUnion(imageURLs),
+      ServiceFields.category: selectedCategory,
+      ServiceFields.imageURLs: downloadURLs
     });
     ref.read(loadingProvider.notifier).toggleLoading(false);
 

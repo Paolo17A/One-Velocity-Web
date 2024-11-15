@@ -158,24 +158,28 @@ Widget viewContentUnavailable(BuildContext context, {required String text}) {
 Widget analyticReportWidget(BuildContext context,
     {required String count,
     required String demographic,
-    required Widget displayIcon,
     required Function? onPress}) {
-  return Padding(
-    padding: const EdgeInsets.all(8),
-    child: Container(
-        width: 200,
-        height: 200,
-        decoration: BoxDecoration(color: CustomColors.nimbusCloud, boxShadow: [
-          BoxShadow(offset: Offset(8, 8), blurRadius: 4, spreadRadius: -8)
-        ]),
-        padding: EdgeInsets.all(8),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            crimsonSarabunBold(count, fontSize: 40),
-            blackSarabunRegular(demographic)
-          ],
-        )),
+  return GestureDetector(
+    onTap: onPress != null ? () => onPress() : null,
+    child: Padding(
+      padding: const EdgeInsets.all(8),
+      child: Container(
+          width: 200,
+          height: 200,
+          decoration: BoxDecoration(
+              color: CustomColors.nimbusCloud,
+              boxShadow: [
+                BoxShadow(offset: Offset(8, 8), blurRadius: 4, spreadRadius: -8)
+              ]),
+          padding: EdgeInsets.all(8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              crimsonSarabunBold(count, fontSize: 40),
+              blackSarabunRegular(demographic)
+            ],
+          )),
+    ),
   );
 }
 
@@ -219,15 +223,38 @@ Widget selectedMemoryImageDisplay(
   );
 }
 
-Widget selectedNetworkImageDisplay(String imageSource) {
+Widget square80NetworkImage(String url) {
+  return Container(
+    width: 80,
+    height: 80,
+    decoration: BoxDecoration(
+        image: DecorationImage(image: NetworkImage(url), fit: BoxFit.cover)),
+  );
+}
+
+Widget selectedNetworkImageDisplay(String imageSource,
+    {required Function deleteImage}) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 40),
     child: Container(
       decoration: BoxDecoration(border: Border.all(color: Colors.black)),
       child: Padding(
         padding: const EdgeInsets.all(10),
-        child: SizedBox(
-            width: 150, height: 150, child: Image.network(imageSource)),
+        child: Column(
+          children: [
+            SizedBox(
+                width: 150, height: 150, child: Image.network(imageSource)),
+            SizedBox(
+              width: 90,
+              child: ElevatedButton(
+                  onPressed: () => deleteImage(),
+                  child: const Icon(
+                    Icons.delete,
+                    color: Colors.white,
+                  )),
+            )
+          ],
+        ),
       ),
     ),
   );
@@ -487,9 +514,64 @@ Widget itemCarouselTemplate(BuildContext context,
   );
 }
 
-Widget footerWidget(BuildContext context) {
+Widget itemRowTemplate(BuildContext context,
+    {required String label,
+    required List<DocumentSnapshot> itemDocs,
+    required String itemType}) {
+  return vertical20Pix(
+    child: Container(
+        width: MediaQuery.of(context).size.width,
+        padding: const EdgeInsets.all(10),
+        child: Column(children: [
+          blackSarabunBold(label, fontSize: 32),
+          Container(width: 220, height: 8, color: CustomColors.crimson),
+          Gap(10),
+          SizedBox(
+              width: MediaQuery.of(context).size.width * 0.8,
+              child: itemDocs.isNotEmpty
+                  ? Wrap(
+                      //alignment: WrapAlignment.center,
+                      children: itemDocs.map((itemDoc) {
+                      return all20Pix(
+                        child:
+                            itemEntry(context, itemDoc: itemDoc, onPress: () {
+                          if (itemType == 'PRODUCT') {
+                            GoRouter.of(context).goNamed(
+                                GoRoutes.selectedProduct,
+                                pathParameters: {
+                                  PathParameters.productID: itemDoc.id
+                                });
+                            GoRouter.of(context).pushNamed(
+                                GoRoutes.selectedProduct,
+                                pathParameters: {
+                                  PathParameters.productID: itemDoc.id
+                                });
+                          } else if (itemType == 'SERVICE') {
+                            GoRouter.of(context).goNamed(
+                                GoRoutes.selectedService,
+                                pathParameters: {
+                                  PathParameters.serviceID: itemDoc.id
+                                });
+                            GoRouter.of(context).pushNamed(
+                                GoRoutes.selectedService,
+                                pathParameters: {
+                                  PathParameters.serviceID: itemDoc.id
+                                });
+                          }
+                        }),
+                      );
+                    }).toList())
+                  : Center(
+                      child:
+                          blackSarabunBold('NO ITEMS AVAILABLE', fontSize: 40),
+                    ))
+        ])),
+  );
+}
+
+Widget footerWidget(BuildContext context, {double? width}) {
   return Container(
-    width: MediaQuery.of(context).size.width,
+    width: width ?? MediaQuery.of(context).size.width,
     color: CustomColors.blackBeauty,
     padding: EdgeInsets.all(20),
     child: Column(
@@ -546,7 +628,7 @@ Widget footerWidget(BuildContext context) {
                     Icon(Icons.location_city, color: CustomColors.ultimateGray),
                     Gap(20),
                     SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.3,
+                      width: MediaQuery.of(context).size.width * 0.2,
                       child: whiteSarabunRegular(
                           'Brgy. Pagsawitan 5 National Highway, Santa Cruz, Philippines',
                           textAlign: TextAlign.left),

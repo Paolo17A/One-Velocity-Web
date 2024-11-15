@@ -110,7 +110,13 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
           }
         }
         relatedProductDocs = await getAllProducts();
-        setState(() {});
+        setState(() {
+          relatedProductDocs = relatedProductDocs.where((product) {
+            final productData = product.data() as Map<dynamic, dynamic>;
+            String thisCategory = productData[ProductFields.category];
+            return category == thisCategory;
+          }).toList();
+        });
 
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
@@ -293,16 +299,18 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
         secondAppBar(context),
         switchedLoadingContainer(
             ref.read(loadingProvider),
-            Column(
-              children: [
-                horizontal5Percent(context, child: _productContainer()),
-                Divider(),
-                if (relatedProductDocs.isNotEmpty)
-                  itemCarouselTemplate(context,
-                      label: 'Related Products',
-                      carouselSliderController: relatedProductsController,
-                      itemDocs: relatedProductDocs)
-              ],
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  horizontal5Percent(context, child: _productContainer()),
+                  Divider(),
+                  if (relatedProductDocs.isNotEmpty)
+                    itemRowTemplate(context,
+                        label: 'Related Products',
+                        itemDocs: relatedProductDocs.take(5).toList(),
+                        itemType: 'PRODUCT')
+                ],
+              ),
             ))
       ],
     );
@@ -327,7 +335,8 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         blackSarabunBold(name, fontSize: 52),
-                        crimsonSarabunBold('PHP ${price.toStringAsFixed(2)}',
+                        crimsonSarabunBold(
+                            'PHP ${formatPrice(price.toDouble())}',
                             fontSize: 40),
                         blackSarabunRegular('Category: $category',
                             fontSize: 30),
@@ -399,14 +408,14 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
   }
 
   Widget _itemImagesDisplay() {
+    List<dynamic> otherImages = [];
+    if (imageURLs.length > 1) otherImages = imageURLs.sublist(1);
     return Column(
       children: [
         MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
-            onTap: () {
-              showOtherPics();
-            },
+            onTap: () => showOtherPics(context, imageURL: imageURLs.first),
             child: Column(
               children: [
                 Container(
@@ -416,71 +425,36 @@ class _SelectedProductScreenState extends ConsumerState<SelectedProductScreen> {
                       border: Border.all(),
                       image: DecorationImage(
                           fit: BoxFit.fill,
-                          image: NetworkImage(imageURLs[currentImageIndex]))),
+                          image: NetworkImage(imageURLs.first))),
                 ),
               ],
             ),
           ),
         ),
-        if (imageURLs.length > 1)
-          vertical10Pix(
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.2,
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                        onPressed: () => currentImageIndex == 0
-                            ? null
-                            : ref
-                                .read(pagesProvider.notifier)
-                                .setCurrentPage(currentImageIndex - 1),
-                        child: const Icon(Icons.arrow_left)),
-                    TextButton(
-                        onPressed: () =>
-                            currentImageIndex == imageURLs.length - 1
-                                ? null
-                                : ref
-                                    .read(pagesProvider.notifier)
-                                    .setCurrentPage(currentImageIndex + 1),
-                        child: const Icon(Icons.arrow_right))
-                  ]),
-            ),
+        SizedBox(
+          width: MediaQuery.of(context).size.width * 0.25,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: otherImages
+                    .map((otherImage) => all10Pix(
+                            child: GestureDetector(
+                          onTap: () =>
+                              showOtherPics(context, imageURL: otherImage),
+                          child: Container(
+                              decoration: BoxDecoration(border: Border.all()),
+                              child: square80NetworkImage(otherImage)),
+                        )))
+                    .toList()),
           ),
-        all10Pix(
+        )
+        /*all10Pix(
           child: Row(
               children: List.generate(
                   5, (index) => Icon(Icons.star, color: CustomColors.crimson))),
-        )
+        )*/
       ],
     );
-  }
-
-  void showOtherPics() {
-    showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-                content: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.7,
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: Column(children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                        onPressed: () => GoRouter.of(context).pop(),
-                        child: blackSarabunBold('X'))
-                  ],
-                ),
-                Container(
-                  width: MediaQuery.of(context).size.height * 0.65,
-                  height: MediaQuery.of(context).size.height * 0.65,
-                  decoration: BoxDecoration(
-                      image: DecorationImage(
-                          image: NetworkImage(imageURLs[currentImageIndex]),
-                          fit: BoxFit.fill)),
-                ),
-              ]),
-            )));
   }
 }

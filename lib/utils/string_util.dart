@@ -6,6 +6,10 @@ class ImagePaths {
   static const String logo = 'assets/images/one_velocity.jpg';
   static const String landing = 'assets/images/landing.png';
   static const String background = 'assets/images/background.jpg';
+  static const String wheel = 'assets/images/wheel.jpeg';
+  static const String battery = 'assets/images/battery.jpeg';
+  static const String paintJob = 'assets/images/paint job.jpg';
+  static const String repair = 'assets/images/repair.png';
 }
 
 class UserTypes {
@@ -35,6 +39,7 @@ class UserFields {
   static const String profileImageURL = 'profileImageURL';
   static const String bookmarkedProducts = 'bookmarkedProducts';
   static const String bookmarkedServices = 'bookmarkedServices';
+  static const String lastActive = 'lastActive';
 }
 
 class FAQFields {
@@ -114,6 +119,7 @@ class PathParameters {
   static const String productID = 'productID';
   static const String serviceID = 'serviceID';
   static const String bookingID = 'bookingID';
+  static const String searchInput = 'searchInput';
 }
 
 class StorageFields {

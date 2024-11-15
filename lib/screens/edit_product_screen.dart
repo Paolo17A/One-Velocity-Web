@@ -240,18 +240,45 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 uploadImageButton('UPLOAD IMAGES', _pickLogoImage),
-                if (selectedItemImages.isNotEmpty)
-                  vertical10Pix(
-                    child: Wrap(
-                        children: selectedItemImages.map((itemByte) {
-                      return selectedMemoryImageDisplay(itemByte!, () {
-                        ref.read(uploadedImagesProvider).removeImage(itemByte);
-                      });
-                    }).toList()),
-                  )
-                else if (!ref.read(loadingProvider))
-                  vertical10Pix(
-                      child: selectedNetworkImageDisplay(imageURLs.first))
+                vertical10Pix(
+                    child: Wrap(children: [
+                  if (!ref.read(loadingProvider) && imageURLs.isNotEmpty)
+                    ...imageURLs
+                        .map((imageURL) => all10Pix(
+                                child: selectedNetworkImageDisplay(imageURL,
+                                    deleteImage: () {
+                              if (imageURLs.length +
+                                      selectedItemImages.length ==
+                                  1) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(
+                                        'You must have at least one image available for this item.')));
+                                return;
+                              }
+                              setState(() {
+                                imageURLs.remove(imageURL);
+                              });
+                            })))
+                        .toList(),
+                  if (selectedItemImages.isNotEmpty)
+                    ...selectedItemImages
+                        .map((imageByte) => all10Pix(
+                                child:
+                                    selectedMemoryImageDisplay(imageByte, () {
+                              if (imageURLs.length +
+                                      selectedItemImages.length ==
+                                  1) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(
+                                        'You must have at least one image available for this item.')));
+                                return;
+                              }
+                              setState(() {
+                                selectedItemImages.remove(imageByte!);
+                              });
+                            })))
+                        .toList()
+                ]))
               ],
             ),
           ],

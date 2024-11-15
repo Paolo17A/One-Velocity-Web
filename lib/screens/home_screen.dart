@@ -5,7 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:one_velocity_web/main.dart';
+import 'package:one_velocity_web/providers/category_provider.dart';
 import 'package:one_velocity_web/utils/color_util.dart';
+import 'package:one_velocity_web/widgets/active_clients_widget.dart';
 import 'package:one_velocity_web/widgets/app_bar_widget.dart';
 import 'package:one_velocity_web/widgets/floating_chat_widget.dart';
 import 'package:pie_chart/pie_chart.dart';
@@ -17,7 +21,6 @@ import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
-import '../widgets/item_entry_widget.dart';
 import '../widgets/left_navigator_widget.dart';
 import '../widgets/text_widgets.dart';
 
@@ -38,14 +41,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     'APPROVED': 0,
     'DENIED': 0
   };
+  Map<String, double> productNameAndOrderMap = {};
+  Map<String, double> serviceNameAndOrderMap = {};
+
   num totalSales = 0;
   String bestSellingProduct = '';
   num ongoingBookings = 0;
+  num totalTransactions = 0;
   String bestSellingService = '';
+  num completedPurchases = 0;
+  num completedBookings = 0;
   //  CLIENT
   List<DocumentSnapshot> productDocs = [];
   List<DocumentSnapshot> wheelProductDocs = [];
   List<DocumentSnapshot> batteryProductDocs = [];
+  List<DocumentSnapshot> paintJobDocs = [];
+  List<DocumentSnapshot> repairDocs = [];
+
   List<DocumentSnapshot> serviceDocs = [];
   List<DocumentSnapshot> paymentDocs = [];
   List<DocumentSnapshot> purchaseDocs = [];
@@ -55,7 +67,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   CarouselSliderController batteryController = CarouselSliderController();
   CarouselSliderController allProductsController = CarouselSliderController();
   CarouselSliderController allServicesController = CarouselSliderController();
-
+  int maxItemsPerRow = 5;
   @override
   void initState() {
     super.initState();
@@ -67,6 +79,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               .read(userTypeProvider.notifier)
               .setUserType(await getCurrentUserType());
           if (ref.read(userTypeProvider) == UserTypes.admin) {
+            MyApp.displaySearchBar = false;
+
             final products = await getAllProducts();
             productsCount = products.length;
             final services = await getAllServices();
@@ -74,6 +88,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             final users = await getAllClientDocs();
             userCount = users.length;
             paymentDocs = await getAllPaymentDocs();
+            totalTransactions = paymentDocs.length;
             for (var payment in paymentDocs) {
               final paymentData = payment.data() as Map<dynamic, dynamic>;
               final status = paymentData[PaymentFields.paymentStatus];
@@ -90,8 +105,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               }
             }
             purchaseDocs = await getAllPurchaseDocs();
+            completedPurchases = purchaseDocs
+                .where((element) {
+                  final purchaseData = element.data() as Map<dynamic, dynamic>;
+                  return purchaseData[PurchaseFields.purchaseStatus] ==
+                      PurchaseStatuses.pickedUp;
+                })
+                .toList()
+                .length;
             await _establishBestSellingProduct();
+            for (var purchase in purchaseDocs) {
+              final purchaseData = purchase.data() as Map<dynamic, dynamic>;
+
+              String productID = purchaseData[PurchaseFields.productID];
+              DocumentSnapshot? itemDoc =
+                  products.where((item) => item.id == productID).firstOrNull;
+              if (itemDoc == null) continue;
+              final itemData = itemDoc.data() as Map<dynamic, dynamic>;
+              String name = itemData[ProductFields.name];
+              if (productNameAndOrderMap.containsKey(name)) {
+                productNameAndOrderMap[name] =
+                    productNameAndOrderMap[name]! + 1;
+              } else {
+                productNameAndOrderMap[name] = 1;
+              }
+            }
             bookingDocs = await getAllBookingDocs();
+            for (var booking in bookingDocs) {
+              final bookingData = booking.data() as Map<dynamic, dynamic>;
+
+              List<dynamic> serviceIDs = bookingData[BookingFields.serviceIDs];
+              DocumentSnapshot? itemDoc = services
+                  .where((item) => serviceIDs.contains(item.id))
+                  .firstOrNull;
+              if (itemDoc == null) continue;
+              final itemData = itemDoc.data() as Map<dynamic, dynamic>;
+              String name = itemData[ServiceFields.name];
+              if (serviceNameAndOrderMap.containsKey(name)) {
+                serviceNameAndOrderMap[name] =
+                    serviceNameAndOrderMap[name]! + 1;
+              } else {
+                serviceNameAndOrderMap[name] = 1;
+              }
+            }
             ongoingBookings = bookingDocs
                 .where((bookingDoc) {
                   final bookingData =
@@ -103,12 +159,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 })
                 .toList()
                 .length;
+            completedBookings = bookingDocs
+                .where((bookingDoc) {
+                  final bookingData =
+                      bookingDoc.data() as Map<dynamic, dynamic>;
+                  return bookingData[BookingFields.serviceStatus] ==
+                      ServiceStatuses.serviceCompleted;
+                })
+                .toList()
+                .length;
             await _establishBestSellingService();
           } else {
+            MyApp.displaySearchBar = true;
             productDocs = await getAllProducts();
             serviceDocs = await getAllServices();
           }
         } else {
+          MyApp.displaySearchBar = true;
           productDocs = await getAllProducts();
           serviceDocs = await getAllServices();
         }
@@ -121,6 +188,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           final productData = productDoc.data() as Map<dynamic, dynamic>;
           return productData[ProductFields.category] ==
               ProductCategories.battery;
+        }).toList();
+        paintJobDocs = serviceDocs.where((serviceDoc) {
+          final serviceData = serviceDoc.data() as Map<dynamic, dynamic>;
+          return serviceData[ServiceFields.category] ==
+              ServiceCategories.paintJob;
+        }).toList();
+        repairDocs = serviceDocs.where((serviceDoc) {
+          final serviceData = serviceDoc.data() as Map<dynamic, dynamic>;
+          return serviceData[ServiceFields.category] ==
+              ServiceCategories.repair;
         }).toList();
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
@@ -232,6 +309,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget regularHome() {
+    maxItemsPerRow = (MediaQuery.of(context).size.width / 350).floor();
     return Container(
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.height,
@@ -243,16 +321,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Container(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height,
-              color: Colors.white.withOpacity(0.8)),
+              color: Colors.white.withOpacity(0.95)),
           SingleChildScrollView(
             child: Column(
               children: [
                 secondAppBar(context),
                 landingWidget(),
-                if (wheelProductDocs.isNotEmpty) _wheelProducts(),
-                if (batteryProductDocs.isNotEmpty) _batteryProducts(),
+                _categoriesSelector(),
+                _categoriesCarousel(),
                 if (productDocs.isNotEmpty) _allProducts(),
                 if (serviceDocs.isNotEmpty) _allServices(),
+                Gap(40),
                 footerWidget(context)
               ],
             ),
@@ -272,73 +351,203 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ));
   }
 
+  Widget _categoriesSelector() {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Expanded(
+            child: InkWell(
+                onTap: () {
+                  ref
+                      .read(categoryProvider)
+                      .setCategory(ProductCategories.wheel);
+                  GoRouter.of(context).goNamed(GoRoutes.products);
+                },
+                child: Container(
+                    height: 160,
+                    decoration: BoxDecoration(
+                      border: Border.all(),
+                      image: DecorationImage(
+                          fit: BoxFit.cover,
+                          image: AssetImage(ImagePaths.wheel)),
+                    ),
+                    child: Stack(
+                      children: [
+                        Container(
+                            color: CustomColors.blackBeauty.withOpacity(0.5)),
+                        Center(child: whiteSarabunBold('WHEELS', fontSize: 28)),
+                      ],
+                    )))),
+        Expanded(
+            child: InkWell(
+                onTap: () {
+                  ref
+                      .read(categoryProvider)
+                      .setCategory(ProductCategories.battery);
+                  GoRouter.of(context).goNamed(GoRoutes.products);
+                },
+                child: Container(
+                    height: 160,
+                    decoration: BoxDecoration(
+                        border: Border.all(),
+                        image: DecorationImage(
+                            fit: BoxFit.cover,
+                            image: AssetImage(ImagePaths.battery)),
+                        color: CustomColors.blackBeauty.withOpacity(0.5)),
+                    child: Stack(
+                      children: [
+                        Container(
+                            color: CustomColors.blackBeauty.withOpacity(0.5)),
+                        Center(
+                            child: whiteSarabunBold('BATTERIES', fontSize: 28)),
+                      ],
+                    )))),
+        Expanded(
+            child: InkWell(
+                onTap: () {
+                  ref
+                      .read(categoryProvider)
+                      .setCategory(ServiceCategories.paintJob);
+                  GoRouter.of(context).goNamed(GoRoutes.services);
+                },
+                child: Container(
+                    height: 160,
+                    decoration: BoxDecoration(
+                        border: Border.all(),
+                        image: DecorationImage(
+                            fit: BoxFit.cover,
+                            image: AssetImage(ImagePaths.paintJob)),
+                        color: CustomColors.blackBeauty.withOpacity(0.5)),
+                    child: Stack(
+                      children: [
+                        Container(
+                            color: CustomColors.blackBeauty.withOpacity(0.5)),
+                        Center(
+                            child:
+                                whiteSarabunBold('PAINT JOBS', fontSize: 28)),
+                      ],
+                    )))),
+        Expanded(
+            child: InkWell(
+                onTap: () {
+                  ref
+                      .read(categoryProvider)
+                      .setCategory(ServiceCategories.repair);
+                  GoRouter.of(context).goNamed(GoRoutes.services);
+                },
+                child: Container(
+                    height: 160,
+                    decoration: BoxDecoration(
+                        border: Border.all(),
+                        image: DecorationImage(
+                            fit: BoxFit.cover,
+                            image: AssetImage(ImagePaths.repair)),
+                        color: CustomColors.blackBeauty.withOpacity(0.5)),
+                    child: Stack(
+                      children: [
+                        Container(
+                            color: CustomColors.blackBeauty.withOpacity(0.5)),
+                        Center(
+                            child: whiteSarabunBold('REPAIRS', fontSize: 28)),
+                      ],
+                    )))),
+      ]),
+    );
+  }
+
+  Widget _categoriesCarousel() {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      height: 550,
+      child: CarouselSlider(
+        items: [
+          _wheelProducts(),
+          _batteryProducts(),
+          _paintJobs(),
+          _repairs(),
+        ],
+        options: CarouselOptions(
+            //height: hasLoggedInUser() ? 540 : 485,
+            viewportFraction: 1,
+            autoPlay: true,
+            autoPlayInterval: const Duration(seconds: 7)),
+      ),
+    );
+  }
+
   Widget _wheelProducts() {
     wheelProductDocs.shuffle();
-    return itemCarouselTemplate(context,
-        label: 'Wheels',
-        carouselSliderController: wheelsController,
-        itemDocs: wheelProductDocs);
+    return itemRowTemplate(context,
+        label: 'WHEELS',
+        itemDocs: wheelProductDocs.take(maxItemsPerRow).toList(),
+        itemType: 'PRODUCT');
   }
 
   Widget _batteryProducts() {
     batteryProductDocs.shuffle();
-    return itemCarouselTemplate(context,
-        label: 'Batteries',
-        carouselSliderController: batteryController,
-        itemDocs: batteryProductDocs);
+    return itemRowTemplate(context,
+        label: 'BATTERIES',
+        itemDocs: batteryProductDocs.take(maxItemsPerRow).toList(),
+        itemType: 'PRODUCT');
+  }
+
+  Widget _paintJobs() {
+    paintJobDocs.shuffle();
+    return itemRowTemplate(context,
+        label: 'PAINT JOBS',
+        itemDocs: paintJobDocs.take(maxItemsPerRow).toList(),
+        itemType: 'SERVICE');
+  }
+
+  Widget _repairs() {
+    repairDocs.shuffle();
+    return itemRowTemplate(context,
+        label: 'REPAIRS',
+        itemDocs: repairDocs.take(maxItemsPerRow).toList(),
+        itemType: 'SERVICE');
   }
 
   Widget _allProducts() {
     productDocs.shuffle();
-    return itemCarouselTemplate(context,
-        label: 'All Products',
-        carouselSliderController: allProductsController,
-        itemDocs: productDocs);
+    return Column(
+      children: [
+        itemRowTemplate(context,
+            label: 'All Products',
+            itemDocs: productDocs.take(maxItemsPerRow * 2).toList(),
+            itemType: 'PRODUCT'),
+        if (productDocs.length > maxItemsPerRow * 2)
+          SizedBox(
+              width: MediaQuery.of(context).size.width * 0.8,
+              child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                TextButton(
+                    onPressed: () =>
+                        GoRouter.of(context).goNamed(GoRoutes.products),
+                    child: blackSarabunBold('VIEW ALL',
+                        decoration: TextDecoration.underline))
+              ]))
+      ],
+    );
   }
 
   Widget _allServices() {
     serviceDocs.shuffle();
-    return vertical20Pix(
-      child: Container(
-          width: MediaQuery.of(context).size.width,
-          padding: const EdgeInsets.all(10),
-          child: Column(children: [
-            blackSarabunBold("All Services", fontSize: 32),
-            Container(width: 220, height: 8, color: CustomColors.crimson),
-            Gap(10),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              IconButton(
-                  onPressed: () => allServicesController.previousPage(),
-                  icon: blackSarabunRegular('<', fontSize: 60)),
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.8,
-                height: 400,
-                child: CarouselSlider.builder(
-                  carouselController: allServicesController,
-                  itemCount: serviceDocs.length,
-                  disableGesture: true,
-                  options: CarouselOptions(
-                      viewportFraction: 0.2,
-                      enlargeCenterPage: true,
-                      scrollPhysics: NeverScrollableScrollPhysics(),
-                      enlargeFactor: 0.2),
-                  itemBuilder: (context, index, realIndex) {
-                    return itemEntry(context,
-                        itemDoc: serviceDocs[index],
-                        onPress: () => GoRouter.of(context).goNamed(
-                                GoRoutes.selectedService,
-                                pathParameters: {
-                                  PathParameters.serviceID:
-                                      serviceDocs[index].id
-                                }));
-                  },
-                ),
-              ),
-              IconButton(
-                  onPressed: () => allServicesController.nextPage(),
-                  icon: blackSarabunRegular('>', fontSize: 60)),
-            ])
-          ])),
+    return Column(
+      children: [
+        itemRowTemplate(context,
+            label: 'All Services',
+            itemDocs: serviceDocs.take(maxItemsPerRow * 2).toList(),
+            itemType: 'SERVICE'),
+        if (serviceDocs.length > maxItemsPerRow * 2)
+          SizedBox(
+              width: MediaQuery.of(context).size.width * 0.8,
+              child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                TextButton(
+                    onPressed: () =>
+                        GoRouter.of(context).goNamed(GoRoutes.services),
+                    child: blackSarabunBold('VIEW ALL',
+                        decoration: TextDecoration.underline))
+              ]))
+      ],
     );
   }
 
@@ -362,7 +571,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       children: [
                         _platformSummary(),
                         _analyticsBreakdown(),
-                        Row(children: [_paymentStatuses()])
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.8,
+                          child: Wrap(
+                              alignment: WrapAlignment.spaceEvenly,
+                              runSpacing: 50,
+                              children: [
+                                _orderBreakdownPieChart(),
+                                _bookingBreakdownPieChart(),
+                                //_paymentStatuses(),
+                              ]),
+                        ),
+                        ActiveClientsWidget(),
+                        Gap(40)
                       ],
                     )),
               )),
@@ -404,31 +625,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Wrap(
           spacing: 50,
           runSpacing: 50,
-          alignment: WrapAlignment.spaceEvenly,
+          alignment: WrapAlignment.center,
           runAlignment: WrapAlignment.spaceEvenly,
           children: [
             analyticReportWidget(context,
                 count: productsCount.toString(),
                 demographic: 'Available Products',
-                displayIcon: const Icon(Icons.settings),
                 onPress: () =>
                     GoRouter.of(context).goNamed(GoRoutes.viewProducts)),
             analyticReportWidget(context,
                 count: servicesCount.toString(),
                 demographic: 'Available Services',
-                displayIcon: const Icon(Icons.home_repair_service),
                 onPress: () =>
                     GoRouter.of(context).goNamed(GoRoutes.viewServices)),
             analyticReportWidget(context,
                 count: userCount.toString(),
                 demographic: 'Registered Users',
-                displayIcon: const Icon(Icons.people),
                 onPress: () =>
                     GoRouter.of(context).goNamed(GoRoutes.viewUsers)),
             analyticReportWidget(context,
+                count: totalTransactions.toString(),
+                demographic: 'Total Transactions',
+                onPress: () =>
+                    GoRouter.of(context).goNamed(GoRoutes.viewTransactions)),
+            analyticReportWidget(context,
+                count: paymentBreakdown["PENDING"].toString(),
+                demographic: 'Pending Transactions',
+                onPress: () =>
+                    GoRouter.of(context).goNamed(GoRoutes.viewTransactions)),
+            analyticReportWidget(context,
+                count: completedPurchases.toString(),
+                demographic: 'Completed Purchases',
+                onPress: () =>
+                    GoRouter.of(context).goNamed(GoRoutes.viewPurchases)),
+            analyticReportWidget(context,
+                count: completedBookings.toString(),
+                demographic: 'Completed Bookings',
+                onPress: () =>
+                    GoRouter.of(context).goNamed(GoRoutes.viewBookings)),
+            analyticReportWidget(context,
                 count: ongoingBookings.toString(),
-                demographic: 'Ongoing Job Orders',
-                displayIcon: const Icon(Icons.online_prediction_sharp),
+                demographic: 'Ongoing Service Bookings',
                 onPress: () =>
                     GoRouter.of(context).goNamed(GoRoutes.viewBookings)),
           ],
@@ -441,7 +678,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return breakdownContainer(context,
         child: Column(
           children: [
-            blackSarabunBold('PAYMENT STATUSES'),
+            blackSarabunBold('TRANSACTION STATUSES'),
             PieChart(
                 dataMap: paymentBreakdown,
                 colorList: [
@@ -449,8 +686,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   CustomColors.ultimateGray,
                   CustomColors.blackBeauty
                 ],
+                legendOptions: LegendOptions(
+                    legendPosition: LegendPosition.right,
+                    legendTextStyle: GoogleFonts.sarabun(color: Colors.black)),
                 chartValuesOptions: ChartValuesOptions(decimalPlaces: 0)),
           ],
         ));
+  }
+
+  Widget _orderBreakdownPieChart() {
+    return breakdownContainer(
+      context,
+      child: Column(
+        children: [
+          blackSarabunBold('PRODUCT PURCHASES', fontSize: 20),
+          if (productNameAndOrderMap.isNotEmpty)
+            PieChart(
+                dataMap: productNameAndOrderMap,
+                //chartRadius: 300,
+                animationDuration: Duration.zero,
+                legendOptions: LegendOptions(
+                    legendPosition: LegendPosition.right,
+                    legendTextStyle: GoogleFonts.sarabun(color: Colors.black)),
+                chartValuesOptions: const ChartValuesOptions(decimalPlaces: 0))
+          else
+            blackSarabunBold('NO ORDERS HAVE BEEN MADE YET')
+        ],
+      ),
+    );
+  }
+
+  Widget _bookingBreakdownPieChart() {
+    return breakdownContainer(
+      context,
+      child: Column(
+        children: [
+          blackSarabunBold('SERVICE BOOKINGS', fontSize: 20),
+          if (serviceNameAndOrderMap.isNotEmpty)
+            PieChart(
+                dataMap: serviceNameAndOrderMap,
+                //chartRadius: 300,
+                animationDuration: Duration.zero,
+                legendOptions: LegendOptions(
+                    legendPosition: LegendPosition.right,
+                    legendTextStyle: GoogleFonts.sarabun(color: Colors.black)),
+                chartValuesOptions: const ChartValuesOptions(decimalPlaces: 0))
+          else
+            blackSarabunBold('NO BOOKINGS HAVE BEEN MADE YET')
+        ],
+      ),
+    );
   }
 }

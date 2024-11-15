@@ -132,10 +132,6 @@ Widget pageNavigatorButtons(
               ? null
               : () {
                   onPreviousPage();
-                  // setState(() {
-                  //   currentPage--;
-                  //   setDisplayedPlantillas();
-                  // });
                 },
           child: Icon(Icons.arrow_back)),
       crimsonSarabunBold((currentPage + 1).toString()),
@@ -144,10 +140,6 @@ Widget pageNavigatorButtons(
               ? null
               : () {
                   onNextPage();
-                  // setState(() {
-                  //   currentPage++;
-                  //   setDisplayedPlantillas();
-                  // });
                 },
           child: Icon(Icons.arrow_forward))
     ],

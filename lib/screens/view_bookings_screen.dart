@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +13,7 @@ import '../utils/firebase_util.dart';
 import '../utils/go_router_util.dart';
 import '../utils/string_util.dart';
 import '../widgets/app_bar_widget.dart';
+import '../widgets/custom_button_widgets.dart';
 import '../widgets/custom_miscellaneous_widgets.dart';
 import '../widgets/custom_padding_widgets.dart';
 import '../widgets/left_navigator_widget.dart';
@@ -23,6 +26,10 @@ class ViewBookingsScreen extends ConsumerStatefulWidget {
 }
 
 class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
+  int currentPage = 0;
+  int maxPage = 0;
+  int entriesPerPage = 8;
+  List<DocumentSnapshot> currentDisplayedBookings = [];
   @override
   void initState() {
     super.initState();
@@ -46,12 +53,38 @@ class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
               (b[PurchaseFields.dateCreated] as Timestamp).toDate();
           return bTime.compareTo(aTime);
         });
+        currentPage = 0;
+        maxPage =
+            (ref.read(bookingsProvider).bookingDocs.length / entriesPerPage)
+                .floor();
+        if (ref.read(bookingsProvider).bookingDocs.length % entriesPerPage == 0)
+          maxPage--;
+        setDisplayedBookings();
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(
             SnackBar(content: Text('Error getting all bookings: $error')));
         ref.read(loadingProvider.notifier).toggleLoading(false);
       }
+    });
+  }
+
+  void setDisplayedBookings() {
+    Future.delayed(Duration(milliseconds: 100)).then((value) {
+      if (ref.read(bookingsProvider).bookingDocs.length > entriesPerPage) {
+        currentDisplayedBookings = ref
+            .read(bookingsProvider)
+            .bookingDocs
+            .getRange(
+                currentPage * entriesPerPage,
+                min((currentPage * entriesPerPage) + entriesPerPage,
+                    ref.read(bookingsProvider).bookingDocs.length))
+            .toList();
+      } else {
+        currentDisplayedBookings = ref.read(bookingsProvider).bookingDocs;
+      }
+      setState(() {});
+      print(currentDisplayedBookings.length);
     });
   }
 
@@ -78,6 +111,25 @@ class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
                                 child:
                                     blackSarabunBold('BOOKINGS', fontSize: 40)),
                             _bookingsContainer(),
+                            if (ref.read(bookingsProvider).bookingDocs.length >
+                                entriesPerPage)
+                              pageNavigatorButtons(
+                                  currentPage: currentPage,
+                                  maxPage: maxPage,
+                                  onPreviousPage: () {
+                                    currentPage--;
+                                    setState(() {
+                                      currentDisplayedBookings.clear();
+                                      setDisplayedBookings();
+                                    });
+                                  },
+                                  onNextPage: () {
+                                    currentPage++;
+                                    setState(() {
+                                      currentDisplayedBookings.clear();
+                                      setDisplayedBookings();
+                                    });
+                                  })
                           ],
                         )),
                   )))
@@ -86,28 +138,12 @@ class _ViewBookingsScreenState extends ConsumerState<ViewBookingsScreen> {
     );
   }
 
-  /*Widget _bookingsContainer() {
-    return viewContentContainer(
-      context,
-      child: Column(
-        children: [
-          _bookingLabelRow(),
-          ref.read(bookingsProvider).bookingDocs.isNotEmpty
-              ? _bookingEntries()
-              : viewContentUnavailable(context, text: 'NO AVAILABLE BOOKINGS'),
-        ],
-      ),
-    );
-  }*/
-
   Widget _bookingsContainer() {
     return ref.read(bookingsProvider).bookingDocs.isNotEmpty
         ? Wrap(
             spacing: 20,
             runSpacing: 20,
-            children: ref
-                .read(bookingsProvider)
-                .bookingDocs
+            children: currentDisplayedBookings
                 .map((bookingDoc) =>
                     ServicePaymentWidget(ref: ref, bookingDoc: bookingDoc))
                 .toList())

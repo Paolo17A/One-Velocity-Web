@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
 
 class CustomTextField extends StatefulWidget {
   final String text;
@@ -74,17 +75,25 @@ class _LiliwECommerceTextFieldState extends State<CustomTextField> {
                       color: Colors.black.withOpacity(0.6),
                     ))
                 : widget.hasSearchButton && widget.onSearchPress != null
-                    ? Transform.scale(
-                        scale: 0.95,
-                        child: ElevatedButton(
-                            onPressed: () {
-                              if (widget.controller.text.isEmpty) return;
-                              widget.onSearchPress!();
-                            },
-                            child: const Icon(
-                              Icons.search,
-                              color: Colors.orange,
-                            )),
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            height: 46,
+                            child: ElevatedButton(
+                                onPressed: () {
+                                  if (widget.controller.text.isEmpty) return;
+                                  widget.onSearchPress!();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10))),
+                                child: const Icon(Icons.search,
+                                    color: Colors.white)),
+                          ),
+                          Gap(1)
+                        ],
                       )
                     : null),
         keyboardType: widget.textInputType,

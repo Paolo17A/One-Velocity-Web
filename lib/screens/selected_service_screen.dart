@@ -1,3 +1,4 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -38,10 +39,11 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
   String category = '';
   bool isAvailable = false;
   List<dynamic> imageURLs = [];
-  int currentImageIndex = 0;
 
   List<DocumentSnapshot> bookingHistoryDocs = [];
-
+  List<DocumentSnapshot> relatedServicesDocs = [];
+  CarouselSliderController relatedServicesController =
+      CarouselSliderController();
   @override
   void initState() {
     super.initState();
@@ -73,10 +75,29 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
             ref
                 .read(cartProvider)
                 .setCartItems(await getServiceCartEntries(context));
+            relatedServicesDocs = await getAllServices();
+
+            setState(() {
+              relatedServicesDocs = relatedServicesDocs.where((service) {
+                final serviceData = service.data() as Map<dynamic, dynamic>;
+                String thisCategory = serviceData[ServiceFields.category];
+                return category == thisCategory;
+              }).toList();
+            });
           } else if (ref.read(userTypeProvider) == UserTypes.admin) {
             bookingHistoryDocs =
                 await getServiceBookingHistory(widget.serviceID);
           }
+        } else {
+          relatedServicesDocs = await getAllServices();
+
+          setState(() {
+            relatedServicesDocs = relatedServicesDocs.where((service) {
+              final serviceData = service.data() as Map<dynamic, dynamic>;
+              String thisCategory = serviceData[ServiceFields.category];
+              return category == thisCategory;
+            }).toList();
+          });
         }
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
@@ -91,7 +112,6 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
   Widget build(BuildContext context) {
     ref.watch(loadingProvider);
     ref.watch(bookmarksProvider);
-    currentImageIndex = ref.watch(pagesProvider.notifier).getCurrentPage();
     return Scaffold(
         appBar: appBarWidget(context),
         floatingActionButton:
@@ -100,9 +120,12 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
                     senderUID: FirebaseAuth.instance.currentUser!.uid,
                     otherUID: adminID)
                 : null,
-        body: hasLoggedInUser() && ref.read(userTypeProvider) == UserTypes.admin
-            ? _adminView()
-            : _clientWidgets());
+        body: SingleChildScrollView(
+          child:
+              hasLoggedInUser() && ref.read(userTypeProvider) == UserTypes.admin
+                  ? _adminView()
+                  : _clientWidgets(),
+        ));
   }
 
   //============================================================================
@@ -156,8 +179,8 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
-                    onTap: () => showOtherPics(context,
-                        imageURL: imageURLs[currentImageIndex]),
+                    onTap: () =>
+                        showOtherPics(context, imageURL: imageURLs.first),
                     child: Image.network(imageURLs[0],
                         width: 150, height: 150, fit: BoxFit.cover)),
               ),
@@ -226,7 +249,18 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
         switchedLoadingContainer(
             ref.read(loadingProvider),
             SingleChildScrollView(
-              child: horizontal5Percent(context, child: _serviceContainer()),
+              child: horizontal5Percent(context,
+                  child: Column(
+                    children: [
+                      _serviceContainer(),
+                      Divider(),
+                      if (relatedServicesDocs.isNotEmpty)
+                        itemRowTemplate(context,
+                            label: 'Related Services',
+                            itemDocs: relatedServicesDocs.take(5).toList(),
+                            itemType: 'SERVICE')
+                    ],
+                  )),
             ))
       ],
     );
@@ -251,7 +285,7 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         blackSarabunBold(name, fontSize: 60),
-                        blackSarabunBold('PHP ${price.toStringAsFixed(2)}',
+                        blackSarabunBold('PHP ${formatPrice(price.toDouble())}',
                             fontSize: 40),
                         blackSarabunRegular('Category: $category',
                             fontSize: 30),
@@ -299,20 +333,8 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
                                                   'Please log-in to your account first.')));
                                       return;
                                     }
-                                    /*DateTime? datePicked = await showDatePicker(
-                                        context: context,
-                                        firstDate: DateTime.now()
-                                            .add(Duration(days: 1)),
-                                        lastDate: DateTime.now()
-                                            .add(Duration(days: 7)));
-                                    if (datePicked == null) {
-                                      return;
-                                    }*/
                                     addServiceToCart(context, ref,
                                         serviceID: widget.serviceID);
-                                    /*createNewBookingRequest(context, ref,
-                                        serviceID: widget.serviceID,
-                                        datePicked: datePicked);*/
                                   }
                                 : null,
                             child: whiteSarabunRegular('REQUEST THIS SERVICE',
@@ -336,13 +358,14 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
   }
 
   Widget _itemImagesDisplay() {
+    List<dynamic> otherImages = [];
+    if (imageURLs.length > 1) otherImages = imageURLs.sublist(1);
     return Column(
       children: [
         MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
-            onTap: () =>
-                showOtherPics(context, imageURL: imageURLs[currentImageIndex]),
+            onTap: () => showOtherPics(context, imageURL: imageURLs.first),
             child: Column(
               children: [
                 Container(
@@ -352,37 +375,30 @@ class _SelectedServiceScreenState extends ConsumerState<SelectedServiceScreen> {
                       border: Border.all(),
                       image: DecorationImage(
                           fit: BoxFit.fill,
-                          image: NetworkImage(imageURLs[currentImageIndex]))),
+                          image: NetworkImage(imageURLs.first))),
                 ),
               ],
             ),
           ),
         ),
-        if (imageURLs.length > 1)
-          vertical10Pix(
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.2,
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                        onPressed: () => currentImageIndex == 0
-                            ? null
-                            : ref
-                                .read(pagesProvider.notifier)
-                                .setCurrentPage(currentImageIndex - 1),
-                        child: const Icon(Icons.arrow_left)),
-                    TextButton(
-                        onPressed: () =>
-                            currentImageIndex == imageURLs.length - 1
-                                ? null
-                                : ref
-                                    .read(pagesProvider.notifier)
-                                    .setCurrentPage(currentImageIndex + 1),
-                        child: const Icon(Icons.arrow_right))
-                  ]),
-            ),
-          )
+        SizedBox(
+          width: MediaQuery.of(context).size.width * 0.25,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: otherImages
+                    .map((otherImage) => all10Pix(
+                            child: GestureDetector(
+                          onTap: () =>
+                              showOtherPics(context, imageURL: otherImage),
+                          child: Container(
+                              decoration: BoxDecoration(border: Border.all()),
+                              child: square80NetworkImage(otherImage)),
+                        )))
+                    .toList()),
+          ),
+        )
       ],
     );
   }
