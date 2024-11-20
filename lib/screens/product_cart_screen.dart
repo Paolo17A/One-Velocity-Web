@@ -47,13 +47,14 @@ class _ProductCartScreenState extends ConsumerState<ProductCartScreen> {
         ref
             .read(cartProvider)
             .setCartItems(await getProductCartEntries(context));
-        print('items: ${ref.read(cartProvider).cartItems.length}');
         associatedProductDocs = await getSelectedProductDocs(
             ref.read(cartProvider).cartItems.map((cartDoc) {
           final cartData = cartDoc.data() as Map<dynamic, dynamic>;
           return cartData[CartFields.itemID].toString();
         }).toList());
         setState(() {});
+        ref.read(cartProvider).setSelectedPaymentMethod('');
+        ref.read(cartProvider).resetProofOfPaymentBytes();
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(

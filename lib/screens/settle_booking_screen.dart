@@ -68,6 +68,7 @@ class _CartScreenState extends ConsumerState<SettleBookingScreen> {
           totalServicePrice += serviceData[ServiceFields.price];
         }
         ref.read(cartProvider).setSelectedPaymentMethod('');
+        ref.read(cartProvider).resetProofOfPaymentBytes();
         ref.read(loadingProvider.notifier).toggleLoading(false);
       } catch (error) {
         scaffoldMessenger.showSnackBar(

@@ -44,8 +44,9 @@ PreferredSizeWidget appBarWidget(BuildContext context,
               ),
             ),
           ),
-          if (MyApp.displaySearchBar)
+          if (MyApp.displaySearchBar) ...[
             Flexible(
+                flex: 3,
                 child: CustomTextField(
                     text: 'Search...',
                     controller: MyApp.searchController,
@@ -61,7 +62,9 @@ PreferredSizeWidget appBarWidget(BuildContext context,
                         PathParameters.searchInput: MyApp.searchController.text
                       });
                     },
-                    displayPrefixIcon: null))
+                    displayPrefixIcon: null)),
+            Flexible(child: Container())
+          ]
         ],
       ),
       actions: showActions
